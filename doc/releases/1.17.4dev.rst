@@ -43,6 +43,8 @@ Script Changes
   step. This script is useful to re-generate calibration files for a given
   configuration without running the full reduction.
 
+- Added finer debugging control for ``pypeit_trace_edges``
+
 
 Datamodel Changes
 -----------------

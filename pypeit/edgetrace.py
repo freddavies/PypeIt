@@ -16,87 +16,12 @@ With a :ref:`pypeit_file`, a typical execution of the script would be:
 
     $ pypeit_trace_edges -f my_pypeit_file.pypeit
 
-To show the trace results after completing each stage and/or to run
-in debugging mode, use the `--show` and/or `--debug` options:
+To show the trace results after completing each stage, use the ``--debug``
+option:
 
 .. code-block:: bash
 
-    $ pypeit_trace_edges -f my_pypeit_file.pypeit --debug --show
-
-Programmatically, if you have a :ref:`pypeit_file` and a path for the reductions
-(`redux_path`), an example of how to trace the slits in a single
-detector is as follows:
-
-.. code-block:: python
-
-    # Imports
-    from pypeit.pypeit import PypeIt
-    from pypeit import edgetrace
-    from pypeit.images import buildimage
-
-    # Instantiate the PypeIt class to perform the necessary setup
-    rdx = PypeIt(pypeit_file, redux_path=redux_path)
-
-    # Find the trace frames files for a specific calibration group
-    group = 0
-    tbl_rows = rdx.fitstbl.find_frames('trace', calib_ID=group, index=True)
-    files = rdx.fitstbl.frame_paths(tbl_rows)
-
-    # Select a detector to trace
-    det = 1
-
-    # Setup the output paths for the trace file; these can be anything but
-    # the defaults are below
-    calib_dir = rdx.par['calibrations']['caldir']
-    setup = rdx.fitstbl['setup'][tbl_rows[0]]
-    calib_id = rdx.fitstbl['calib'][tbl_rows[0]]
-
-    # Skip the bias subtraction, if reasonable; see
-    # pypeit.biasframe.BiasFrame to construct a bias to subtract from
-    # the TraceImage
-    rdx.par['calibrations']['traceframe']['process']['bias'] = 'skip'
-
-    # Construct the TraceImage
-    traceImage = buildimage.buildimage_fromlist(rdx.spectrograph, det,
-                                                rdx.par['calibrations']['traceframe'],
-                                                files, calib_dir=self.calib_dir,
-                                                setup=setup, calib_id=calib_id)
-
-    # Then run the edge tracing.  This performs the automatic tracing.
-    edges = edgetrace.EdgeTraceSet(traceImage, rdx.spectrograph,
-                                   rdx.par['calibrations']['slitedges'], auto=True)
-    # You can look at the results using the show method:
-    edges.show()
-    # Or in ginga viewer
-    edges.show(in_ginga=True)
-    # And you can save the results to a file
-    edges.to_file()
-
-If you want to instead start without a pypeit file, you could do the
-following for, e.g., a single unbinned Keck DEIMOS flat-field
-exposure in a fits file called `trace_file`:
-
-.. code-block:: python
-
-    import os
-    from pypeit import edgetrace
-    from pypeit.images import buildimage
-    from pypeit.spectrographs.util import load_spectrograph
-
-    spec = load_spectrograph('keck_deimos')
-    par = spec.default_pypeit_par()
-    par['calibrations']['traceframe']['process']['bias'] = 'skip'
-    # Make any desired changes to the parameters here
-    det = 3
-    calib_dir = par['calibrations']['caldir']
-
-    # Construct the TraceImage
-    traceImage = buildimage.buildimage_fromlist(spec, det, par['calibrations']['traceframe'],
-                                                [trace_file], calib_dir=self.calib_dir,
-                                                setup='A', calib_id=1)
-
-    edges = edgetrace.EdgeTraceSet(traceImage, spec, par['calibrations']['slitedges'], auto=True)
-    edges.to_file()
+    $ pypeit_trace_edges -f my_pypeit_file.pypeit --debug 1
 
 .. include common links, assuming primary doc root is up one directory
 .. include:: ../include/links.rst
