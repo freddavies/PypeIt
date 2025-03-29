@@ -145,7 +145,7 @@ first tab in the `ginga`_ window:
 
    *Trace Image*, i.e., the flat image, with the traced order edges overlaid.
    The green/magenta lines indicate the left/right order edges, and the aquamarine
-   labels starting with an ``S`` are the internal slit identifiers of PypeIt.
+   labels starting with an ``S`` are the internal slit/order identifiers of PypeIt.
 
 
 Additionally, since for echelle observations PypeIt is able to add missing orders, a QA
@@ -153,28 +153,30 @@ file is automatically generated to allow the user to assess the success of the p
 see :ref:`qa-order-predict`.
 The QA file is a PNG file in the ``QA/PNG/`` folder and it looks like this:
 
-.. figure:: ../figures/Edges_A_0_MSC01_orders_qa.png
-   :align: center
+.. container:: objfind
 
-   QA plot, called ``Edges_A_0_MSC01_orders_qa``, showing the measured order
+   .. image:: ../figures/Edges_A_0_MSC01_orders_qa.png
+      :align: center
+
+   *QA plot, called ``Edges_A_0_MSC01_orders_qa.png``, showing the measured order
    spatial widths (blue) and gaps (green) in pixels. The colored lines show
    the best fit polynomial model used for the predicted order locations. The
-   missing orders that are added are shown as open squares.
+   missing orders that are added are shown as open squares.*
 
 
 Wavelengths
 +++++++++++
 
 The wavelength calibration is usually performed using the ThAr arc lamp frames. The results can
-be inspected using the automatically generated QA file; see :ref:`qa-wave-fit`.
+be inspected using the automatically generated QA files; see :ref:`qa-wave-fit`.
 
-Below is the wavelength-calibration QA plot for the bluest order in this dataset (order=62).
+Below is the 1D fit wavelength-calibration QA plot for the bluest order in this dataset (order=62).
 Such a plot is produced for each order.
 
 
 .. figure:: ../figures/hires_wave1d.png
 
-   The wavelength-calibration QA plot for the bluest Keck/HIRES order
+   The 1D fit wavelength-calibration QA plot for the bluest Keck/HIRES order
    (order=62), called ``Arc_1dfit_A_0_MSC01_S0062.png``.  The left panel shows
    the arc spectrum extracted down the center of the order, with green text and
    lines marking lines used by the wavelength calibration.  Gray lines mark
@@ -186,7 +188,8 @@ Such a plot is produced for each order.
 
 For echelle spectrographs, the automated wavelength calibration procedure will
 also perform a 2d fit to attempt to improve the 1d fits. The results of the 2d
-fit can be inspected by looking at the automatically generated QA files.
+fit can be inspected by looking at the automatically generated QA files. Below
+is an example of the global 2D fit and the improved 1D fits QA plots.
 
 .. container:: image-group
 
@@ -269,22 +272,26 @@ Object Finding and Extraction
 
 
 After the above calibrations are complete, PypeIt will iteratively identify
-sources, perform local and global sky subtraction, and perform 1D spectral
+sources, perform global and local sky subtraction, and perform 1D spectral
 extractions.  This process is fully described here: :ref:`object_finding`.
 
 PypeIt produces QA files that allow you to assess the detection of the objects.
-For example, here is the QA plot for the qso found in order 35 (reddest order):
+For example, here is the QA plots for the quasar and standard star spectra in order 35 (reddest order):
 
-.. figure:: ../figures/hires_objfind.png
-   :figwidth: 60%
-   :align: center
+.. container:: objfind
 
-   Detection of a source spectrum in order 35.  The black line shows the
-   spectrally collapsed S/N as a function of position within the slit/order.
+   .. image:: ../figures/hires_objfind.png
+      :width: 48%
+
+   .. image:: ../figures/hires_objfind2.png
+      :width: 48%
+
+   *Detection of the quasar (left) and standard star (right) in order 35 spectra.
+   The black line shows the spectrally collapsed S/N as a function of position within the order.
    The dashed red line is the S/N threshold set by the :ref:`findobjpar`, and
    the green circle marks the spatial position of the detected object. This plot
    is useful to assess if the object was correctly detected and if the S/N
-   threshold (``snr_thresh``) parameter set is appropriate for the observation.
+   threshold (``snr_thresh``) parameter set is appropriate for the observation.*
 
 Given that HIRES produces multi-order echelle data, PypeIt will attempt to extract
 the object spectrum across all orders, even if it is only detected in a single order.
@@ -302,9 +309,8 @@ Spec2D
 ------
 
 The calibrated 2D spectral images can be visually inspected using
-:ref:`pypeit_show_2dspec`, which displays the images in a `ginga`_ window.  For
-example, the figure below shows 3 of the 4 image channels derived from one of
-the standard star observations, displayed by executing:
+:ref:`pypeit_show_2dspec`, which displays the images in a `ginga`_ window.
+The call to visualize the 2D spectral image of one of the quasar observations is:
 
 .. code-block:: bash
 
@@ -324,8 +330,8 @@ four tabs in the `ginga`_ window:
 
    *Calibrated science image at the top, in the middle the sky residual image (sky-subtracted
    calibrated image divided by the uncertainties), and on the right the residual image.
-   The green/magenta lines are the slit edges.  The orange lines are the object traces and the
-   orange text is the PypeIt assigned name (starting with ``SPAT``).*
+   The green/magenta lines are the order edges.  The orange lines are the object traces and the
+   orange text is the PypeIt assigned name (starting with ``OBJ``).*
 
 The main assessments to perform are to make sure that the object is well traced,
 that there are little to no strong sky residuals in the ``sky_resid`` channel,
@@ -336,7 +342,7 @@ Spec1D
 ------
 
 A summary of all the extracted sources is reported in an ASCII text with the
-the same name as the spec1 fits file, but with the extension changed from ``.fits`` to ``.txt``.
+same name as the spec1d fits file, but with the extension changed from ``.fits`` to ``.txt``.
 For this example, here are the first few lines of the file
 ``Science/spec1d_HI.20151214.17593-SDSSJ0100+2802_HIRES_20151214T045314.323.txt``:
 
@@ -368,20 +374,19 @@ and the result looks like this:
 .. figure:: ../figures/hires_spec1d_xgui.png
 
    `XSpecGUI`_ produced by calling :ref:`pypeit_show_1dspec` for the order=40 spectrum.
-   The black line is the flux and the red line is the estimated error.
+   The black line is the flux and the red line is the estimated error. In the window,
+   press ``?`` to open a webpage with the `XSpecGUI keystrokes`_ that help you navigate
+   through the spectrum.
 
-In the window, press ``?`` to open a webpage with the `XSpecGUI keystrokes`_ that help you navigate
-through the spectrum.
-
-Another option for visualizing the 1D estracted spectrum is to use the `ginga`_ viewer. The call
+Another option for visualizing the 1D extracted spectrum is to use the `ginga`_ viewer. The call
 is simply:
 
 .. code-block:: bash
 
     pypeit_show_1dspec Science/spec1d_HI.20151214.17593-SDSSJ0100+2802_HIRES_20151214T045314.323.fits --ginga
 
-which plot the spectrum in a tab of the `ginga`_ viewer and allow to selecting the different order using a
-drop down menu, in addition to selecting other properties of the spectum. Here is one exemple:
+which plots the spectrum in a tab of the `ginga`_ viewer and allows to select the different order spectra using a
+drop down menu, in addition to selecting other properties of the spectrum. Here is one exemple:
 
 .. figure:: ../figures/hires_spec1d_ginga.png
 
@@ -403,10 +408,12 @@ standard star observations reduced in the `Main Run`_. The typical call for HIRE
 
     pypeit_sensfunc -f Science/spec1d_HI.20151214.16715-Feige110_HIRES_20151214T043836.845.fits
 
-The ``-f`` flag requests the script to use the extracted spectrum of the flatfield calibration to
+The ``-f`` flag requests that the script uses the extracted spectrum of the flatfield calibration to
 estimate the blaze function in order to improve the sensitivity function calculation. Other parameters
 can be set through a configuration file, but in this case, most of the parameters needed for HIRES
-are already set by default. See :ref:`sensfuncpar` for a list of all the parameters that can be set.
+are already set by default. See :ref:`sensfuncpar` for a list of all the parameters that can be set,
+and :ref:`instr_par-keck_hires` for the default parameters for HIRES.
+
 The script produces a sensitivity function file, called
 ``sens_HI.20151214.16715-Feige110_HIRES_20151214T043836.845.fits`` and three QA files that can be
 inspected to assess the quality of the sensitivity function.
@@ -423,7 +430,7 @@ standard star spectrum:
    .. image:: ../figures/hires_std_fluxed.png
       :width: 48%
 
-   *On the top, example of the spectroscopic zeropoint fit for order 58. On the bottom, the standard star
+   *On the left, example of the spectroscopic zeropoint fit for order 58. On the right, the standard star
    spectrum flux-calibrated using the generated sensitivity function. The true archival standard star spectrum
    is also shown in green for comparison.*
 
@@ -439,43 +446,44 @@ For the next steps we need specific configuration files, which can be generated 
 
 This script takes as input the folder where the spec1d files are stored (``Science/``) and the folder
 where the sensitivity function is stored (``./``). The ``--objmodel`` flag is used to specify the type
-of object model to be used for the telluric correction. It, then, creates three configuration files:
+of object model to be used for the telluric correction. The script creates three configuration files:
 ``keck_hires.flux``, ``keck_hires.coadd1d``, and ``keck_hires.tell``.
 
 The ``keck_hires.flux`` (see also :ref:`flux_file`) looks like this:
 
 .. include:: ../include/keck_hires.flux.rst
 
-It does not need much editing, besides making sure that the ``sensfile`` column has the correct filename.
-If the sensitivity function used is the same for all the objects, then it is enough to add the filename
-of the sensitivity function only to the first row of the :ref:`data_block`. In this example, both
-qso and standard star are flux calibrated.
+It does not need much editing, besides making sure that the ``sensfile`` column has the correct file name.
+In this example, both the quasar and standard star spectra are flux calibrated.
 
-The flux calibration can then be run with:
+The flux calibration can be run with:
 
 .. code-block:: bash
 
     pypeit_flux_calib keck_hires.flux
 
-This will add a ``OPT_FLAM`` and ``BOX_FLAM`` column to each of the spec1d files
-in the ``Science/`` directory.
+This will add a ``*_FLAM`` columns to each of the spec1d files in the ``Science/`` directory.
+See :ref:`spec1D-datamodel` for more details.
 
 Co-adding
 ---------
 
 The next step is to co-add the flux-calibrated spectra. This step is particular important for
 echelle observations, since the orders are are also stitched together. The co-addition is performed
-using the :ref:`pypeit_coadd_1dspec` script and the configuration file ``keck_hires.coadd1d``.
+using the :ref:`pypeit_coadd_1dspec` and the configuration file ``keck_hires.coadd1d``.
 
-The configuration file (see also :ref:`coadd1d_file`) looks like this:
+The configuration file (see also :ref:`coadd1d_file`) for co-adding the quasar spectra looks like this:
 
 .. include:: ../include/keck_hires.coadd1d.rst
 
-And before running the co-addition, we need to remove the standard star file from the :ref:`data_block`,
-make sure that the ``sensfile`` column has the correct filename, and provide a name for the output file.
-In this example, the output file is called ``J0100+2802_coadded_50kms.fits``. In addition, we decided for this
-example to use a 50 km/s dispersion for the co-added spectrum, by setting the parameter ``dv = 50``, and this
-allows for a smoother visualization of the final spectrum.
+Before running the co-addition, we need to remove the standard star file from the :ref:`data_block`,
+make sure that the ``sensfile`` column has the correct file name, and provide a name for the output ``coaddfile``.
+In this example, the output file is called ``J0100+2802_coadded_50kms.fits``. If the sensitivity function
+used is the same for all the objects, then it is enough to add the file name of the sensitivity function
+only to the first row of the :ref:`data_block`.
+
+In addition, we decided for this example to use a 50 km/s dispersion for the co-added spectrum,
+by setting the parameter ``dv = 50.0``, which allows for a smoother visualization of the final spectrum.
 
 The co-addition can then be run with:
 
@@ -502,7 +510,7 @@ spectrum:
     specviz.load_data(spec)
     specviz.show()
 
-Here is an example of how the spectrum looks like in the `jdaviz`_ interface:
+Here is an example of how the spectrum looks in the `jdaviz`_ interface:
 
 .. figure:: ../figures/hires_coadded1d_specviz.png
 
@@ -520,7 +528,9 @@ looks like this:
 
 The telluric correction relies on a user-defined object model, defined by the ``objmodel`` parameter.
 In this example, we are using a quasar model, and we needs to edit the configuration file to provide
-the redshift of the quasar. The rest of the parameters can be left as default.
+the redshift of the quasar. The rest of the parameters can be left as default. See :ref:`telluricpar` for
+a list of all the parameters that can be set, and :ref:`instr_par-keck_hires` for the default parameters
+for HIRES.
 
 The telluric correction can then be run with:
 
