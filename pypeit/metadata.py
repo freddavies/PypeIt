@@ -921,6 +921,7 @@ class PypeItMetaData:
 
                 # Loop through the meta keys
                 for mkey in metakey:
+                    print("Problem Key:", metakey)
                     # Find the unique values of meta for this configuration
                     uniq_meta = np.unique(self.table[mkey][in_cfg].data)
                     # Warn the user that the matching meta values are not
