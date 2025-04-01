@@ -23,7 +23,7 @@ using this example dataset first.  Please join our `PypeIt Users Slack <pypeit-u
 to ask for help, and/or `Submit an issue`_ to Github if you find a bug!
 
 The following was performed on a Macbook Pro with 16 GB RAM. The main reduction took
-approximately 1 hour and 30 minutes, and the fluxing took an additional 20 minutes.
+a little over 1 hour, and the fluxing took an additional 15-20 minutes.
 
 Setup
 =====
@@ -63,7 +63,7 @@ by datasets. We inspect the ``.sorted`` file and identify the dataset that we wa
 
     pypeit_setup -s keck_hires -r PypeIt-development-suite/RAW_DATA/keck_hires/J0100+2802_H204Hr_RED_C1_ECH_-0.82_XD_1.62_1x2 -c A
 
-This creates a :ref:`pypeit_file` called ``keck_hires_A.pypeit`` inside a folder called ``keck_hires_A.pypeit/``,
+This creates a :ref:`pypeit_file` called ``keck_hires_A.pypeit`` inside a folder called ``keck_hires_A/``,
 and it looks like this:
 
 .. include:: ../include/keck_hires_A.pypeit.rst
@@ -134,8 +134,8 @@ PypeIt, by default, uses a mosaic approach for the reduction. It constructs a mo
 of the blue, green, and red detector data and reduces it, instead of processing
 the detector data individually.
 
-The code first uses the ``trace`` frames to find the order edges on the three HIRES
-detector mosaiced together. To check that PypeIt correctly identified every order,
+The code first uses the mosaiced ``trace`` frames to find all of the order edges
+in the HIRES data. To check that PypeIt correctly identified every order,
 we can run the :ref:`pypeit_chk_edges` script, with this explicit call:
 
 .. code-block:: bash
@@ -157,15 +157,13 @@ file is automatically generated to allow the user to assess the success of the p
 see :ref:`qa-order-predict`.
 The QA file is a PNG file in the ``QA/PNG/`` folder and it looks like this:
 
-.. container:: objfind
+.. figure:: ../figures/Edges_A_0_MSC01_orders_qa.png
+    :align: center
 
-   .. image:: ../figures/Edges_A_0_MSC01_orders_qa.png
-      :align: center
-
-   *QA plot, called ``Edges_A_0_MSC01_orders_qa.png``, showing the measured order
-   spatial widths (blue) and gaps (green) in pixels. The colored lines show
-   the best fit polynomial model used for the predicted order locations. The
-   missing orders that are added are shown as open squares.*
+    QA plot, called ``Edges_A_0_MSC01_orders_qa.png``, showing the measured order
+    spatial widths (blue) and gaps (green) in pixels. The colored lines show
+    the best fit polynomial model used for the predicted order locations. The
+    missing orders that are added are shown as open squares.
 
 
 Wavelengths
@@ -197,7 +195,7 @@ Such a plot is produced for each order.
 The results of the 2D fit can be inspected by looking at the automatically generated QA files.
 Below is an example of the global 2D fit and the improved 1D fits QA plots.
 
-.. container:: image-group
+.. container:: wave2d
 
    .. image:: ../figures/hires_wave_global2dfit.png
       :width: 48%
@@ -292,12 +290,12 @@ For example, here is the QA plots for the quasar and standard star spectra in or
    .. image:: ../figures/hires_objfind2.png
       :width: 48%
 
-   *Detection of the quasar (left) and standard star (right) in order 35 spectra.
-   The black line shows the spectrally collapsed S/N as a function of position within the order.
-   The dashed red line is the S/N threshold set by the :ref:`findobjpar`, and
-   the green circle marks the spatial position of the detected object. This plot
-   is useful to assess if the object was correctly detected and if the S/N
-   threshold (``snr_thresh``) parameter set is appropriate for the observation.*
+   *Detection of the quasar (left) and standard star (right) in order 35 spectra.*
+   *The black line shows the spectrally collapsed S/N as a function of position within the order.*
+   *The dashed red line is the S/N threshold set by the* :ref:`findobjpar`,
+   *and the green circle marks the spatial position of the detected object. This plot*
+   *is useful to assess if the object was correctly detected and if the S/N threshold*
+   (``snr_thresh``) *parameter set is appropriate for the observation.*
 
 Given that HIRES produces multi-order echelle data, PypeIt will attempt to extract
 the object spectrum across all orders, even if it is only detected in a single order.
@@ -334,10 +332,10 @@ four tabs in the `ginga`_ window:
 
    .. image:: ../figures/hires_res.png
 
-   *Calibrated science image at the top, in the middle the sky residual image (sky-subtracted
-   calibrated image divided by the uncertainties), and on the right the residual image.
-   The green/magenta lines are the order edges.  The orange lines are the object traces and the
-   orange text is the PypeIt assigned name (starting with ``OBJ``).*
+   *Calibrated science image at the top, in the middle the sky residual image (sky-subtracted*
+   *calibrated image divided by the uncertainties), and on the right the residual image.*
+   *The green/magenta lines are the order edges. The orange lines are the object traces and the*
+   *orange text is the PypeIt assigned name (starting with* ``OBJ`` *).*
 
 The main assessments to perform are to make sure that the object is well traced,
 that there are little to no strong sky residuals in the ``sky_resid`` channel,
@@ -404,7 +402,7 @@ The flux calibration is performed by first creating a sensitivity function from 
 standard star observations. The sensitivity function is then applied to the science
 observations. See :ref:`fluxing` for more details.
 
-.. warning::
+.. caution::
 
    High quality absolute flux calibration of HIRES data is difficult to achieve. This is due to
    the fact that the instrument's response function varies with the telescope position in an
@@ -438,7 +436,7 @@ for the current observation, and the last one shows the standard star spectrum f
 the generated sensitivity function. Here is an example of the zeropoint fit QA plot and the flux-calibrated
 standard star spectrum:
 
-.. container:: spec2d
+.. container:: sens
 
    .. image:: ../figures/hires_zeropoint.png
       :width: 49%
@@ -509,10 +507,14 @@ The co-addition can then be run with:
 
 The coadded spectrum can be visualized by just using `matplotlib`_, or we can take advantage of the
 `specutils`_ interface available through PypeIt.  Use of this interface requires to have the `specutils`_
-package installed. See :ref:`spec1D-specutils` for more details.
-This interface allows us to interact with our spectrum using `jdaviz`_.  This **needs** to be done
-within a `jupyter notebook`_, and the following lines can be used to load and visualize the co-added
-spectrum:
+package installed.
+
+This interface allows us to interact with our spectrum using `jdaviz`_.  Although `jdaviz`_ can be run
+both within a `jupyter notebook`_ and as a stand-alone application, in order to be able to visualize
+PypeIt 1D output files, `jdaviz`_ must currently be run from within a `jupyter notebook`_. See
+:ref:`spec1D-specutils` for more details.
+
+The following lines can be used to load and visualize the co-added spectrum of the quasar J0100+2802:
 
 .. code-block:: python
 
