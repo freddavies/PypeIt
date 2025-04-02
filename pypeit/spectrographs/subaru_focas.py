@@ -28,8 +28,8 @@ class SubaruFOCASSpectrograph(spectrograph.Spectrograph):
     name = 'subaru_focas'
     camera = 'FOCAS'
     header_name = 'FOCAS'
-    supported = False
-    comment = ' just getting started'
+    supported = True
+    comment = 'reasonable progress'
 
 
     @classmethod
@@ -212,26 +212,6 @@ class SubaruFOCASSpectrograph(spectrograph.Spectrograph):
         '''
         # From Kentaro Aoki on Slack on 2024-06-11
         Each chip has four amplifiers.
-        When binning=1, the chip1 has the overscan regions
-        ovregion1="[521:535,*]"
-        ovregion2="[538:552,*]"
-        ovregion3="[1593:1607,*]"
-        ovregion4="[1611:1625,*]",
-        the chip 2 has
-        ovregion1="[521:535,*]"
-        ovregion2="[538:552,*]"
-        ovregion3="[1593:1607,*]"
-        ovregion4="[1610:1624,*]"
-        When binning=2, the chip1 has the overscan regions
-        ovregion1="[261:275,*]"
-        ovregion2="[278:292,*]"
-        ovregion3="[813:827,*]"
-        ovregion4="[831:845,*]",
-        the chip 2 has
-        ovregion1="[261:275,*]"
-        ovregion2="[278:292,*]"
-        ovregion3="[813:827,*]"
-        ovregion4="[830:844,*]"
 
         The gains of chip 1 are
         gain1=2.081
@@ -255,56 +235,6 @@ class SubaruFOCASSpectrograph(spectrograph.Spectrograph):
         noise3=3.4
         noise4=3.6
         '''
-
-        # CHIP1 ("right", DET-ID == 1)
-        # NOTE: a) 1-based indexing, b) end index included in range,
-        #       c) order is Y, X
-        # NOTE: There is an extra column at x=1609 of Chip1 which causes
-        #        a shift in the position of ch4.
-        datamap_det1 = {'1': ['[:, 9:520]', '[:, 553:1064]',
-                              '[:, 1081:1592]', '[:, 1625:2136]'],
-                        '2': ['[:, 5: 260]', '[:, 293:548]',
-                              '[:, 557:812]', '[:, 846:1101]'],
-                        # NOTE: tried other axis, doesn't work as expected
-                        #'2': ['[5:260,:]', '[293:548,:]',
-                        #      '[557:812,:]', '[846:1101,:]'],
-                        '4': ['[:, 3:130]', '[:, 163:290]',
-                              '[:, 295:422]', '[:, 456:583]'],
-                        }
-        ovrscan_det1 = {'1': ['[:, 521:535]', '[:, 538:552]',
-                              '[:, 1593:1607]', '[:, 1611:1625]'],
-                        '2': ['[:, 261:275]', '[:, 278:292]',
-                              '[:, 813:827]', '[:, 831:845]'],
-                        # NOTE: tried other axis, doesn't work as expected
-                        #'2': ['[261:275,:]', '[278:292,:]',
-                        #      '[813:827,:]', '[831:845,:]'],
-                        '4': ['[:, 0:2]', '[:, 130:162]',
-                              '[:, 290:294]', '[:, 422:455]'],
-                        }
-
-        # CHIP2 ("left", DET-ID == 2)
-        datamap_det2 = {'1': ['[:, 9:520]', '[:, 553:1064]',
-                              '[:, 1081:1592]', '[:, 1625:2136]'],
-                        '2': ['[:, 5:260]', '[:, 293:548]',
-                              '[:, 557:812]', '[:, 845:1100]'],
-                        # NOTE: tried other axis, doesn't work as expected
-                        #'2': ['[5:260,:]', '[293:548,:]',
-                        #     '[557:812,:]', '[845:1100,:]'],
-                        '4': ['[:, 3:130]', '[:, 163:290]',
-                              '[:, 295:422]', '[:, 455:582]'],
-                        }
-        ovrscan_det2 = {'1': ['[:, 521:535]', '[:, 538:552]',
-                              '[:, 1593:1607]', '[:, 1610:1624]'],
-                        '2': ['[:, 261:275]', '[:, 278:292]',
-                              '[:, 813:827]', '[:, 830:844]'],
-                        # NOTE: tried other axis, doesn't work as expected
-                        #'2': ['[261:275,:]', '[278:292,:]',
-                        #      '[813:827,:]', '[830:844,:]'],
-                        '4': ['[:, 1:2]', '[:, 131:162]',
-                              '[:, 291:294]', '[:, 423:454]'],
-                        }
-
-        # TODO -- Deal with dataswec, oscansec
         detector_dict1 = dict(
             binning         = binning,
             det             = 1,
@@ -332,11 +262,8 @@ class SubaruFOCASSpectrograph(spectrograph.Spectrograph):
             ronoise         = np.atleast_1d([4.2, 3.8, 3.6, 4.0]),
             # NOTE: PypeIt binning variable is "<spectral>,<spatial>"
             # but FOCAS only removes overscan in the spatial
-            # NOTE 2: gave up on trying to use these and implemented a
-            # get_rawimage() method (below).
-            #datasec         = np.atleast_1d(datamap_det1[binning[-1]]),
-            #oscansec        = np.atleast_1d(ovrscan_det1[binning[-1]]),
         )
+
         # CHIP2
         detector_dict2 = dict(
             binning         = binning,
@@ -365,8 +292,6 @@ class SubaruFOCASSpectrograph(spectrograph.Spectrograph):
             ronoise         = np.atleast_1d([4.3, 3.7, 3.4, 3.6]),
             # NOTE: PypeIt binning variable is "<spectral>,<spatial>"
             # but FOCAS only removes overscan in the spatial
-            #datasec         = np.atleast_1d(datamap_det2[binning[-1]]),
-            #oscansec        = np.atleast_1d(ovrscan_det2[binning[-1]]),
         )
         # Finish
         if chip == '1':
@@ -447,71 +372,8 @@ class SubaruFOCASSpectrograph(spectrograph.Spectrograph):
             and used to constuct the :class:`~pypeit.metadata.PypeItMetaData`
             object.
         """
-        #return ['dispname', 'dispangle', 'decker', 'detector']
         # TODO -- Consider dispangle
         return ['dispname', 'decker', 'detector']
-
-
-    # TODO -- Convert this into get_comb_group()
-    def parse_dither_pattern(self, file_list, ext=None):
-        """
-        Parse headers from a file list to determine the dither pattern.
-
-        Parameters
-        ----------
-        file_list (list of strings):
-            List of files for which dither pattern is desired
-        ext (int, optional):
-            Extension containing the relevant header for these files. Default=None. If None, code uses
-            self.primary_hdrext
-
-        Returns
-        -------
-        dither_pattern, dither_id, offset_arcsec
-
-        dither_pattern (str `numpy.ndarray`_):
-            Array of dither pattern names
-        dither_id (str `numpy.ndarray`_):
-            Array of dither pattern IDs
-        offset_arc (float `numpy.ndarray`_):
-            Array of dither pattern offsets
-        """
-        nfiles = len(file_list)
-        offset_arcsec = np.zeros(nfiles)
-        dither_pattern = None
-        dither_id = None
-        for ifile, file in enumerate(file_list):
-            hdr = fits.getheader(file, self.primary_hdrext if ext is None else ext)
-            try:
-                ra, dec = meta.convert_radec(self.get_meta_value(hdr, 'ra', no_fussing=True),
-                                    self.get_meta_value(hdr, 'dec', no_fussing=True))
-            except:
-                msgs.warn('Encounter invalid value of your coordinates. Give zeros for both RA and DEC. Check that this does not cause problems with the offsets')
-                ra, dec = 0.0, 0.0
-            if ifile == 0:
-                coord_ref = SkyCoord(ra*units.deg, dec*units.deg)
-                offset_arcsec[ifile] = 0.0
-                # ESOs position angle appears to be the negative of the canonical astronomical convention
-                posang_ref = -(hdr['HIERARCH ESO INS SLIT POSANG']*units.deg)
-                posang_ref_rad = posang_ref.to('radian').value
-                # Unit vector pointing in direction of slit PA
-                u_hat_slit = np.array([np.sin(posang_ref), np.cos(posang_ref)]) # [u_hat_ra, u_hat_dec]
-            else:
-                coord_this = SkyCoord(ra*units.deg, dec*units.deg)
-                posang_this = coord_ref.position_angle(coord_this).to('deg')
-                separation  = coord_ref.separation(coord_this).to('arcsec').value
-                ra_off, dec_off = coord_ref.spherical_offsets_to(coord_this)
-                u_hat_this  = np.array([ra_off.to('arcsec').value/separation, dec_off.to('arcsec').value/separation])
-                dot_product = np.dot(u_hat_slit, u_hat_this)
-                if not np.isclose(np.abs(dot_product),1.0, atol=1e-2):
-                    msgs.error('The slit appears misaligned with the angle between the coordinates: dot_product={:7.5f}'.format(dot_product) + msgs.newline() +
-                               'The position angle in the headers {:5.3f} differs from that computed from the coordinates {:5.3f}'.format(posang_this, posang_ref))
-                offset_arcsec[ifile] = separation*np.sign(dot_product)
-
-#            dither_id.append(hdr['FRAMEID'])
-#            offset_arcsec[ifile] = hdr['YOFFSET']
-        return dither_pattern, dither_id, offset_arcsec
-
 
     def get_rawimage(self, raw_file, det):
         """
@@ -544,7 +406,62 @@ class SubaruFOCASSpectrograph(spectrograph.Spectrograph):
             (1-indexed) number of the amplifier used to read each detector
             pixel. Pixels unassociated with any amplifier are set to 0.
         """
-        # Read
+        # Definitions for the over scan regions in the DS9 image coordinate.
+        # Format
+        # 1: start of left overscan region
+        # 2: end of left overscan region
+        # 3: start of image region
+        # 4: end of image region
+        # 5: start of right overscan region
+        # 6: end of right overscan region
+        #
+        overscan = {}
+        # binning == 1
+        overscan[1] = np.asarray([
+            # For right (DET_ID == 1) image
+            [2, 8, 9, 520, 521, 536],
+            [537, 552, 553, 1064, 1065, 1071],
+            [1074, 1080, 1081, 1592, 1593, 1608],
+            [1610, 1625, 1626, 2137, 2138, 2143],
+            #
+            # For left (DET_ID == 2) image
+            [2, 8, 9, 520, 521, 536],
+            [537, 552, 553, 1064, 1065, 1071],
+            [1074, 1080, 1081, 1592, 1593, 1608],
+            [1609, 1624, 1625, 2136, 2137, 2142],
+            ])
+
+        # binning == 2
+        overscan[2] = np.asarray([
+            # For right (DET-ID == 1) image
+            [1, 4, 5, 260, 261, 276],
+            [277, 292, 293, 548, 549, 551],
+            [553, 556, 557, 812, 813, 828],
+            [829, 845, 846, 1101, 1102, 1104],
+            #
+            # For left (DET-ID == 2) image
+            [2, 4, 5, 260, 261, 276],
+            [277, 292, 293, 548, 549, 551],
+            [553, 556, 557, 812, 813, 828],
+            [829, 844, 845, 1100, 1101, 1104],
+            ])
+
+        # binning == 4
+        overscan[4] = np.asarray([
+            # For right (DET-ID == 1) image
+            [1, 2, 3, 130, 131, 146],
+            [147, 162, 163, 290, 291, 292],
+            [293, 294, 295, 422, 423, 438],
+            [439, 455, 456, 583, 584, 584],
+            #
+            # For left (DET-ID == 2) image
+            [1, 2, 3, 130, 131, 146],
+            [147, 162, 163, 290, 291, 292],
+            [293, 294, 295, 422, 423, 438],
+            [439, 454, 455, 582, 583, 584],
+            ])
+
+        # Read image
         msgs.info(f'Attempting to read FOCAS file: {raw_file}, det={det}')
 
         # NOTE: io.fits_open checks that the file exists
@@ -630,59 +547,3 @@ class SubaruFOCASSpectrograph(spectrograph.Spectrograph):
         """
         return ['DISPERSR', 'FILTER02', 'SLIT', 'SLT-LEN', 'SLT-PA',
                 'SLT-WID']  #, 'SLTCPIX1', 'SLTCPIX2', 'SLTC-RA', 'SLTC-DEC']
-
-
-# Definitions for the over scan regions in the DS9 image coordinate.
-# Format
-# 1: start of left overscan region
-# 2: end of left overscan region
-# 3: start of image region
-# 4: end of image region
-# 5: start of right overscan region
-# 6: end of right overscan region
-#
-overscan = {}
-# binning == 1
-overscan[1] = np.asarray([
-    # For right (DET_ID == 1) image
-    [2, 8, 9, 520, 521, 536],
-    [537, 552, 553, 1064, 1065, 1071],
-    [1074, 1080, 1081, 1592, 1593, 1608],
-    [1610, 1625, 1626, 2137, 2138, 2143],
-    #
-    # For left (DET_ID == 2) image
-    [2, 8, 9, 520, 521, 536],
-    [537, 552, 553, 1064, 1065, 1071],
-    [1074, 1080, 1081, 1592, 1593, 1608],
-    [1609, 1624, 1625, 2136, 2137, 2142],
-    ])
-
-# binning == 2
-overscan[2] = np.asarray([
-    # For right (DET-ID == 1) image
-    [1, 4, 5, 260, 261, 276],
-    [277, 292, 293, 548, 549, 551],
-    [553, 556, 557, 812, 813, 828],
-    [829, 845, 846, 1101, 1102, 1104],
-    #
-    # For left (DET-ID == 2) image
-    [2, 4, 5, 260, 261, 276],
-    [277, 292, 293, 548, 549, 551],
-    [553, 556, 557, 812, 813, 828],
-    [829, 844, 845, 1100, 1101, 1104],
-    ])
-
-# binning == 4
-overscan[4] = np.asarray([
-    # For right (DET-ID == 1) image
-    [1, 2, 3, 130, 131, 146],
-    [147, 162, 163, 290, 291, 292],
-    [293, 294, 295, 422, 423, 438],
-    [439, 455, 456, 583, 584, 584],
-    #
-    # For left (DET-ID == 2) image
-    [1, 2, 3, 130, 131, 146],
-    [147, 162, 163, 290, 291, 292],
-    [293, 294, 295, 422, 423, 438],
-    [439, 454, 455, 582, 583, 584],
-    ])
