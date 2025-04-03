@@ -490,6 +490,8 @@ branch.  The tagging process is as follows:
         * Make any final updates to ``CHANGES.rst`` and reset the relevant
           version header to be the intended tag number.
 
+        * Update the list of supported versions in the ``SECURITY.md`` file.
+
         * Update the documentation by executing ``cd doc ; make clean ; make
           html``, add any updated files, and correct all errors/warnings.
 
