@@ -105,37 +105,6 @@ PypeIt has a few optional dependencies that improve and/or expand functionality.
     marks may not be correct, leading to errors when they are directly pasted
     into a terminal window.
 
-Development or pre-release versions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The developers may occasionally ask users to jump on specific branches of the
-code to help them more quickly have their issue addressed.  **This is done on a
-shared-risk basis!**  I.e., development versions are intrinsically more unstable
-and, by definition, transient.
-
-If you find yourself working in branches frequently, you are encouraged to
-perform a :ref:`developer_install`.
-
-However, you can install development versions of PypeIt directly from `GitHub
-<https://github.com/pypeit/PypeIt>`_ using ``pip`` as follows. If you already
-have a ``pypeit`` environment set up, run:
-
-.. code-block:: console
-
-    pip install --upgrade "pypeit[dev]@git+https://github.com/pypeit/PypeIt.git"
-
-This will install the default branch, ``release``.  To install, e.g., 
-the ``develop`` branch, run:
-
-.. code-block:: console
-
-    pip install --upgrade "pypeit[dev]@git+https://github.com/pypeit/PypeIt.git@develop"
-
-To install a different branch, use the branch name instead of ``develop`` in the
-command above.  Commit hashes, tag names, or git refs can also be specified; see
-the `VCS Support documentation
-<https://pip.pypa.io/en/stable/cli/pip_install/>`_ for details and examples.
-
 Install via ``conda``
 ---------------------
 
@@ -173,8 +142,8 @@ This environment should now be ready to use and contain the latest official
 
 .. _upgrade:
 
-Upgrading to a new version
---------------------------
+Upgrading to a new version of PypeIt
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Since either installation method above ultimately uses ``pip`` to install
 PypeIt, upgrading the package should simply be a matter of executing:
@@ -206,7 +175,7 @@ upgrading:
 
 If you have locally installed files, your upgrade may look something like this:
 
-.. code-block:: console
+.. code-block:: bash
 
     # Check the cache contents
     pypeit_clean_cache -l
@@ -259,7 +228,7 @@ please `Submit an issue`_.
 .. _install_windows:
 
 User Installation on Windows
-----------------------------
+---------------------------------------------
 
 #. Download `Python for Windows <https://www.python.org/downloads/windows/>`_.
 
@@ -649,6 +618,35 @@ Developer Installation
 We, of course, welcome and encourage community development of PypeIt.
 Please see our :ref:`codeconduct` and the :ref:`development`.
 
+Developer install via ``pip``
+-----------------------------
+
+Install pre-release or development versions of PypeIt directly from `GitHub
+<https://github.com/pypeit/PypeIt>`_ using ``pip`` as follows. If you already
+have a ``pypeit`` environment set up, run:
+
+.. code-block:: console
+
+    pip install --upgrade "git+https://github.com/pypeit/PypeIt#egg=pypeit"
+
+If you're installing in a clean environment, be sure to include the optional
+dependencies as well:
+
+.. code-block:: console
+
+    pip install --upgrade "git+https://github.com/pypeit/PypeIt#egg=pypeit"
+
+These commands will install the default branch, ``release``. You can also
+specify a different branch, such as the main ``develop`` branch:
+
+.. code-block:: console
+
+    pip install --upgrade "git+https://github.com/pypeit/PypeIt.git@develop#egg=pypeit"
+
+Commit hashes, tag names, or git refs can also be specified; see the `VCS
+Support documentation
+<https://pip.pypa.io/en/stable/reference/pip_install/#vcs-support>`_ for details
+and examples.
 
 Developer install from source
 -----------------------------
