@@ -105,7 +105,7 @@ class OperationThread(QThread):
             self._main_window.create_progress_dialog(self._operation.name, max_progress, self._cancel_op)
             
         # Ignore the progress if there's no max progress yet
-        if mp is not None:            
+        if mp is not None and mp > 0:
             self._main_window.show_operation_progress(increase=1, message = progress_message)
 
     def _op_complete(self, canceled, exc_info):
@@ -162,7 +162,6 @@ class MetadataOperation(QObject):
         super().__init__()
         self._model=model
         self.name = name
-        self._max_progress = None
         self._main_window = main_controller.main_window
 
     def preRun(self):
@@ -170,25 +169,16 @@ class MetadataOperation(QObject):
         Perform setup required before running the operation. This involves watching the log
         for files being added to the metadata.
         """
-        building_metadata_re = re.compile(r"Building metadata for (\d+) ")
-        self._model.log_buffer.watch("building_metadata", building_metadata_re, self._buildingMetadata)
-        
-        added_metadata_re = re.compile(r"Adding metadata for (.*)$")
-        self._model.log_buffer.watch("added_metadata", added_metadata_re, self._addedMetadata)
+        self._model.log_buffer.watch("background_progress", None, self._background_progress)
         self._model.closeAllFiles()
         return True
 
-    def _buildingMetadata(self, name, match):
-        """Callback used to find the total number of files being read when building metadata."""
-        self._max_progress = int(match.group(1))
-        msgs.info(f"Found max progress {self._max_progress}")
-
-    def _addedMetadata(self, name, match):
-        """Callback used to report progress on reading files when building metadata."""
+    def _background_progress(self, name):
+        """Callback used to report progress on background operations and to cancel those operations."""
         if QThread.currentThread().isInterruptionRequested():
             raise OpCanceledError()
-
-        self.progressMade.emit(self._max_progress, match.group(1))
+        # Use 0 for max progress so the progress dialog just shows a busy icon
+        self.progressMade.emit(0,"Reading files...")
 
 
     def postRun(self, canceled, exc_info):
@@ -198,8 +188,7 @@ class MetadataOperation(QObject):
             canceled (bool):  True if the operation was canceled. 
             exc_info (tuple): The exception information (as returned by sys.exc_info()) for any errors that occurred.
         """
-        self._model.log_buffer.unwatch("added_metadata")
-        self._model.log_buffer.unwatch("building_metadata")
+        self._model.log_buffer.unwatch("background_progress")
 
         if exc_info[0] is not None:
             traceback_string = "".join(traceback.format_exception(*exc_info))
@@ -669,9 +658,9 @@ class SetupGUIController(QObject):
         defaultFont = self.app.font()
         msgs.info(f"Default font pixel size: {defaultFont.pixelSize()}")
         msgs.info(f"Default font point size: {defaultFont.pointSizeF()}")
-        if defaultFont.pointSizeF() < 12.0:
-            msgs.info(f"Setting font to 12.")
-            defaultFont.setPointSize(12)
+        if defaultFont.pointSizeF() < 14.0:
+            msgs.info(f"Setting font to 14.")
+            defaultFont.setPointSize(14)
             self.app.setFont(defaultFont)
 
         self.main_window = SetupGUIMainWindow(self.model, self)
