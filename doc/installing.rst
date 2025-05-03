@@ -391,14 +391,15 @@ Calculation of the sensitivity functions and general fitting of telluric
 absorption uses a PCA decomposition of a massive grid of model atmosphere spectra
 across many different observatories, with reference files that are only a few MB
 in size. Earlier PypeIt versions used pre-computed model grids which were much
-larger (few to several GB) which were observatory-specific; note that the new PCA
+larger (several GB) which were observatory-specific; note that the new PCA
 models are explicitly designed to be observatory-agnostic, and typically only differ
-in their intrinsic spectral resolution (except for HIRES and NIRSPEC model files).
+in their intrinsic spectral resolution (except for Keck/HIRES and Keck/NIRSPEC
+model files).
 
 .. note::
 
     Instruments that anticipate needing a telluric correction have the filename
-    of a sufficient resolution PCA model already included in the ``telgridfile``
+    of a PCA model with sufficient resolution already included in the ``telgridfile``
     `TelluricPar keyword
     <https://pypeit.readthedocs.io/en/latest/pypeit_par.html#telluricpar-keywords>`__.
     While the ``pypeit_install_telluric`` script can be used to download the files
