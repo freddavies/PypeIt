@@ -147,7 +147,7 @@ Parameters
 ==========
 
 teltype
-++++++++
+-------
 
 There are two options to model the atmospheric absorption, ``pca`` (default)
 and ``grid`` (legacy).
@@ -166,7 +166,7 @@ The ``grid`` option corresponds to the default method used in earlier versions
 of PypeIt, and uses grids of pre-computed observatory-specific atmospheric models.
 
 tell_npca
-++++++++
++++++++++
 
 The default number of PCA vectors used is 5, but ``tell_npca`` can be increased
 up to 10 in case more flexibility is required in the telluric model. Has no
