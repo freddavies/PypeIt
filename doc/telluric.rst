@@ -165,6 +165,14 @@ may eventually appear as well.
 The ``grid`` option corresponds to the default method used in earlier versions
 of PypeIt, and uses grids of pre-computed observatory-specific atmospheric models.
 
+telgridfile
++++++++++++
+
+There are different TellPCA files available corresponding to different (maximum) 
+spectral resolutions and wavelength ranges. All spectrographs which default to 
+the ``IR`` telluric method have the suitable file as the default value of 
+``telgridfile``.
+
 tell_npca
 +++++++++
 
