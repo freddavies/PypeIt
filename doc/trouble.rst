@@ -1,7 +1,7 @@
 
 .. include:: include/links.rst
 
-.. _known_failure_modes:
+.. _troubleshooting:
 
 ================================
 Troubleshooting and Known Issues
