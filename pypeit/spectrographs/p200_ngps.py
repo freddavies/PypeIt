@@ -155,15 +155,15 @@ class P200NGPSSpectrograph(spectrograph.Spectrograph):
         return np.zeros(len(fitstbl), dtype=bool)
 
 
-class P200NGPSSpectrograph_R(P200NGPSSpectrograph):
+class P200NGPSSpectrograph_r(P200NGPSSpectrograph):
     """
-    Child to handle P200/NGPS R-Channel specific code
+    Child to handle P200/NGPS r-Channel specific code
     """
-    name = 'p200_ngps_R'
-    camera = 'NGPS_R'
-    header_name = 'NGPS_R'
+    name = 'p200_ngps_r'
+    camera = 'NGPS_r'
+    header_name = 'NGPS_r'
     supported = True
-    comment = 'R-Channel'
+    comment = 'r-Channel'
 
     def get_rawimage(self, raw_file, det):
         """
@@ -212,7 +212,7 @@ class P200NGPSSpectrograph_R(P200NGPSSpectrograph):
             # Always the same binning for DET01 and DET02    
             binspat = headarr[1]['BINSPAT'] 
             binspec = headarr[1]['BINSPEC']
-            return f"{binspec},{binspat}"
+            return parse.binning2string(binspec, binspat)
         
         # If there is no target keyword, return image type
         elif meta_key == 'target':
@@ -244,11 +244,11 @@ class P200NGPSSpectrograph_R(P200NGPSSpectrograph):
     
         binning = self.get_meta_value(self.get_headarr(hdu), 'binning') 
 
-        # Detector 1 (R Channel)
+        # Detector 1 (r Channel)
         detector_dict1 = dict(
             binning         = binning,
-            det             = 1, # All R channel images assigned to extension 1
-            dataext         = 1, # All R channel images assigned to extension 1
+            det             = 1, # All r channel images assigned to extension 1
+            dataext         = 1, # All r channel images assigned to extension 1
             specaxis        = 1,
             specflip        = False, 
             spatflip        = False, 
@@ -300,7 +300,7 @@ class P200NGPSSpectrograph_R(P200NGPSSpectrograph):
 
         par['calibrations']['wavelengths']['lamps'] = ['ThAr'] # FeAr and ThAR lamps for NGPS (ThAr)
         par['calibrations']['wavelengths']['method'] = 'full_template' # Use wavelength template
-        par['calibrations']['wavelengths']['reid_arxiv'] = 'wvarxiv_p200_ngps_20250131T1227.fits' # R Channel
+        par['calibrations']['wavelengths']['reid_arxiv'] = 'wvarxiv_p200_ngps_20250131T1227.fits' #  Channel
 
         par['calibrations']['wavelengths']['rms_thresh_frac_fwhm'] = 1.0 
 
@@ -318,15 +318,15 @@ class P200NGPSSpectrograph_R(P200NGPSSpectrograph):
 
 
 
-class P200NGPSSpectrograph_I(P200NGPSSpectrograph):
+class P200NGPSSpectrograph_i(P200NGPSSpectrograph):
     """
-    Child to handle P200/NGPS I-Channel specific code
+    Child to handle P200/NGPS i-Channel specific code
     """
-    name = 'p200_ngps_I'
-    camera = 'NGPS_I'
-    header_name = 'NGPS_I'
+    name = 'p200_ngps_i'
+    camera = 'NGPS_i'
+    header_name = 'NGPS_i'
     supported = True
-    comment = 'I-Channel'
+    comment = 'i-Channel'
 
 
     def get_rawimage(self, raw_file, det):
@@ -379,7 +379,7 @@ class P200NGPSSpectrograph_I(P200NGPSSpectrograph):
             # Always the same binning for DET01 and DET02    
             binspat = headarr[2]['BINSPAT'] 
             binspec = headarr[2]['BINSPEC']
-            return f"{binspec},{binspat}"
+            return parse.binning2string(binspec, binspat)
         
         # If there is no target keyword, return image type
         elif meta_key == 'target':
@@ -411,11 +411,11 @@ class P200NGPSSpectrograph_I(P200NGPSSpectrograph):
     
         binning = self.get_meta_value(self.get_headarr(hdu), 'binning') 
     
-        # Detector 2 (I Channel)
+        # Detector 2 (i Channel)
         detector_dict2 = dict(
             binning         = binning,
-            det             = 1, # All I channel images assigned to extension 2 ###################
-            dataext         = 2, # All I channel images assigned to extension 2
+            det             = 1, # All i channel images assigned to extension 2 ###################
+            dataext         = 2, # All i channel images assigned to extension 2
             specaxis        = 1,
             specflip        = False, 
             spatflip        = False, 
