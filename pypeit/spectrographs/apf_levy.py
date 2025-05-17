@@ -51,17 +51,15 @@ class APFLevySpectrograph(spectrograph.Spectrograph):
         par['calibrations']['slitedges']['smash_range'] = [0.4,0.6]
 
         par['calibrations']['tilts']['tracethresh'] = 20
-        # Bias
 
-        par['calibrations']['wavelengths']['reid_arxiv'] = 'apf_levy_ech.fits'
         # 1D wavelength solution
+        par['calibrations']['wavelengths']['reid_arxiv'] = 'apf_levy_ech.fits'
         par['calibrations']['wavelengths']['lamps'] = ['ThAr_HARPS']
         par['calibrations']['wavelengths']['sigdetect'] = 5.0
         par['calibrations']['wavelengths']['fwhm'] = 2.5
         par['calibrations']['wavelengths']['rms_thresh_frac_fwhm'] = 0.2
         # Reidentification parameters
         par['calibrations']['wavelengths']['method'] = 'reidentify'
-        #par['calibrations']['wavelengths']['ech_fix_format'] = True
         # Echelle parameters
         par['calibrations']['wavelengths']['echelle'] = True
         par['calibrations']['wavelengths']['ech_nspec_coeff'] = 4
@@ -78,13 +76,13 @@ class APFLevySpectrograph(spectrograph.Spectrograph):
 
         # no sky subtraction on standard stars
         par['reduce']['skysub']['global_sky_std'] = False
-        
+
         # skip sky subtraction when searching for objects
         # this is because the sky subtraction is not very good with narrow
         # slits and the usual APF target is bright
         par['reduce']['findobj']['skip_skysub'] = True
 
-        par['reduce']['findobj']['find_trim_edge'] = [1, 1]
+        par['reduce']['findobj']['find_trim_edge'] = [2, 2]
         par['reduce']['findobj']['maxnumber_sci'] = 1
         par['reduce']['findobj']['maxnumber_std'] = 1
 
@@ -361,7 +359,7 @@ class APFLevySpectrograph(spectrograph.Spectrograph):
             rv = rv & (fitstbl['idname'] != filetype)
 
         return rv
-    
+
     def config_specific_par(self, scifile, inp_par=None):
         """
         Modify the PypeIt parameters to hard-wired values used for
