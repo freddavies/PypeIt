@@ -55,7 +55,7 @@ of astronomical spectroscopic data. Its algorithms build on decades-long
 development of previous data reduction pipelines by the developers. The
 reduction procedure - including a complete list of the input parameters and
 available functionality - is provided by our `online documentation
-<https://pypeit.readthedocs.io/en/release/>`__.
+<https://pypeit.readthedocs.io/en/stable/>`__.
 
 PypeIt is designed to be used by both advanced spectroscopists with prior data
 reduction expertise and astronomers with no prior experience of data reduction.
@@ -63,9 +63,9 @@ It is highly configurable and designed to be applied to any standard
 slit-imaging spectrograph, including long-slit, multi-slit, as well as
 cross-dispersed echelle spectra.  **The spectrographs that PypeIt can be used
 with are listed** `here
-<https://pypeit.readthedocs.io/en/release/spectrographs/spectrographs.html>`__.
+<https://pypeit.readthedocs.io/en/stable/spectrographs/spectrographs.html>`__.
 Specifically, look `here
-<https://pypeit.readthedocs.io/en/release/spectrographs/spectrographs.html#instrument-specific-details>`__
+<https://pypeit.readthedocs.io/en/stable/spectrographs/spectrographs.html#instrument-specific-details>`__
 for useful information about reducing data with certain instruments.
 
 In addition to our primary code base, we maintain an extensive `development
@@ -87,10 +87,10 @@ Community
 As a project, PypeIt is committed to fostering a welcoming, diverse, and
 inclusive community.  As a member of this community you are expected to read and
 follow our `Code of Conduct
-<https://pypeit.readthedocs.io/en/release/codeconduct.html>`__.
+<https://pypeit.readthedocs.io/en/stable/codeconduct.html>`__.
 
 Along with our extensive `online documentation
-<https://pypeit.readthedocs.io/en/release/>`__, we encourage the PypeIt user
+<https://pypeit.readthedocs.io/en/stable/>`__, we encourage the PypeIt user
 base to communicate via our `PypeIt Users Slack
 <https://pypeit-users.slack.com>`__.  All are welcome to join using `this
 invitation link
@@ -137,7 +137,7 @@ Citation
 
 If you use PypeIt in your research, please cite the following publications
 (we provide the relevant `BibTeX entries
-<https://pypeit.readthedocs.io/en/release/index.html#pypeit-bibtex-entries>`__
+<https://pypeit.readthedocs.io/en/stable/index.html#pypeit-bibtex-entries>`__
 for your convenience):
 
  - Prochaska et al. (2020, JOSS): `arXiv <https://ui.adsabs.harvard.edu/abs/2020arXiv200506505P/abstract>`__, `JOSS <https://joss.theoj.org/papers/10.21105/joss.02308>`__
@@ -147,7 +147,7 @@ You are also encouraged to note the specific version of the code you have used
 (e.g., 1.17.3).  If there is no place to include the relevant citations in the
 text of the publication, please include the following acknowledgement (provided
 in latex and using the provided `BibTeX entries
-<https://pypeit.readthedocs.io/en/release/index.html#pypeit-bibtex-entries>`__):
+<https://pypeit.readthedocs.io/en/stable/index.html#pypeit-bibtex-entries>`__):
 
 .. code-block:: latex
 
