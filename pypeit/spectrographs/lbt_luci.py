@@ -132,7 +132,7 @@ class LBTLUCISpectrograph(spectrograph.Spectrograph):
                    (lamp2 == True) or
                    (lamp3 == True))):
                 return 'arc'
-            # pixelflat off -> will be typed as bias
+            # pixelflat off -> will be typed as lampoffflats
             elif ((dispname != 'Mirror') and
                 (calib_unit == True) and
                 (lamp1 == False) and
@@ -228,8 +228,7 @@ class LBTLUCISpectrograph(spectrograph.Spectrograph):
             return good_exp & (fitstbl['idname'] == 'object')
         if ftype in ['standard']:
             return good_exp & (fitstbl['idname'] == 'standard')
-        if ftype == 'bias':
-            # for NIR data we type off lamp flats as biases
+        if ftype == 'lampoffflats':
             return good_exp & (fitstbl['idname'] == 'flat_off')
         if ftype in ['pixelflat', 'trace']:
             # Flats and trace frames are typed together
