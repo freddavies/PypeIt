@@ -12,9 +12,9 @@ proc classes: (lbt_mods1r_proc, lbt_mods1b_proc, lbt_mods2r_proc, lbt_mods2b_pro
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Four proc classes, one per channel, have been introduced (2025) to work on the pre-processed 
-MODS spectra that are output by the modsCCDRed tasks. These files, which have the _otf.fits 
-suffix, have been overscan-subtracted, trimmed, and flat fielded by a color-normalized slitless
-pixel flat. 
+MODS spectra that are output by the modsCCDRed (https://github.com/rwpogge/modsCCDRed) tasks. 
+These files, which have the _otf.fits suffix, have been overscan-subtracted, trimmed, and 
+flat-fielded by a color-normalized slitless pixel flat. 
 
 Unlike the original mods classes, the proc classes do not apply the conversion gain, and so 
 pixel values are in units of ADU. 
@@ -44,6 +44,8 @@ red end of the blue channel and the blue end of the red channel is cut off by th
 continuum objects, object finding works best when limited to the central region of the spectrum. 
 For emission line objects, the user will need to set the region and also insure that the standard 
 star is included in the pypeit file, to be used as a crutch for object tracing.
+
+.. code-block:: ini
 
      [reduce]
          [[findobj]]
