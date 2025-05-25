@@ -679,7 +679,8 @@ class BuildWaveCalib:
             patt_dict, final_fit = arcfitter.get_results()
 
             # Grab arxiv for redo later?
-            if self.par['echelle']: 
+            if self.par['echelle']:
+                embed()
                 # Hold for later usage
                 self.wave_soln_arxiv, self.arcspec_arxiv = arcfitter.get_arxiv(self.orders)
                 self.arccen = arccen
