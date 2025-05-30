@@ -122,7 +122,7 @@ class TNGDoloresSpectrograph(spectrograph.Spectrograph):
             par['calibrations']['wavelengths']['reid_arxiv'] = 'tng_dolores_LR-R_arx.fits'
             # Add CdI
             par['calibrations']['wavelengths']['method'] = 'full_template'
-            par['calibrations']['wavelengths']['lamps'] = ['NeI', 'HgI', 'HeI']
+            par['calibrations']['wavelengths']['lamps'] = ['NeI', 'HgI']
         else:
             par['calibrations']['wavelengths']['method'] = 'holy-grail'
             msgs.warn('Check wavelength calibration file.')
