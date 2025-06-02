@@ -336,7 +336,6 @@ class SubaruFOCASSpectrograph(spectrograph.Spectrograph):
 
         elif grism_ID == 'SCFCGRMR01':
             # 300R grism
-            #par['calibrations']['wavelengths']['reid_arxiv'] = 'wvarxiv_subaru_focas_SCFCGRMB01.fits'
             par['calibrations']['wavelengths']['reid_arxiv'] = 'wvarxiv_subaru_focas_SCFCGRMR01.fits'
             par['calibrations']['wavelengths']['method'] = 'full_template'
             par['calibrations']['wavelengths']['stretch_func'] = 'quadratic'
@@ -356,16 +355,14 @@ class SubaruFOCASSpectrograph(spectrograph.Spectrograph):
         elif grism_ID == 'SCFCGRHD52':
             # VPH520 grism
             par['calibrations']['wavelengths']['reid_arxiv'] = 'wvarxiv_subaru_focas_SCFCGRHD52.fits'
-            #par['calibrations']['wavelengths']['reid_arxiv'] = 'wvarxiv_subaru_focas_SCFCGRMR01.fits'
             par['calibrations']['wavelengths']['method'] = 'full_template'
             par['calibrations']['wavelengths']['stretch_func'] = 'quadratic'
 
-        elif grism_ID == 'SCFCGRHD65':
-            # VPH650 grism
-            #par['calibrations']['wavelengths']['reid_arxiv'] = 'wvarxiv_subaru_focas_SCFCGRHD65.fits'
-            par['calibrations']['wavelengths']['reid_arxiv'] = 'wvarxiv_subaru_focas_SCFCGRMB01.fits'
-            par['calibrations']['wavelengths']['method'] = 'full_template'
-            par['calibrations']['wavelengths']['stretch_func'] = 'quadratic'
+        # elif grism_ID == 'SCFCGRHD65':
+        #     # VPH650 grism
+        #     par['calibrations']['wavelengths']['reid_arxiv'] = 'wvarxiv_subaru_focas_SCFCGRHD65.fits'
+        #     par['calibrations']['wavelengths']['method'] = 'full_template'
+        #     par['calibrations']['wavelengths']['stretch_func'] = 'quadratic'
 
         # elif grism_ID == 'SCFCGRHD68':
         #     # VPH680 grism
