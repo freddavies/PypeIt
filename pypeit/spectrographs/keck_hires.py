@@ -166,7 +166,10 @@ class KECKHIRESSpectrograph(spectrograph.Spectrograph):
 
         # Sensitivity function parameters
         par['sensfunc']['algorithm'] = 'IR'
-        par['sensfunc']['polyorder'] = 5 #[9, 11, 11, 9, 9, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7]
+        par['sensfunc']['polyorder'] = 9 #[9, 11, 11, 9, 9, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7]
+        par['sensfunc']['extrap_blu'] = 0.0  # Y-band contaminated by higher order so don't extrap much
+        par['sensfunc']['extrap_red'] = 0.0
+        par['fluxcalib']['extrap_sens'] = True
         par['sensfunc']['IR']['telgridfile'] = 'TellPCA_3000_10500_R120000.fits'
         par['sensfunc']['IR']['pix_shift_bounds'] = (-40.0,40.0)
         
@@ -215,6 +218,62 @@ class KECKHIRESSpectrograph(spectrograph.Spectrograph):
 
         # Return
         return par
+
+    def tweak_standard(self, wave_in, counts_in, counts_ivar_in, gpm_in, meta_table, log10_blaze_function=None):
+        """
+        This routine is for performing instrument- and/or disperser-specific
+        tweaks to standard stars so that sensitivity function fits will be
+        well behaved.
+
+        Parameters
+        ----------
+        wave_in: `numpy.ndarray`_
+            Input standard star wavelengths (:obj:`float`, ``shape = (nspec,)``)
+        counts_in: `numpy.ndarray`_
+            Input standard star counts (:obj:`float`, ``shape = (nspec,)``)
+        counts_ivar_in: `numpy.ndarray`_
+            Input inverse variance of standard star counts (:obj:`float`, ``shape = (nspec,)``)
+        gpm_in: `numpy.ndarray`_
+            Input good pixel mask for standard (:obj:`bool`, ``shape = (nspec,)``)
+        meta_table: :obj:`dict`
+            Table containing meta data that is slupred from the :class:`~pypeit.specobjs.SpecObjs`
+            object.  See :meth:`~pypeit.specobjs.SpecObjs.unpack_object` for the
+            contents of this table.
+        log10_blaze_function: `numpy.ndarray`_ or None
+            Input blaze function to be tweaked, optional. Default=None.
+
+        Returns
+        -------
+        wave_out: `numpy.ndarray`_
+            Output standard star wavelengths (:obj:`float`, ``shape = (nspec,)``)
+        counts_out: `numpy.ndarray`_
+            Output standard star counts (:obj:`float`, ``shape = (nspec,)``)
+        counts_ivar_out: `numpy.ndarray`_
+            Output inverse variance of standard star counts (:obj:`float`, ``shape = (nspec,)``)
+        gpm_out: `numpy.ndarray`_
+            Output good pixel mask for standard (:obj:`bool`, ``shape = (nspec,)``)
+        log10_blaze_function_out: `numpy.ndarray`_ or None
+            Output blaze function after being tweaked.
+        """
+        # Mask by hand the blue and red edges to avoid spurious behavior to reflect in the sensitivity function
+        # Mask the first 10 pixels and the last 10 pixels
+        wave_out = wave_in.copy()
+        counts_out = counts_in.copy()
+        counts_ivar_out = counts_ivar_in.copy()
+        gpm_out = gpm_in.copy()
+        log10_blaze_function_out = log10_blaze_function.copy() if log10_blaze_function is not None else None
+        # Mask the first and last 10 pixels
+        gpm_out[:10] = False
+        gpm_out[-10:] = False
+        _bpm = np.logical_not(gpm_out)
+        # Set the wave, counts and inverse variance to zero in the masked pixels
+        wave_out[_bpm] = 0.0
+        counts_out[_bpm] = 0.0
+        counts_ivar_out[_bpm] = 0.0
+        if log10_blaze_function_out is not None:
+            log10_blaze_function_out[_bpm] = 0.0
+
+        return wave_out, counts_out, counts_ivar_out, gpm_out, log10_blaze_function_out
 
     def init_meta(self):
         """
