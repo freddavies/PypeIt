@@ -165,6 +165,7 @@ class KECKHIRESSpectrograph(spectrograph.Spectrograph):
         par['reduce']['findobj']['maxnumber_std'] = 1  # Assume that there is only one object in each order.
 
         # Sensitivity function parameters
+        par['sensfunc']['trim_std_pixs'] = [10, 10]  # Trim 10 pixels from each end of the standard star spectrum
         par['sensfunc']['algorithm'] = 'IR'
         par['sensfunc']['polyorder'] = 9 #[9, 11, 11, 9, 9, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7]
         par['sensfunc']['extrap_blu'] = 0.0  # Y-band contaminated by higher order so don't extrap much
@@ -219,7 +220,8 @@ class KECKHIRESSpectrograph(spectrograph.Spectrograph):
         # Return
         return par
 
-    def tweak_standard(self, wave_in, counts_in, counts_ivar_in, gpm_in, meta_table, log10_blaze_function=None):
+    def tweak_standard(self, wave_in, counts_in, counts_ivar_in, gpm_in, meta_table,
+                       trim_std_pixs=None, log10_blaze_function=None):
         """
         This routine is for performing instrument- and/or disperser-specific
         tweaks to standard stars so that sensitivity function fits will be
@@ -239,6 +241,10 @@ class KECKHIRESSpectrograph(spectrograph.Spectrograph):
             Table containing meta data that is slupred from the :class:`~pypeit.specobjs.SpecObjs`
             object.  See :meth:`~pypeit.specobjs.SpecObjs.unpack_object` for the
             contents of this table.
+        trim_std_pixs: :obj:`list` or :obj:`tuple`, optional
+            List or tuple of two integers specifying the number of pixels to
+            trim from the start and end of the standard star spectrum. If None,
+            no trimming is applied. Default=None.
         log10_blaze_function: `numpy.ndarray`_ or None
             Input blaze function to be tweaked, optional. Default=None.
 
@@ -255,23 +261,32 @@ class KECKHIRESSpectrograph(spectrograph.Spectrograph):
         log10_blaze_function_out: `numpy.ndarray`_ or None
             Output blaze function after being tweaked.
         """
-        # Mask by hand the blue and red edges to avoid spurious behavior to reflect in the sensitivity function
-        # Mask the first 10 pixels and the last 10 pixels
+
         wave_out = wave_in.copy()
         counts_out = counts_in.copy()
         counts_ivar_out = counts_ivar_in.copy()
         gpm_out = gpm_in.copy()
         log10_blaze_function_out = log10_blaze_function.copy() if log10_blaze_function is not None else None
-        # Mask the first and last 10 pixels
-        gpm_out[:10] = False
-        gpm_out[-10:] = False
-        _bpm = np.logical_not(gpm_out)
-        # Set the wave, counts and inverse variance to zero in the masked pixels
-        wave_out[_bpm] = 0.0
-        counts_out[_bpm] = 0.0
-        counts_ivar_out[_bpm] = 0.0
-        if log10_blaze_function_out is not None:
-            log10_blaze_function_out[_bpm] = 0.0
+
+        if trim_std_pixs is not None:
+            # make sure that the trim_pixs is a list of 2 integers
+            if not isinstance(trim_std_pixs, (list, tuple)) or len(trim_std_pixs) != 2:
+                msgs.error("trim_std_pixs must be a list or tuple of two integers.")
+            # make sure that the second number is larger than the first
+            if trim_std_pixs[1] <= trim_std_pixs[0]:
+                msgs.error("The second number in trim_std_pixs must be larger than the first.")
+            # Mask the first and last trim_std_pixs pixels
+            s = trim_std_pixs[0]
+            e = trim_std_pixs[1]
+            gpm_out[:s] = False
+            gpm_out[-e:] = False
+            # Set the wave, counts and inverse variance to zero in the masked pixels
+            _bpm = np.logical_not(gpm_out)
+            wave_out[_bpm] = 0.0
+            counts_out[_bpm] = 0.0
+            counts_ivar_out[_bpm] = 0.0
+            if log10_blaze_function_out is not None:
+                log10_blaze_function_out[_bpm] = 0.0
 
         return wave_out, counts_out, counts_ivar_out, gpm_out, log10_blaze_function_out
 

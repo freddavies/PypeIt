@@ -260,7 +260,9 @@ class SensFunc(datamodel.DataContainer):
 
         # Perform any instrument tweaks
         wave_twk, counts_twk, counts_ivar_twk, counts_mask_twk, log10_blaze_function_twk = \
-            self.spectrograph.tweak_standard(wave, counts, counts_ivar, counts_mask, self.meta_spec, log10_blaze_function=log10_blaze_function)
+            self.spectrograph.tweak_standard(wave, counts, counts_ivar, counts_mask, self.meta_spec,
+                                             log10_blaze_function=log10_blaze_function,
+                                             trim_std_pixs=self.par['trim_std_pixs'],)
         # Reshape to 2d arrays
         self.wave_cnts, self.counts, self.counts_ivar, self.counts_mask, self.log10_blaze_function, self.nspec_in, \
             self.norderdet = utils.spec_atleast_2d(wave_twk, counts_twk, counts_ivar_twk, counts_mask_twk,
@@ -449,7 +451,7 @@ class SensFunc(datamodel.DataContainer):
         wave : `numpy.ndarray`_
             The wavelength array used for the zeropoint evaluation.
         """
-        return None, None
+        return None
 
     def extrapolate(self, samp_fact=1.5):
         """
@@ -494,7 +496,7 @@ class SensFunc(datamodel.DataContainer):
 
         # Evaluate extrapolated zerpoint for all orders detectors
         for iorddet in range(self.norderdet):
-            zeropoint_extrap[:, iorddet], wave_extrap[:,iorddet] = self.eval_zeropoint(wave_extrap[:,iorddet], iorddet)
+            zeropoint_extrap[:, iorddet] = self.eval_zeropoint(wave_extrap[:,iorddet], iorddet)
 
         self.steps.append(inspect.stack()[0][3])
         return wave_extrap, zeropoint_extrap
@@ -536,7 +538,7 @@ class SensFunc(datamodel.DataContainer):
                 wave_mask_min = wave_min
                 wave_mask_max = wave_max
             splice_wave_mask = (wave_splice_1d >= wave_mask_min) & (wave_splice_1d <= wave_mask_max)
-            zeropoint_splice_1d[splice_wave_mask], wave_splice_1d[splice_wave_mask] \
+            zeropoint_splice_1d[splice_wave_mask] \
                     = self.eval_zeropoint(wave_splice_1d[splice_wave_mask], idet)
 
         # Interpolate over gaps
@@ -975,9 +977,6 @@ class IRSensFunc(SensFunc):
         -------
         zeropoint : `numpy.ndarray`_, shape is (nspec,)
             Zeropoint array evaluated at the input wavelength grid and with the gpm applied.
-        wave : `numpy.ndarray`_, shape is (nspec,)
-            Wavelength array with the gpm applied. This is the same as the input
-            wavelength array, but with the gpm applied to it.
 
         """
         s = self.telluric.model['IND_LOWER']
@@ -991,16 +990,10 @@ class IRSensFunc(SensFunc):
         else:
             log10_blaze_function = None
 
-        # Extrapolate the gpm (assuming that the extrapolated points are good, therefore fill_value=1)
-        gpm = scipy.interpolate.interp1d(self.sens['SENS_WAVE'][iorddet,s[iorddet]:e[iorddet]],
-                                         self.sens['SENS_ZEROPOINT_FIT_GPM'][iorddet,s[iorddet]:e[iorddet]].astype(float),
-                                         kind='nearest', bounds_error=False, fill_value=1.)(wave)
-
-        zeropoint =  flux_calib.eval_zeropoint(
+        return flux_calib.eval_zeropoint(
             self.sens['SENS_COEFF'][iorddet,:self.telluric.model['POLYORDER_VEC'][iorddet]+2],
             self.telluric.func, wave, self.sens['WAVE_MIN'][iorddet], self.sens['WAVE_MAX'][iorddet],
-            log10_blaze_func_per_ang=log10_blaze_function) * gpm.astype(bool)
-        return zeropoint, wave * gpm.astype(bool)
+            log10_blaze_func_per_ang=log10_blaze_function)
 
 
 class UVISSensFunc(SensFunc):
@@ -1096,22 +1089,11 @@ class UVISSensFunc(SensFunc):
         -------
         zeropoint : `numpy.ndarray`_, shape is (nspec,)
             Zeropoint array evaluated at the input wavelength grid and with the gpm applied.
-        wave : `numpy.ndarray`_, shape is (nspec,)
-            Wavelength array with the gpm applied. This is the same as the input
-            wavelength array, but with the gpm applied to it.
         """
-
-        # Extrapolate the gpm (assuming that the extrapolated points are good, therefore fill_value=1)
-        gpm = scipy.interpolate.interp1d(self.sens['SENS_WAVE'][iorddet,:],
-                                         self.sens['SENS_ZEROPOINT_FIT_GPM'][iorddet,:].astype(float),
-                                         kind='nearest', bounds_error=False, fill_value=1.)(wave)
-
         # This routine can extrapolate
-        zeropoint =  scipy.interpolate.interp1d(self.sens['SENS_WAVE'][iorddet,:],
+        return scipy.interpolate.interp1d(self.sens['SENS_WAVE'][iorddet,:],
                                           self.sens['SENS_ZEROPOINT_FIT'][iorddet,:],
-                                          bounds_error=False, fill_value='extrapolate')(wave) * gpm.astype(bool)
-
-        return zeropoint, wave * gpm.astype(bool)
+                                          bounds_error=False, fill_value='extrapolate')(wave)
 
 
 
