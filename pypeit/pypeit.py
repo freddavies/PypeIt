@@ -429,7 +429,7 @@ class PypeIt:
                     # TODO: come up with sensible naming convention for
                     # save_exposure for combined files
                     if len(sci_spec2d.detectors) > 0:
-                        self.save_exposure(frames[0], sci_spec2d, sci_sobjs, self.basename, history)
+                        self.save_exposure(frames[0], sci_spec2d, sci_sobjs, self.basename, history, skip_write_2d=self.par['scienceframe']['process']['skip_write_2d'])
                     else:
                         msgs.warn('No spec2d and spec1d saved to file because the '
                                   'calibration/reduction was not successful for all the detectors')
@@ -1167,7 +1167,7 @@ class PypeIt:
         # Return the value of the correction and the corrected wavelength image
         return vel_corr, waveimg
 
-    def save_exposure(self, frame, all_spec2d, all_specobjs, basename, history=None):
+    def save_exposure(self, frame, all_spec2d, all_specobjs, basename, history=None, skip_write_2d:bool=False):
         """
         Save the outputs from extraction for a given exposure
 
@@ -1183,6 +1183,8 @@ class PypeIt:
                 The root name for the output file.
             history (:obj:`pypeit.history.History`):
                 History entries to be added to fits header
+            skip_write_2d (:obj:`bool`):
+                Skip writing the 2D spectrum to disk  (Default: False)
         Returns:
             None or SpecObjs:  All of the objects saved to disk
 
@@ -1231,6 +1233,9 @@ class PypeIt:
             sobjs = specobjs.SpecObjs.from_fitsfile(outfile1d, chk_version=False)
             sobjs.write_info(outfiletxt, self.spectrograph.pypeline)
             #all_specobjs.write_info(outfiletxt, self.spectrograph.pypeline)
+
+        if skip_write_2d:
+            return
 
         # 2D spectra
         outfile2d = os.path.join(self.science_path, 'spec2d_{:s}.fits'.format(basename))

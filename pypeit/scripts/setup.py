@@ -5,6 +5,7 @@ This script generates files to setup a PypeIt run
 .. include:: ../include/links.rst
 """
 import argparse
+import pathlib
 from IPython import embed
 
 from pypeit.scripts import scriptbase
@@ -58,6 +59,9 @@ class Setup(scriptbase.ScriptBase):
                                  'pypeit_obslog; i.e., you have to tell pypeit_setup to keep '
                                  'these frames, whereas you have to tell pypeit_obslog to remove '
                                  'them.')
+        parser.add_argument('-p', '--param_block_file', default=None, type=str,
+                            help='File containing the additional PypeIt user parameters to be '
+                                 'added to the parameter block of the geerated reduction file')
         parser.add_argument('-G', '--gui', default=False, action='store_true',
                             help='Run setup in a GUI')        
 
@@ -101,6 +105,13 @@ class Setup(scriptbase.ScriptBase):
 
         # Initialize PypeItSetup based on the arguments
         ps = PypeItSetup.from_file_root(args.root, args.spectrograph, extension=args.extension)
+        # Add any additional user parameters
+        if args.param_block_file is not None:
+            user_pars = pathlib.Path(args.param_block_file)
+            if user_pars.exists():
+                with open(user_pars, 'r', encoding='utf-8') as par_file:
+                    user_cfgs = [l.rstrip() for l in par_file.readlines()]
+                ps.update_user_cfg(user_cfgs)
         # Run the setup
         ps.run(setup_only=True, clean_config=not args.keep_bad_frames)
 

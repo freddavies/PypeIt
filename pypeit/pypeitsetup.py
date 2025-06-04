@@ -222,11 +222,27 @@ class PypeItSetup:
         """
 
         # Configure me
-        cfg_lines = ['[rdx]']
-        cfg_lines += ['    spectrograph = {0}'.format(spectrograph)]
+        cfg_lines = ['[rdx]', f'    spectrograph = {spectrograph}']
 
         # Instantiate
         return cls(data_files, cfg_lines=cfg_lines, frametype=frametype)
+    
+    def update_user_cfg(self, user_cfg:list=None):
+        """
+        Update the user-defined configuration lines
+
+        _extended_summary_
+
+        Args:
+            user_cfg (:obj:`list`, optional):
+                List of configuration lines to be added to the parameter block
+                of the pypeit file.
+        """
+        # Append the lines provided to the instance attribute
+        if user_cfg is not None:
+            self.user_cfg.extend(user_cfg)
+        # TODO: Should there be checking that new lines are not repititive of
+        #       existing configuraiton lines?
 
     @property
     def nfiles(self):
