@@ -1964,16 +1964,17 @@ class Spectrograph:
             # Mask the first and last trim_std_pixs pixels
             s = trim_std_pixs[0]
             e = trim_std_pixs[1]
-            gpm_out[:s] = False
-            gpm_out[-e:] = False
-            # Set the wave, counts and inverse variance to zero in the masked pixels
-            _bpm = np.logical_not(gpm_out)
+            trim_mask = np.zeros_like(wave_out, dtype=bool)
+            trim_mask[s:-e] = True
+
+            # Set the wave, counts, gpm, inverse variance and log10 blaze to zero in the masked pixels
             msgs.info('Trimming standard star spectrum by {:d} pixels at the start and {:d} pixels at the end.'.format(s, e))
-            wave_out[_bpm] = 0.0
-            counts_out[_bpm] = 0.0
-            counts_ivar_out[_bpm] = 0.0
+            wave_out = wave_out* trim_mask
+            counts_out = counts_out * trim_mask
+            counts_ivar_out = counts_ivar_out * trim_mask
+            gpm_out = gpm_out & trim_mask
             if log10_blaze_function_out is not None:
-                log10_blaze_function_out[_bpm] = 0.0
+                log10_blaze_function_out = log10_blaze_function_out * trim_mask
 
         return wave_out, counts_out, counts_ivar_out, gpm_out, log10_blaze_function_out
 

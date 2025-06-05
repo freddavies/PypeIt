@@ -564,6 +564,10 @@ class ShaneKastRedSpectrograph(ShaneKastSpectrograph):
         require such tweaks it will just return the inputs, but for isntruments that do this function is overloaded
         with a method that performs the tweaks.
 
+        NOTE: if the `trim_std_pixs` parameter is not None, then the standard star spectrum will be only trimmed
+        by the specified number of pixels at the start and end of the spectrum, and no other tweaks will be
+        performed.
+
         Parameters
         ----------
         wave_in: `numpy.ndarray`_
@@ -598,6 +602,10 @@ class ShaneKastRedSpectrograph(ShaneKastSpectrograph):
         log10_blaze_function_out: `numpy.ndarray`_ or None
             Output blaze function after being tweaked.
         """
+
+        if trim_std_pixs is not None:
+            return super().tweak_standard(wave_in, counts_in, counts_ivar_in, gpm_in, meta_table,
+                                          trim_std_pixs=trim_std_pixs, log10_blaze_function=log10_blaze_function)
 
         # Could check the wavelenghts here to do something more robust to header/meta data issues
         if '600/7500' in meta_table['DISPNAME']:

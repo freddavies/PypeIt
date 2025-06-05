@@ -165,9 +165,10 @@ class KECKHIRESSpectrograph(spectrograph.Spectrograph):
         par['reduce']['findobj']['maxnumber_std'] = 1  # Assume that there is only one object in each order.
 
         # Sensitivity function parameters
-        par['sensfunc']['trim_std_pixs'] = [10, 10]  # Trim 10 pixels from each end of the standard star spectrum
+        par['sensfunc']['trim_std_pixs'] = [4, 40]  # Trim 10 pixels from each end of the standard star spectrum
+        par['sensfunc']['mask_hydrogen_lines'] = False  # TODO - REMOVE, FOR TESING
         par['sensfunc']['algorithm'] = 'IR'
-        par['sensfunc']['polyorder'] = 9 #[9, 11, 11, 9, 9, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7]
+        par['sensfunc']['polyorder'] = 7 #[9, 11, 11, 9, 9, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7]
         par['sensfunc']['extrap_blu'] = 0.0  # Y-band contaminated by higher order so don't extrap much
         par['sensfunc']['extrap_red'] = 0.0
         par['fluxcalib']['extrap_sens'] = True

@@ -2478,7 +2478,9 @@ class Telluric(datamodel.DataContainer):
         self.arg_dict_list = [None]*self.norders
         self.max_ntheta_obj = 0
         for counter, iord in enumerate(self.srt_order_tell):
-            msgs.info(f'Initializing object model for order: {iord}, {counter}/{self.norders}'
+            _ord = self.ech_orders[iord] if self.ech_orders is not None and \
+                                            len(self.ech_orders) == self.norders else iord
+            msgs.info(f'Initializing object model for order: {_ord}, {counter}/{self.norders}'
                       + f' with user supplied function: {self.init_obj_model.__name__}')
             tellmodel = eval_telluric(self.tell_guess, self.tell_dict,
                                         ind_lower=self.ind_lower[iord],
@@ -2530,7 +2532,16 @@ class Telluric(datamodel.DataContainer):
         only_orders = [only_orders] if (only_orders is not None and
                                         isinstance(only_orders, (int, np.integer))) \
                                     else only_orders
-        good_orders = self.srt_order_tell if only_orders is None else only_orders
+        # by default, we use all orders
+        good_orders = self.srt_order_tell
+        # If only_orders is not None, then we check that the orders are in the data
+        if only_orders is not None and self.ech_orders is not None and len(self.ech_orders) == self.norders:
+            if np.where(np.isin(self.ech_orders,only_orders))[0].size == 0:
+                msgs.warn(f'No orders found in the data matching the input only_orders={only_orders}. '
+                          f'Using all orders available in the data.')
+            else:
+                good_orders = np.where(np.isin(self.ech_orders, only_orders))[0]
+
         # Run the fits
         self.result_list = [None]*self.norders
         self.outmask_list = [None]*self.norders
@@ -2541,7 +2552,9 @@ class Telluric(datamodel.DataContainer):
         for counter, iord in enumerate(self.srt_order_tell):
             if iord not in good_orders:
                 continue
-            msgs.info(f'Fitting object + telluric model for order: {iord}, {counter}/{self.norders}'
+            _ord = self.ech_orders[iord] if self.ech_orders is not None and \
+                                            len(self.ech_orders) == self.norders else iord
+            msgs.info(f'Fitting object + telluric model for order: {_ord}, {counter}/{self.norders}'
                       + f' with user supplied function: {self.init_obj_model.__name__}')
             self.result_list[iord], ymodel, ivartot, self.outmask_list[iord] \
                     = fitting.robust_optimize(self.flux_arr[self.ind_lower[iord]:self.ind_upper[iord]+1,iord],
