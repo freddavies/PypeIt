@@ -28,6 +28,9 @@ settings that are related to the Subaru/FOCAS spectrograph.
           spectroscopic mode or have incompatible readout configurations,
           the method used to read the FOCAS files will fault.
 
+At present,the code only works on DET-ID=2 data, i.e. the second
+of the two detectors.
+
 Deviations
 ==========
 
@@ -45,10 +48,10 @@ set taken with FOCAS.
 DETECTOR
 ========
 
-FOCAS uses a single 2048×4096 MIT/LL CCD detector. Unlike multi-detector instruments,
-FOCAS does not require mosaic construction. The detector is oriented such that the
-dispersion direction is along the 4096-pixel axis (x-direction) and the spatial
-direction is along the 2048-pixel axis (y-direction).
+FOCAS uses two 2048×4096 MIT/LL CCD detectors. Unlike other multi-detector instruments,
+FOCAS does not use mosaic construction. The detector is oriented such that the
+dispersion direction is along the 4096-pixel axis (y-direction) and the spatial
+direction is along the 2048-pixel axis (x-direction).
 
 The detector configuration is automatically handled by PypeIt with:
 
@@ -56,10 +59,9 @@ The detector configuration is automatically handled by PypeIt with:
 
     [rdx]
         spectrograph = subaru_focas
-        detnum = 1
 
 This is the default configuration and typically does not need to be modified
-by the user unless restricting the reduction to a specific detector region.
+by the user. 
 
 Calibrations
 ============
