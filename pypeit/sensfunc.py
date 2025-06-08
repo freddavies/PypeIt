@@ -736,10 +736,13 @@ class SensFunc(datamodel.DataContainer):
                       color=(rr, gg, bb), drawstyle='steps-mid', linewidth=1.0,
                       label=thru_title[iorddet], zorder=idet, alpha=0.7)
 
-
-        # wave_gpm_global = self.sens['SENS_FLUXED_STD_WAVE'] > 1.0
-        wave_min = 0.98*_wave_min #(self.sens['SENS_FLUXED_STD_WAVE'][wave_gpm_global]).min()
-        wave_max = 1.02*_wave_max #(self.sens['SENS_FLUXED_STD_WAVE'][wave_gpm_global]).max()
+        if _wave_min is None or _wave_max is None:
+            wave_gpm_global = self.sens['SENS_FLUXED_STD_WAVE'] > 1.0
+            wave_min = (self.sens['SENS_FLUXED_STD_WAVE'][wave_gpm_global]).min()
+            wave_max = (self.sens['SENS_FLUXED_STD_WAVE'][wave_gpm_global]).max()
+        else:
+            wave_min = 0.98*_wave_min
+            wave_max = 1.02*_wave_max
         pix_wave_std = (self.std_dict['wave'].value >= wave_min) & (self.std_dict['wave'].value <= wave_max)
         flux_min = -1.0
         flux_max = 1.10*self.std_dict['flux'][pix_wave_std].value.max()

@@ -1054,11 +1054,11 @@ def get_mask(wave_star, flux_star, ivar_star, mask_star,
 
     Returns
     -------
-    msk_bad: bool `numpy.ndarray`_
+    bpm: bool `numpy.ndarray`_
         mask for bad pixels.
-    msk_star: bool `numpy.ndarray`_
+    mask_recomb: bool `numpy.ndarray`_
         mask for recombination lines in star spectrum.
-    msk_tell: bool `numpy.ndarray`_
+    mask_tell: bool `numpy.ndarray`_
         mask for telluric regions.
     """
 
@@ -1070,17 +1070,17 @@ def get_mask(wave_star, flux_star, ivar_star, mask_star,
 
     # masking bad entries
     msgs.info(" Masking bad pixels")
-    mask_bad = mask_star.copy()
-    mask_bad[ivar_star <= 0.] = False
-    mask_bad[flux_star <= 0.] = False
+    bpm = mask_star.copy()
+    bpm[ivar_star <= 0.] = False
+    bpm[flux_star <= 0.] = False
     # Mask edges
     msgs.info(" Masking edges")
-    mask_bad[[0, -1]] = False
+    bpm[[0, -1]] = False
     # Mask Atm. cutoff
     msgs.info(" Masking Below the atmospheric cutoff")
     atms_cutoff = wave_star <= 3000.0
-    mask_bad[atms_cutoff] = False
-    gpm = np.where(mask_bad)
+    bpm[atms_cutoff] = False
+    gpm = np.logical_not(bpm)
 
     if mask_hydrogen_lines:
         mask_recomb = mask_stellar_hydrogen(
@@ -1126,12 +1126,12 @@ def get_mask(wave_star, flux_star, ivar_star, mask_star,
             trans_final = interpolate.interp1d(wave_trans[trans_use], trans_convolved,
                                                bounds_error=False,
                                                fill_value='extrapolate')(wave_star)
-            tell_nir = (trans_final<trans_thresh) & (wave_star>9100.0)
+            tell_nir = (trans_final < trans_thresh) & (wave_star > 9100.0)
             mask_tell[tell_nir] = False
         else:
             msgs.info('Your spectrum is bluer than 9100A, only optical telluric regions are masked.')
 
-    return mask_bad, mask_recomb, mask_tell
+    return bpm, mask_recomb, mask_tell
 
 
 def mask_stellar_hydrogen(wave_star, mask_width=10.0, mask_star=None):
