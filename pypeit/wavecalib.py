@@ -584,7 +584,6 @@ class BuildWaveCalib:
             #   They will be excised in the detect_lines() method on the extracted arc
             if self.par['method'] != 'full_template':
                 self.gpm &= self.msarc.image < self.nonlinear_counts
-
         else:
             self.orders = None
             self.wvc_bpm = None
@@ -680,7 +679,6 @@ class BuildWaveCalib:
 
             # Grab arxiv for redo later?
             if self.par['echelle']:
-                embed()
                 # Hold for later usage
                 self.wave_soln_arxiv, self.arcspec_arxiv = arcfitter.get_arxiv(self.orders)
                 self.arccen = arccen

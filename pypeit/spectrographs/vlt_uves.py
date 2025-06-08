@@ -53,7 +53,7 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
 
     telescope = telescopes.VLTTelescopePar()
     url = 'https://www.eso.org/sci/facilities/paranal/instruments/uves.html'
-    header_name = 'VLT'
+    header_name = 'UVES'
     pypeline = 'Echelle'
     ech_fixed_format = False
     supported = False
@@ -77,7 +77,6 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
         self.meta['dec'] = dict(ext=0, card='DEC', required_ftypes=['science', 'standard'])
         self.meta['target'] = dict(ext=0, card='OBJECT')
         self.meta['binning'] = dict(card=None, compound=True)
-
         self.meta['mjd'] = dict(ext=0, card='MJD-OBS')
         self.meta['exptime'] = dict(ext=0, card='EXPTIME')
         self.meta['airmass'] = dict(ext=0, card='HIERARCH ESO TEL AIRM START', required_ftypes=['science', 'standard'])
@@ -85,7 +84,6 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
         self.meta['dispname'] = dict(card=None, compound=True)
         self.meta['idname'] = dict(ext=0, card='HIERARCH ESO DPR CATG')
         self.meta['arm'] = dict(card=None, compound=True)
-        self.meta['decker'] = dict(ext=0, card='HIERARCH ESO INS SLIT2 WID')
         self.meta['instrument'] = dict(ext=0, card='INSTRUME')
 
     def compound_meta(self, headarr, meta_key):
@@ -103,14 +101,17 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
             object: Metadata value read from the header(s).
         """
         if meta_key == 'binning':
-            if 'HIERARCH ESO DET WIN1 BINX' in headarr[0]:
+            try:
                 binspatial = headarr[0]['HIERARCH ESO DET WIN1 BINX']
-            else:
+            except KeyError:
+                msgs.warn("Cannot determine spatial binning from the header. Setting to 1")
                 binspatial = 1
-            if 'HIERARCH ESO DET WIN1 BINY' in headarr[0]:
+            try:
                 binspec = headarr[0]['HIERARCH ESO DET WIN1 BINY']
-            else:
+            except KeyError:
+                msgs.warn("Cannot determine spectral binning from the header. Setting to 1")
                 binspec = 1
+            # Parse the binning information into a string
             return parse.binning2string(binspec, binspatial)
         elif meta_key == 'arm':
             if 'HIERARCH ESO TPL NAME' in headarr[0]:
@@ -124,7 +125,6 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
                 else:
                     arm = 'None'
             return arm
-
         elif meta_key == 'dispname':
             if 'HIERARCH ESO INS GRAT1 WLEN' in headarr[0]:
                 cwlen = headarr[0]['HIERARCH ESO INS GRAT1 WLEN']
@@ -213,7 +213,9 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
         # TODO: Allow for 'sky' frame type, for now include sky in
         # 'science' category
         if ftype == 'science':
-            return good_exp & (fitstbl['idname'] == 'SCIENCE')
+            return good_exp & ((fitstbl['idname'] == 'SCIENCE')
+                                | (fitstbl['target'] == 'STD,TELLURIC')
+                                | (fitstbl['target'] == 'STD,SKY'))
         if ftype == 'standard':
             return good_exp & (fitstbl['target'] == 'STD,FLUX')
         if ftype == 'bias':
@@ -290,7 +292,6 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
     #     composite_arc_file = 'keck_hires_composite_arc.fits'
     #
     #     return [angle_fits_file, composite_arc_file]
-        
 
     def order_platescale(self, order_vec, binning=None):
         """
@@ -335,6 +336,9 @@ class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
         """
         par = super().default_pypeit_par()
 
+        # what is this?
+        # par['rdx']['detnum'] = [(1,2,3)]
+
         # Adjustments to parameters for Keck HIRES
         turn_off_on = dict(use_biasimage=False, use_overscan=True, overscan_method='median')
         par.reset_all_processimages_par(**turn_off_on)
@@ -352,9 +356,6 @@ class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
         par['calibrations']['illumflatframe']['exprng'] = [None, 60]
         par['calibrations']['standardframe']['exprng'] = [1, 600]
         par['scienceframe']['exprng'] = [601, None]
-
-        # Set default processing for slitless_pixflat
-        par['calibrations']['slitless_pixflatframe']['process']['scale_to_mean'] = True
 
         # Slit tracing
         par['calibrations']['slitedges']['edge_thresh'] = 8.0
@@ -377,6 +378,13 @@ class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
         par['calibrations']['tilts']['spat_order'] = 3
         par['calibrations']['tilts']['spec_order'] = 5  # [5, 5, 5] + 12*[7] # + [5]
 
+        # 1D wavelength solution
+        par['calibrations']['wavelengths']['lamps'] = ['ThAr']
+        par['calibrations']['wavelengths']['rms_thresh_frac_fwhm'] = 0.1
+        par['calibrations']['wavelengths']['sigdetect'] = 5.
+        par['calibrations']['wavelengths']['n_first'] = 3
+        par['calibrations']['wavelengths']['n_final'] = 4
+
         par['calibrations']['wavelengths']['match_toler'] = 1.5
         # Reidentification parameters
         par['calibrations']['wavelengths']['method'] = 'reidentify'
@@ -386,7 +394,6 @@ class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
         par['calibrations']['wavelengths']['reid_cont_sub'] = False
 
         # Echelle parameters
-        par['calibrations']['wavelengths']['lamps'] = ['ThAr']
         par['calibrations']['wavelengths']['echelle'] = True
         par['calibrations']['wavelengths']['ech_nspec_coeff'] = 5
         par['calibrations']['wavelengths']['ech_norder_coeff'] = 3
@@ -411,16 +418,16 @@ class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
         par['reduce']['findobj']['maxnumber_std'] = 1  # Assume that there is only one object in each order.
 
         # Sensitivity function parameters
-        par['sensfunc']['algorithm'] = 'IR'
-        par['sensfunc']['polyorder'] = 5 #[9, 11, 11, 9, 9, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7]
-        par['sensfunc']['IR']['telgridfile'] = 'TellPCA_3000_10500_R120000.fits'
-        par['sensfunc']['IR']['pix_shift_bounds'] = (-40.0,40.0)
+        # par['sensfunc']['algorithm'] = 'IR'
+        # par['sensfunc']['polyorder'] = 5 #[9, 11, 11, 9, 9, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7]
+        # par['sensfunc']['IR']['telgridfile'] = 'TellPCA_3000_10500_R120000.fits'
+        # par['sensfunc']['IR']['pix_shift_bounds'] = (-40.0,40.0)
         
         # Telluric parameters
         # HIRES is usually oversampled, so the helio shift can be large
-        par['telluric']['pix_shift_bounds'] = (-40.0,40.0)
+        # par['telluric']['pix_shift_bounds'] = (-40.0,40.0)
         # Similarly, the resolution guess is higher than it should be
-        par['telluric']['resln_frac_bounds'] = (0.25,1.25)
+        # par['telluric']['resln_frac_bounds'] = (0.25,1.25)
 
         # Coadding
         par['coadd1d']['wave_method'] = 'log10'
@@ -499,125 +506,8 @@ class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
         # wavelength
         par['calibrations']['wavelengths']['fwhm'] = 8.0/bin_spec
 
-        # Wavelength calibration and setup-dependent parameters
-        if float(self.get_meta_value(scifile, 'dispname')) == 346:
-            par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_346_1x1.fits'
-        elif float(self.get_meta_value(scifile, 'dispname')) == 390:
-            par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_390_1x1.fits'
-
         # Return
         return par
-
-    # def get_rawimage(self, raw_file, det, spectrim=20):
-    #     """
-    #     Read raw images and generate a few other bits and pieces
-    #     that are key for image processing.
-    #
-    #     Based on readmhdufits.pro
-    #
-    #     Parameters
-    #     ----------
-    #     raw_file : :obj:`str`
-    #         File to read
-    #     det : :obj:`int`
-    #         1-indexed detector to read
-    #
-    #     Returns
-    #     -------
-    #     detector_par : :class:`pypeit.images.detector_container.DetectorContainer`
-    #         Detector metadata parameters.
-    #     raw_img : `numpy.ndarray`_
-    #         Raw image for this detector.
-    #     hdu : `astropy.io.fits.HDUList`_
-    #         Opened fits file
-    #     exptime : :obj:`float`
-    #         Exposure time read from the file header
-    #     rawdatasec_img : `numpy.ndarray`_
-    #         Data (Science) section of the detector as provided by setting the
-    #         (1-indexed) number of the amplifier used to read each detector
-    #         pixel. Pixels unassociated with any amplifier are set to 0.
-    #     oscansec_img : `numpy.ndarray`_
-    #         Overscan section of the detector as provided by setting the
-    #         (1-indexed) number of the amplifier used to read each detector
-    #         pixel. Pixels unassociated with any amplifier are set to 0.
-    #     """
-    #     # TODO -- Put a check in here to avoid data using the
-    #     #  original CCD (1 chip)
-    #
-    #     # Check for file; allow for extra .gz, etc. suffix
-    #     if not os.path.isfile(raw_file):
-    #         msgs.error(f'{raw_file} not found!')
-    #     hdu = io.fits_open(raw_file)
-    #
-    #     head0 = hdu[0].header
-    #
-    #     # Get post, pre-pix values
-    #     precol = head0['PRECOL']
-    #     postpix = head0['POSTPIX']
-    #     preline = head0['PRELINE']
-    #     postline = head0['POSTLINE']
-    #     detlsize = head0['DETLSIZE']
-    #     x0, x_npix, y0, y_npix = np.array(parse.load_sections(detlsize)).flatten()
-    #
-    #     # get the x and y binning factors...
-    #     # binning = head0['BINNING']
-    #
-    #     binning = self.get_meta_value(self.get_headarr(hdu), 'binning')
-    #     #        # TODO: JFH I think this works fine
-    #     #        if binning != '3,1':
-    #     #            msgs.warn("This binning for HIRES might not work.  But it might..")
-    #
-    #     # We are flipping this because HIRES stores the binning oppostire of the (binspec, binspat) pypeit convention.
-    #     binspatial, binspec = parse.parse_binning(head0['BINNING'])
-    #     # Validate the entered (list of) detector(s)
-    #     nimg, _det = self.validate_det(det)
-    #
-    #     # Grab the detector or mosaic parameters
-    #     mosaic = None if nimg == 1 else self.get_mosaic_par(det, hdu=hdu)
-    #     detectors = [self.get_detector_par(det, hdu=hdu)] if nimg == 1 else mosaic.detectors
-    #
-    #     # get the chips to read in
-    #     # DP: I don't know if this needs to still exist. I believe det is never None
-    #     if det is None:
-    #         chips = range(self.ndet)
-    #     else:
-    #         chips = [d - 1 for d in _det]  # Indexing starts at 0 here
-    #
-    #     # get final datasec and oscan size (it's the same for every chip so
-    #     # it's safe to determine it outsize the loop)
-    #
-    #     # Create final image
-    #     if det is None:
-    #         # JFH: TODO is this a good idea?
-    #         image = np.zeros((x_npix, y_npix + 4 * postpix))
-    #         rawdatasec_img = np.zeros_like(image, dtype=int)
-    #         oscansec_img = np.zeros_like(image, dtype=int)
-    #     else:
-    #         data, oscan = hires_read_1chip(hdu, chips[0] + 1)
-    #         image = np.zeros((nimg, data.shape[0], data.shape[1] + oscan.shape[1]))
-    #         rawdatasec_img = np.zeros_like(image, dtype=int)
-    #         oscansec_img = np.zeros_like(image, dtype=int)
-    #
-    #     # Loop over the chips
-    #     for ii, tt in enumerate(chips):
-    #         image_ii, oscan_ii = hires_read_1chip(hdu, tt + 1)
-    #
-    #         # Indexing
-    #         x1, x2, y1, y2, o_x1, o_x2, o_y1, o_y2 = indexing(tt, postpix, det=det, xbin=binspatial, ybin=binspec)
-    #
-    #         # Fill
-    #         image[ii, y1:y2, x1:x2] = image_ii
-    #         image[ii, o_y1:o_y2, o_x1:o_x2] = oscan_ii
-    #         rawdatasec_img[ii, y1:y2 - spectrim // binspec, x1:x2] = 1  # Amp
-    #         oscansec_img[ii, o_y1:o_y2 - spectrim // binspec, o_x1:o_x2] = 1  # Amp
-    #
-    #     exptime = hdu[self.meta['exptime']['ext']].header[self.meta['exptime']['card']]
-    #
-    #     # Return
-    #     # Handle returning both single and multiple images
-    #     if nimg == 1:
-    #         return detectors[0], image[0], hdu, exptime, rawdatasec_img[0], oscansec_img[0]
-    #     return mosaic, image, hdu, exptime, rawdatasec_img, oscansec_img
 
 
 class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
@@ -935,6 +825,7 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
         detector_dicts = [detector_dict1, detector_dict2, detector_dict3]
         return detector_container.DetectorContainer( **detector_dicts[det-1])
 
+
 def indexing(itt, postpix, det=None,xbin=1,ybin=1):
     """
     Some annoying book-keeping for instrument placement.
@@ -971,48 +862,57 @@ def indexing(itt, postpix, det=None,xbin=1,ybin=1):
     # Return
     return x1, x2, y1, y2, o_x1, o_x2, o_y1, o_y2
 
-def hires_read_1chip(hdu,chipno):
-    """ Read one of the HIRES detectors
-
-    Parameters
-    ----------
-    hdu : HDUList
-    chipno : int
-
-    Returns
-    -------
-    data : ndarray
-    oscan : ndarray
-    """
-
-    # Extract datasec from header
-    datsec = hdu[chipno].header['DATASEC']
-    detsec = hdu[chipno].header['DETSEC']
-    postpix = hdu[0].header['POSTPIX']
-    precol = hdu[0].header['PRECOL']
-
-    x1_dat, x2_dat, y1_dat, y2_dat = np.array(parse.load_sections(datsec)).flatten()
-    x1_det, x2_det, y1_det, y2_det = np.array(parse.load_sections(detsec)).flatten()
-
-    # This rotates the image to be increasing wavelength to the top
-    #data = np.rot90((hdu[chipno].data).T, k=2)
-    #nx=data.shape[0]
-    #ny=data.shape[1]
-
-    # Science data
-    fullimage = hdu[chipno].data
-    data = fullimage[x1_dat:x2_dat,y1_dat:y2_dat]
-
-    # Overscan
-    oscan = fullimage[:,y2_dat:]
-
-    # Flip as needed
-    if x1_det > x2_det:
-        data = np.flipud(data)
-        oscan = np.flipud(oscan)
-    if y1_det > y2_det:
-        data = np.fliplr(data)
-        oscan = np.fliplr(oscan)
-
-    # Return
-    return data, oscan
+# def uves_read_1chip(hdu,chipno):
+#     """ Read one of the HIRES detectors
+#
+#     Parameters
+#     ----------
+#     hdu : HDUList
+#     chipno : int
+#
+#     Returns
+#     -------
+#     data : ndarray
+#     oscan : ndarray
+#     """
+#
+#     # Extract datasec from header
+#     x_pix = hdu[0].header['NAXIS1']
+#     x0 = hdu[0].header['HIERARCH ESO DET WIN1 STRX']
+#     y_pix = hdu[0].header['NAXIS2']
+#     y0 = hdu[0].header['HIERARCH ESO DET WIN1 STRY']
+#     precol = hdu[0].header['HIERARCH ESO DET OUT1 PRSCX']
+#     postpix = hdu[0].header['HIERARCH ESO DET OUT1 OVSCX']
+#
+#     x1_dat = precol + x0
+#     x2_dat = x_pix - postpix
+#     y1_dat = y0
+#     y2_dat = y_pix
+#
+#     x1_det = x0
+#     x2_det = hdu[0].header['HIERARCH ESO DET OUT1 NX']
+#     y1_det = y0
+#     y2_det = hdu[0].header['HIERARCH ESO DET OUT1 NY']
+#
+#     # This rotates the image to be increasing wavelength to the top
+#     #data = np.rot90((hdu[chipno].data).T, k=2)
+#     #nx=data.shape[0]
+#     #ny=data.shape[1]
+#
+#     # Science data
+#     fullimage = hdu[chipno].data
+#     data = fullimage[x1_dat:x2_dat,y1_dat:y2_dat]
+#
+#     # Overscan
+#     oscan = fullimage[:,y2_dat:]
+#
+#     # Flip as needed
+#     if x1_det > x2_det:
+#         data = np.flipud(data)
+#         oscan = np.flipud(oscan)
+#     if y1_det > y2_det:
+#         data = np.fliplr(data)
+#         oscan = np.fliplr(oscan)
+#
+#     # Return
+#     return data, oscan
