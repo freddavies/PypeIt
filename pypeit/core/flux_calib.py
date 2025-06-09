@@ -992,7 +992,7 @@ def fit_zeropoint(wave, Nlam_star, Nlam_ivar_star, gpm_star, std_dict,
             plt.show()
 
     # Get masks from observed star spectrum. True = Good pixels
-    mask_bad, mask_recomb, mask_tell = get_mask(wave, Nlam_star, Nlam_ivar_star, gpm_star,
+    mask_star, mask_recomb, mask_tell = get_mask(wave, Nlam_star, Nlam_ivar_star, gpm_star,
                                               mask_hydrogen_lines=mask_hydrogen_lines,
                                               mask_helium_lines=mask_helium_lines,
                                               mask_telluric=True, hydrogen_mask_wid=hydrogen_mask_wid,
@@ -1000,7 +1000,7 @@ def fit_zeropoint(wave, Nlam_star, Nlam_ivar_star, gpm_star, std_dict,
 
     # Get zeropoint
     zeropoint_data, zeropoint_data_gpm, zeropoint_fit, zeropoint_fit_gpm = standard_zeropoint(
-        wave, Nlam_star, Nlam_ivar_star, mask_bad, flux_true, mask_recomb=mask_recomb,
+        wave, Nlam_star, Nlam_ivar_star, mask_star, flux_true, mask_recomb=mask_recomb,
         mask_tell=mask_tell, maxiter=35, upper=3, lower=3, polyorder=polyorder,
         balm_mask_wid=hydrogen_mask_wid, nresln=nresln, resolution=resolution,
         polycorrect=polycorrect, polyfunc=polyfunc, debug=debug)
@@ -1054,8 +1054,8 @@ def get_mask(wave_star, flux_star, ivar_star, mask_star,
 
     Returns
     -------
-    bpm: bool `numpy.ndarray`_
-        mask for bad pixels.
+    gpm_star: bool `numpy.ndarray`_
+        mask for good pixels (True = good pixel).
     mask_recomb: bool `numpy.ndarray`_
         mask for recombination lines in star spectrum.
     mask_tell: bool `numpy.ndarray`_
@@ -1070,17 +1070,16 @@ def get_mask(wave_star, flux_star, ivar_star, mask_star,
 
     # masking bad entries
     msgs.info(" Masking bad pixels")
-    bpm = mask_star.copy()
-    bpm[ivar_star <= 0.] = False
-    bpm[flux_star <= 0.] = False
+    gpm_star = mask_star.copy()
+    gpm_star[ivar_star <= 0.] = False
+    gpm_star[flux_star <= 0.] = False
     # Mask edges
     msgs.info(" Masking edges")
-    bpm[[0, -1]] = False
+    gpm_star[[0, -1]] = False
     # Mask Atm. cutoff
     msgs.info(" Masking Below the atmospheric cutoff")
     atms_cutoff = wave_star <= 3000.0
-    bpm[atms_cutoff] = False
-    gpm = np.logical_not(bpm)
+    gpm_star[atms_cutoff] = False
 
     if mask_hydrogen_lines:
         mask_recomb = mask_stellar_hydrogen(
@@ -1117,10 +1116,10 @@ def get_mask(wave_star, flux_star, ivar_star, mask_star,
             skytrans_file = dataPaths.skisim.get_file_path('mktrans_zm_10_10.dat')
             skytrans = ascii.read(skytrans_file)
             wave_trans, trans = skytrans['wave'].data*10000.0, skytrans['trans'].data
-            trans_use = (wave_trans >= np.min(wave_star[gpm])-100.0) & (wave_trans <= np.max(wave_star[gpm])+100.0)
+            trans_use = (wave_trans >= np.min(wave_star[gpm_star])-100.0) & (wave_trans <= np.max(wave_star[gpm_star])+100.0)
             # Estimate the resolution of your spectra.
             # I assumed 3 pixels per resolution. This gives an approximate right resolution at the middle point.
-            resolution = np.median(wave_star[gpm]) / np.median(wave_star[gpm] - np.roll(wave_star[gpm], 1)) / 3
+            resolution = np.median(wave_star[gpm_star] / (wave_star[gpm_star] - np.roll(wave_star[gpm_star], 1))) / 3
             trans_convolved, px_sigma, px_bin = conv2res(wave_trans[trans_use], trans[trans_use], resolution,
                                                          central_wl='midpt', debug=False)
             trans_final = interpolate.interp1d(wave_trans[trans_use], trans_convolved,
@@ -1131,7 +1130,7 @@ def get_mask(wave_star, flux_star, ivar_star, mask_star,
         else:
             msgs.info('Your spectrum is bluer than 9100A, only optical telluric regions are masked.')
 
-    return bpm, mask_recomb, mask_tell
+    return gpm_star, mask_recomb, mask_tell
 
 
 def mask_stellar_hydrogen(wave_star, mask_width=10.0, mask_star=None):
