@@ -216,7 +216,7 @@ class P200NGPSSpectrograph_r(P200NGPSSpectrograph):
         
         # If there is no target keyword, return image type
         elif meta_key == 'target':
-            if headarr[0]['TARGET'] is not None:
+            if 'TARGET' in headarr[0]:
                 return headarr[0]['TARGET']
             else:
                 return headarr[0]['IMGTYPE']
@@ -282,7 +282,7 @@ class P200NGPSSpectrograph_r(P200NGPSSpectrograph):
         par['calibrations']['slitedges']['edge_thresh'] = 50. # Lower edge tracing thresdhold to catch leftmost slit
         par['calibrations']['slitedges']['minimum_slit_length'] = 100 # Set minimum slit length 
         par['calibrations']['slitedges']['min_edge_side_sep'] = 1.0
-#        par['calibrations']['slitedges']['add_slits'] = ['1:2090:24:153']
+#        #par['calibrations']['slitedges']['add_slits'] = ['1:1090:24:153']
         
         par['scienceframe']['process']['combine'] = 'median'
         par['calibrations']['standardframe']['process']['combine'] = 'median'
@@ -368,11 +368,7 @@ class P200NGPSSpectrograph_i(P200NGPSSpectrograph):
         if meta_key == 'mjd':
             return Time(headarr[0]['UTSHUT']).mjd
         elif meta_key == 'dispangle':
-            try:
-                return 0
-            except Exception as e:
-                msgs.warn("Could not read dispangle from header:" + msgs.newline() + str(headarr[0]['ANGLE']))
-                raise e    
+            return 0
             
         elif meta_key == 'binning':
             # Always the same binning for DET01 and DET02    
@@ -382,7 +378,7 @@ class P200NGPSSpectrograph_i(P200NGPSSpectrograph):
         
         # If there is no target keyword, return image type
         elif meta_key == 'target':
-            if headarr[0]['TARGET'] is not None:
+            if 'TARGET' in headarr[0]:
                 return headarr[0]['TARGET']
             else:
                 return headarr[0]['IMGTYPE']
@@ -447,7 +443,7 @@ class P200NGPSSpectrograph_i(P200NGPSSpectrograph):
         par['calibrations']['slitedges']['edge_thresh'] = 50. # Lower edge tracing thresdhold to catch leftmost slit
         par['calibrations']['slitedges']['minimum_slit_length'] = 100 # Set minimum slit length 
         par['calibrations']['slitedges']['min_edge_side_sep'] = 1.0
-#        par['calibrations']['slitedges']['add_slits'] = ['1:2035:123:251']
+#        #par['calibrations']['slitedges']['add_slits'] = ['1:1015:123:251']
         
         par['scienceframe']['process']['combine'] = 'median'
         par['calibrations']['standardframe']['process']['combine'] = 'median'
