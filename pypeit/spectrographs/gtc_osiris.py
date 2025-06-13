@@ -863,6 +863,16 @@ class GTCOSIRISSpectrograph(spectrograph.Spectrograph):
 
         # Turn off the 2D fit - this seems to be giving bad results for OSIRIS
         par['reduce']['skysub']['no_poly'] = True
+
+        # Don't extrapolate the sensitivity function for the low resolution gratings
+        # Sensitivity function parameters
+        par['sensfunc']['extrap_blu'] = 0.0
+        par['sensfunc']['extrap_red'] = 0.0
+        par['fluxcalib']['extrap_sens'] = True
+        par['sensfunc']['algorithm'] = 'IR'
+        par['sensfunc']['polyorder'] = 13
+        par['sensfunc']['IR']['maxiter'] = 2
+        par['sensfunc']['IR']['telgridfile'] = 'TellPCA_3000_26000_R10000.fits'
         return par
 
     def init_meta(self):
