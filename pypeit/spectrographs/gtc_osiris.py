@@ -385,6 +385,7 @@ class GTCOSIRISPlusSpectrograph(spectrograph.Spectrograph):
         elif self.get_meta_value(scifile, 'dispname') == 'R2500U':
             par['calibrations']['wavelengths']['lamps'] = ['XeI','HgI']
             par['calibrations']['wavelengths']['reid_arxiv'] = 'gtc_osiris_R2500U.fits'
+            par['calibrations']['wavelengths']['nsippet'] = 1
         elif self.get_meta_value(scifile, 'dispname') == 'R2500V':
             par['calibrations']['wavelengths']['lamps'] = ['HgI','NeI','XeI']
             par['calibrations']['wavelengths']['reid_arxiv'] = 'gtc_osiris_R2500V.fits'
@@ -1058,6 +1059,7 @@ class GTCOSIRISSpectrograph(spectrograph.Spectrograph):
         elif self.get_meta_value(scifile, 'dispname') == 'R2500U':
             par['calibrations']['wavelengths']['lamps'] = ['XeI','HgI']
             par['calibrations']['wavelengths']['reid_arxiv'] = 'gtc_osiris_R2500U.fits'
+            par['calibrations']['wavelengths']['nsippet'] = 1
         elif self.get_meta_value(scifile, 'dispname') == 'R2500V':
             par['calibrations']['wavelengths']['lamps'] = ['HgI','NeI','XeI']
             par['calibrations']['wavelengths']['reid_arxiv'] = 'gtc_osiris_R2500V.fits'
