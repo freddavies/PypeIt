@@ -88,6 +88,8 @@ class APFLevySpectrograph(spectrograph.Spectrograph):
         par['reduce']['findobj']['find_trim_edge'] = [3, 3]
         par['reduce']['findobj']['maxnumber_sci'] = 1
         par['reduce']['findobj']['maxnumber_std'] = 1
+        par['reduce']['findobj']['find_fwhm'] = 4.0
+        par['reduce']['findobj']['snr_thresh'] = 3.0       
 
         par['reduce']['extraction']['boxcar_radius'] = 1.6
         par['reduce']['skysub']['mask_by_boxcar'] = True
@@ -388,6 +390,7 @@ class APFLevySpectrograph(spectrograph.Spectrograph):
 
         if decker == '3.0':
             par['reduce']['extraction']['boxcar_radius'] = 0.864
+            par['reduce']['extraction']['model_full_slit'] = True
             par['reduce']['skysub']['no_local_sky'] = True
             par['reduce']['findobj']['find_trim_edge'] = [0, 0]
             par['calibrations']['slitedges']['pad'] = 1
