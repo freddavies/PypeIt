@@ -949,7 +949,7 @@ class BuildWaveCalib:
         # Prep
         if self.par['ech_separate_2d']:
             slit_img = self.slits.slit_img()
-            # Grab the detectors in the mosaice (1-based indexing)
+            # Grab the detectors in the mosaic (1-based indexing)
             dets = np.unique(self.msarc.det_img)
             dets = dets[dets > 0]
         else:
