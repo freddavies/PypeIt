@@ -85,6 +85,9 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
         self.meta['idname'] = dict(ext=0, card='HIERARCH ESO DPR CATG')
         self.meta['arm'] = dict(card=None, compound=True)
         self.meta['instrument'] = dict(ext=0, card='INSTRUME')
+        self.meta['decker'] = dict(ext=0, card='HIERARCH ESO INS SLIT2 WID')
+        self.meta['echangle'] = dict(card=None, default=0.0)  # There is no header card for this, but it is required
+        self.meta['xdangle'] = dict(card=None, compound=True)
 
     def compound_meta(self, headarr, meta_key):
         """
@@ -113,7 +116,7 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
                 binspec = 1
             # Parse the binning information into a string
             return parse.binning2string(binspec, binspatial)
-        elif meta_key == 'arm':
+        elif meta_key == 'arm' or meta_key == 'dispname':
             if 'HIERARCH ESO TPL NAME' in headarr[0]:
                 tplid = headarr[0]['HIERARCH ESO TPL NAME'].lower()
                 if 'blue' in tplid:
@@ -125,7 +128,7 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
                 else:
                     arm = 'None'
             return arm
-        elif meta_key == 'dispname':
+        elif meta_key == 'xdangle':
             if 'HIERARCH ESO INS GRAT1 WLEN' in headarr[0]:
                 cwlen = headarr[0]['HIERARCH ESO INS GRAT1 WLEN']
             elif 'HIERARCH ESO INS GRAT2 WLEN' in headarr[0]:
@@ -147,10 +150,10 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
 
         Returns:
             :obj:`list`: List of keywords of data pulled from file headers
-            and used to constuct the :class:`~pypeit.metadata.PypeItMetaData`
+            and used to construct the :class:`~pypeit.metadata.PypeItMetaData`
             object.
         """
-        return ['dispname', 'arm', 'binning']
+        return ['xdangle', 'arm', 'binning']
 
     def config_independent_frames(self):
         """
@@ -316,6 +319,19 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
         # Assume no significant variation (which is likely true)
         return np.ones_like(order_vec)*det.platescale*binspatial
 
+    def get_echelle_angle_files(self):
+        """ Pass back the files required
+        to run the echelle method of wavecalib
+
+        Returns:
+            list: List of files
+        """
+        angle_fits_file = 'vlt_uves_angle_fits.fits'
+        composite_arc_file = 'vlt_uves_composite_arc.fits'
+
+        return [angle_fits_file, composite_arc_file]
+
+
 
 # default_pypeit_par, config_specific_par and get_detector_par different for each arm??
 class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
@@ -365,9 +381,9 @@ class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
         par['calibrations']['slitedges']['left_right_pca'] = True
         par['calibrations']['slitedges']['length_range'] = 0.3
         par['calibrations']['slitedges']['max_nudge'] = 0.
-        par['calibrations']['slitedges']['overlap'] = True
+        par['calibrations']['slitedges']['overlap'] = False
         par['calibrations']['slitedges']['dlength_range'] = 0.25
-        par['calibrations']['slitedges']['mask_off_detector'] = True
+        par['calibrations']['slitedges']['mask_off_detector'] = False
 
         par['calibrations']['slitedges']['add_missed_orders'] = True
         par['calibrations']['slitedges']['order_width_poly'] = 2
@@ -381,22 +397,33 @@ class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
         # 1D wavelength solution
         par['calibrations']['wavelengths']['lamps'] = ['ThAr']
         par['calibrations']['wavelengths']['rms_thresh_frac_fwhm'] = 0.1
-        par['calibrations']['wavelengths']['sigdetect'] = 5.
+        par['calibrations']['wavelengths']['sigdetect'] = 4.
         par['calibrations']['wavelengths']['n_first'] = 3
         par['calibrations']['wavelengths']['n_final'] = 4
 
+        # Setup dependent
+        # 346
+        # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
+        # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_346_1x1.fits'
+        # 390
+        # par['calibrations']['wavelengths']['n_final'] = [3] + 38*[4] + [3]
+        # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_390_1x1.fits'
+        # 437
+        # par['calibrations']['wavelengths']['n_final'] = [3] + 29*[4] + [3]
+        # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_437_1x1.fits'
+
         par['calibrations']['wavelengths']['match_toler'] = 1.5
         # Reidentification parameters
-        par['calibrations']['wavelengths']['method'] = 'reidentify'
-        # par['calibrations']['wavelengths']['cc_shift_range'] = (-80.,80.)
-        par['calibrations']['wavelengths']['cc_thresh'] = 0.50
-        par['calibrations']['wavelengths']['cc_local_thresh'] = 0.50
+        par['calibrations']['wavelengths']['method'] = 'echelle'
+        par['calibrations']['wavelengths']['cc_shift_range'] = (-80.,80.)
+        par['calibrations']['wavelengths']['cc_thresh'] = 0.6
+        par['calibrations']['wavelengths']['cc_local_thresh'] = 0.25
         par['calibrations']['wavelengths']['reid_cont_sub'] = False
 
         # Echelle parameters
         par['calibrations']['wavelengths']['echelle'] = True
-        par['calibrations']['wavelengths']['ech_nspec_coeff'] = 5
-        par['calibrations']['wavelengths']['ech_norder_coeff'] = 3
+        par['calibrations']['wavelengths']['ech_nspec_coeff'] = 6
+        par['calibrations']['wavelengths']['ech_norder_coeff'] = 4
         par['calibrations']['wavelengths']['ech_sigrej'] = 2.0
         par['calibrations']['wavelengths']['ech_separate_2d'] = True
         par['calibrations']['wavelengths']['bad_orders_maxfrac'] = 0.5
@@ -508,6 +535,120 @@ class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
 
         # Return
         return par
+
+    # @property
+    # def norders(self):
+    #     """
+    #     Number of orders observed for this spectograph.
+    #     """
+    #     # 346
+    #     # return 33
+    #     # 390
+    #     return 40
+    #     # 437
+    #     # return 31
+    #
+    # @property
+    # def order_spat_pos(self):
+    #     """
+    #     Return the expected spatial position of each echelle order.
+    #
+    #     The following lines generated the values below:
+    #
+    #     .. code-block:: python
+    #
+    #         from pypeit import edgetrace
+    #         edges = edgetrace.EdgeTraceSet.from_file('Edges_A_1_DET01.fits.gz')
+    #
+    #         nrm_edges = edges.edge_fit[edges.nspec//2,:] / edges.nspat
+    #         slit_cen = ((nrm_edges + np.roll(nrm_edges,1))/2)[np.arange(nrm_edges.size//2)*2+1]
+    #
+    #     """
+    #     # 346
+    #     # self.slits.spat_id/self.slits.nspat
+    #     # return np.array([0.01672502, 0.04038521, 0.06437769, 0.08873001, 0.11342802,
+    #     #                  0.13848158, 0.16389396, 0.18967436, 0.2158253 , 0.24235753,
+    #     #                  0.26927502, 0.29658814, 0.32430333, 0.3524269 , 0.3809682 ,
+    #     #                  0.40993333, 0.43933332, 0.46917632, 0.49946995, 0.53022563,
+    #     #                  0.56144813, 0.59315476, 0.62534499, 0.65802905, 0.69121394,
+    #     #                  0.72492322, 0.75916269, 0.79394031, 0.82926452, 0.86515239,
+    #     #                  0.90162054, 0.93867218, 0.97624925]) #, 1.01457846
+    #     # 390
+    #     return np.array([0.01015914, 0.02863268, 0.04737307, 0.06639743, 0.08571161,
+    #                      0.10532204, 0.12523394, 0.14545357, 0.16598767, 0.18684648,
+    #                      0.20803361, 0.22955166, 0.25140925, 0.27361704, 0.29618321,
+    #                      0.31911634, 0.34241571, 0.36609522, 0.3901668 , 0.41464044,
+    #                      0.43951508, 0.46480507, 0.49052863, 0.51669461, 0.54329339,
+    #                      0.57034692, 0.59786838, 0.62586725, 0.65435386, 0.68334213,
+    #                      0.71284255, 0.74286562, 0.77342552, 0.80453873, 0.83622065,
+    #                      0.86848146, 0.90133283, 0.93479389, 0.96886826, 1.00359619])
+    #     # 437
+    #     # return np.array([0.01619767, 0.04055738, 0.06533852, 0.09053352, 0.11616566,
+    #     #                  0.14224589, 0.16877437, 0.19576498, 0.22323035, 0.25118463,
+    #     #                  0.27963696, 0.30860075, 0.33808912, 0.36811271, 0.39868486,
+    #     #                  0.42982015, 0.46153456, 0.49384601, 0.52676794, 0.56030554,
+    #     #                  0.59448245, 0.62931538, 0.66481626, 0.70100701, 0.73791999,
+    #     #                  0.77556252, 0.81395274, 0.85309815, 0.89305741, 0.9338257 ,
+    #     #                  0.97538197])
+    #
+    # @property
+    # def order_spat_width(self):
+    #     """
+    #     Return the expected spatial position of each echelle order.
+    #
+    #     The following lines generated the values below:
+    #
+    #     .. code-block:: python
+    #
+    #         import numpy as np
+    #         from pypeit import slittrace
+    #         slits = slittrace.SlitTraceSet.from_file('Slits_A_0_DET01.fits.gz')
+    #
+    #         np.median(slits.right_init-slits.left_init, axis=0)/slits.nspat
+    #
+    #     """
+    #     # 346
+    #     # return np.array(33*[0.019389049210670473])
+    #     # 390
+    #     return np.array(40 * [0.01628965847925201])
+    #     # 437
+    #     # return np.array(31 * [0.020187482348035246])
+    #
+    # @property
+    # def orders(self):
+    #     """
+    #     Return the order number for each echelle order.
+    #     """
+    #     # 346
+    #     # return np.array([153, 152, 151, 150, 149, 148, 147, 146, 145, 144, 143, 142, 141,
+    #     #                  140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128,
+    #     #                  127, 126, 125, 124, 123, 122, 121], dtype=int)
+    #     # 390
+    #     return np.array([142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130,
+    #                      129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117,
+    #                      116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104,
+    #                      103])
+    #     # 437
+    #     # return np.array([124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112,
+    #     #                  111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100,  99,
+    #     #                  98,  97,  96,  95,  94])
+    #
+    # @property
+    # def spec_min_max(self):
+    #     """
+    #     Return the minimum and maximum spectral pixel expected for the
+    #     spectral range of each order.
+    #     """
+    #     # 346
+    #     # spec_max = np.asarray([3000]*32 + [925])#, 2460
+    #     # spec_min = np.asarray([635] + [0]*32)
+    #     # 390
+    #     spec_max = np.asarray([3000]*38 + [920, 2740])
+    #     spec_min = np.asarray([1650, 330] + [0]*38)
+    #     # 437
+    #     # spec_max = np.asarray([3000]*30 + [2260])
+    #     # spec_min = np.asarray([1060] + [0]*30)
+    #     return np.vstack((spec_min, spec_max))
 
 
 class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
