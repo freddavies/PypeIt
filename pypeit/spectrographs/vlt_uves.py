@@ -3,26 +3,17 @@ Module for VLT/UVES
 
 .. include:: ../include/links.rst
 """
-import os
 
 from IPython import embed
 
-
-
 import numpy as np
-from scipy.io import readsav
-
-from astropy.table import Table
-from astropy import time
 
 from pypeit import msgs
 from pypeit import telescopes
-from pypeit import io
 from pypeit.core import parse
 from pypeit.core import framematch
 from pypeit.spectrographs import spectrograph
 from pypeit.images import detector_container
-from pypeit.par import pypeitpar
 from pypeit.images.mosaic import Mosaic
 from pypeit.core.mosaic import build_image_mosaic_transform
 
@@ -87,7 +78,7 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
         self.meta['instrument'] = dict(ext=0, card='INSTRUME')
         self.meta['decker'] = dict(ext=0, card='HIERARCH ESO INS SLIT2 WID')
         self.meta['echangle'] = dict(card=None, default=0.0)  # There is no header card for this, but it is required
-        self.meta['xdangle'] = dict(card=None, compound=True)
+        self.meta['xdangle'] = dict(card=None, compound=True, rtol=0.01)  # There is not tolerance, really, because it's the central wavelength.
 
     def compound_meta(self, headarr, meta_key):
         """
@@ -425,7 +416,7 @@ class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
         par['calibrations']['wavelengths']['ech_nspec_coeff'] = 6
         par['calibrations']['wavelengths']['ech_norder_coeff'] = 4
         par['calibrations']['wavelengths']['ech_sigrej'] = 2.0
-        par['calibrations']['wavelengths']['ech_separate_2d'] = True
+        par['calibrations']['wavelengths']['ech_separate_2d'] = False
         par['calibrations']['wavelengths']['bad_orders_maxfrac'] = 0.5
 
         # Flats
@@ -478,6 +469,9 @@ class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
         """
         # Binning
         binning = '1,1' if hdu is None else self.get_meta_value(self.get_headarr(hdu), 'binning')
+        binfact = int(binning.split(',')[0]) * int(binning.split(',')[1])
+        ronoise = 3.8/np.sqrt(binfact) if hdu is None else hdu[0].header['HIERARCH ESO DET OUT1 RON']
+        gain = 0.54 if hdu is None else hdu[0].header['HIERARCH ESO DET OUT1 GAIN']
 
         # Detector
         detector_dict = dict(
@@ -493,8 +487,8 @@ class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
             nonlinear       = 0.7, # Website says 0.6, but we'll push it a bit
             mincounts       = -1e10,
             numamplifiers   = 1,
-            gain            = np.atleast_1d([hdu[0].header['HIERARCH ESO DET OUT1 GAIN']]),
-            ronoise         = np.atleast_1d([hdu[0].header['HIERARCH ESO DET OUT1 RON']]),
+            gain            = np.atleast_1d([gain]),
+            ronoise         = np.atleast_1d([ronoise]),
             datasec         = np.atleast_1d('[:,51:2098]'), # '[49:2000,1:2999]',  49  2099
             oscansec        = np.atleast_1d('[:,4:50]'), # '[1:48, 1:2999]',
             )
