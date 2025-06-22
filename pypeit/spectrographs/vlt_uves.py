@@ -427,6 +427,8 @@ class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
         # Extraction
         par['reduce']['skysub']['bspline_spacing'] = 0.6
         par['reduce']['skysub']['global_sky_std'] = False
+        par['reduce']['skysub']['sky_sigrej'] = 4.0
+
         # local sky subtraction operates on entire slit
         par['reduce']['extraction']['model_full_slit'] = True
         # Mask 3 edges pixels since the slit is short, insted of default (5,5)
