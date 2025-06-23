@@ -32,12 +32,11 @@ import sklearn
 import pypeit
 import time
 
-# TODO: Reminder that our aim is to eventually deprecate use of xspectrum1d in
-# favor of specutils.Spectrum1D (or whatever it is in specutils>2.0).
-from linetools.spectra import xspectrum1d
+#from linetools.spectra import xspectrum1d
 
 from pypeit import msgs
 from pypeit import dataPaths
+from pypeit import onespec
 from pypeit import __version__
 
 # TODO -- Move this module to core/
@@ -982,7 +981,7 @@ def load_thar_spec():
     return fits_open(dataPaths.arclines.get_file_path('thar_spec_MM201006.fits'))
 
 
-def load_sky_spectrum(sky_file: str) -> xspectrum1d.XSpectrum1D:
+def load_sky_spectrum(sky_file: str) -> onespec.OneSpec:
     """
     Load a sky spectrum from the PypeIt data directory into an XSpectrum1D
     object.
@@ -996,9 +995,15 @@ def load_sky_spectrum(sky_file: str) -> xspectrum1d.XSpectrum1D:
             The filename (NO PATH) of the sky file to use.
 
     Returns:
-        `linetools.spectra.xspectrum1d.XSpectrum1D`_: Sky spectrum
+        `onespec.OneSpec`_: Sky spectrum
     """
     path = dataPaths.sky_spec.get_file_path(sky_file)
-    return xspectrum1d.XSpectrum1D.from_file(str(path))
+    # Load up
+    hdul = astropy.io.fits.open(path)
+    wave = hdul['WAVELENGTH'].data
+    flux = hdul['FLUX'].data
+    #embed(header='load_sky_spectrum 1001 of io')
+    #return xspectrum1d.XSpectrum1D.from_file(str(path))
+    return onespec.OneSpec(wave, None, flux, fluxed=False)
 
 

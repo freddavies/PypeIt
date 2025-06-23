@@ -13,7 +13,7 @@ import numpy as np
 
 from astropy import units
 
-from linetools.spectra import xspectrum1d
+#from linetools.spectra import xspectrum1d
 
 from pypeit import msgs
 from pypeit.core import flexure
@@ -21,6 +21,7 @@ from pypeit.core import flux_calib
 from pypeit.core import parse
 from pypeit import utils
 from pypeit import datamodel
+from pypeit import onespec
 from pypeit.images.detector_container import DetectorContainer
 from pypeit.images.mosaic import Mosaic
 
@@ -464,8 +465,9 @@ class SpecObj(datamodel.DataContainer):
                 Sky Spectrum
 
         Returns:
-            `linetools.spectra.xspectrum1d.XSpectrum1D`_: New sky
-            spectrum (mainly for QA)
+            onespec.OneSpec:
+                New sky spectrum with the flexure applied  
+                mainly for QA
         """
         # Simple interpolation to apply
         # Apply
@@ -475,8 +477,9 @@ class SpecObj(datamodel.DataContainer):
                           msgs.newline() + "{0:s}".format(str(self.NAME)))
                 self[attr+'_WAVE'] = flexure.flexure_interp(shift, self[attr+'_WAVE']).copy()
         # Shift sky spec too
-        twave = flexure.flexure_interp(shift, sky_spec.wavelength.value) * units.AA
-        new_sky = xspectrum1d.XSpectrum1D.from_tuple((twave, sky_spec.flux))
+        twave = flexure.flexure_interp(shift, sky_spec.wave)
+        #new_sky = xspectrum1d.XSpectrum1D.from_tuple((twave, sky_spec.flux))
+        new_sky = onespec.OneSpec(twave, None, sky_spec.flux)
         # Save - since flexure may have been applied/calculated twice, this needs to be additive
         self.update_flex_shift(shift, flex_type='local')
         # Return
@@ -614,6 +617,7 @@ class SpecObj(datamodel.DataContainer):
         # Return
         return self[swave], self[sflux], self[sivar], self[smask]
 
+    '''
     def to_xspec1d(self, masked=True, extraction='OPT', fluxed=True):
         """
         Create an `XSpectrum1D <linetools.spectra.xspectrum1d.XSpectrum1D>`_
@@ -640,6 +644,7 @@ class SpecObj(datamodel.DataContainer):
 
         # Create
         return xspectrum1d.XSpectrum1D.from_tuple((wave, flux, sig))
+    '''
 
     def ready_for_extraction(self):
         """ Simple method to check all the items are filled

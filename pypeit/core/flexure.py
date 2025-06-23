@@ -24,7 +24,7 @@ import scipy.signal
 import scipy.optimize as opt
 from scipy import interpolate
 
-from linetools.spectra import xspectrum1d
+#from linetools.spectra import xspectrum1d
 
 from pypeit import msgs
 from pypeit import dataPaths
@@ -39,6 +39,7 @@ from pypeit.datamodel import DataContainer
 from pypeit.images.detector_container import DetectorContainer
 from pypeit.images.mosaic import Mosaic
 from pypeit import specobj, specobjs
+from pypeit import onespec
 from pypeit import wavemodel
 
 from IPython import embed
@@ -293,14 +294,14 @@ def spec_flex_shift(obj_skyspec, sky_file=None, arx_skyspec=None, arx_fwhm_pix=N
     """ Calculate shift between object sky spectrum and archive sky spectrum
 
     Args:
-        obj_skyspec (`linetools.spectra.xspectrum1d.XSpectrum1d`_):
+        obj_skyspec (`onespec.OneSpec`_):
             Spectrum of the sky related to our object
         sky_file (:obj:`str`, optional):
             Name of the archival sky file. If equal to 'model', instead,
             a model sky spectrum will be generated using :func:`~pypeit.wavemodel.nearIR_modelsky`
             and the spectral resolution of obj_skyspec. If None, arx_skyspec and arx_fwhm_pix
             must be provided.
-        arx_skyspec (`linetools.spectra.xspectrum1d.XSpectrum1d`_, optional):
+        arx_skyspec (`onespec.OneSpec`_, optional):
             Archived sky spectrum. If None, it will be loaded from the sky_file
             (sky_file must be provided).
         arx_fwhm_pix (:obj:`float`, optional):
@@ -359,7 +360,7 @@ def spec_flex_shift(obj_skyspec, sky_file=None, arx_skyspec=None, arx_fwhm_pix=N
     elif arx_fwhm_pix is None:
         # get arxiv sky spectrum resolution (FWHM in pixels)
         msgs.info("Computing the spectral FWHM for the provided arxiv sky spectrum")
-        arx_fwhm_pix = autoid.measure_fwhm(arx_skyspec.flux.value, sigdetect=4., fwhm=4.)
+        arx_fwhm_pix = autoid.measure_fwhm(arx_skyspec.flux, sigdetect=4., fwhm=4.)
         if arx_fwhm_pix is None:
             msgs.error('Failed to measure the spectral FWHM of the archived sky spectrum. '
                        'Not enough sky lines detected. Provide a value using arx_fwhm_pix')
@@ -369,7 +370,8 @@ def spec_flex_shift(obj_skyspec, sky_file=None, arx_skyspec=None, arx_fwhm_pix=N
     # smooth to the same resolution as the object sky spectrum? Yes, if not using a model sky
     if sky_file != 'model':
         # get gaussian sigma (pixels) for smoothing
-        smooth_fwhm_pix = get_fwhm_gauss_smooth(arx_skyspec, obj_skyspec, arx_fwhm_pix, spec_fwhm_pix=spec_fwhm_pix)
+        smooth_fwhm_pix = get_fwhm_gauss_smooth(arx_skyspec, obj_skyspec, arx_fwhm_pix, 
+                                                spec_fwhm_pix=spec_fwhm_pix)
 
         if smooth_fwhm_pix is None:
             # smooth_fwhm_pix is None if spec_fwhm_pix<0, i.e., the wavelength calibration is bad
@@ -382,12 +384,12 @@ def spec_flex_shift(obj_skyspec, sky_file=None, arx_skyspec=None, arx_fwhm_pix=N
     # Determine region of wavelength overlap
     minwave = 0 if minwave is None else minwave
     maxwave = np.inf if maxwave is None else maxwave
-    min_wave = max(np.amin(arx_skyspec.wavelength.value), np.amin(obj_skyspec.wavelength.value), minwave)
-    max_wave = min(np.amax(arx_skyspec.wavelength.value), np.amax(obj_skyspec.wavelength.value), maxwave)
+    min_wave = max(np.amin(arx_skyspec.wave), np.amin(obj_skyspec.wave), minwave)
+    max_wave = min(np.amax(arx_skyspec.wave), np.amax(obj_skyspec.wave), maxwave)
 
     # Define wavelengths of overlapping spectra
-    keep_idx = np.where((obj_skyspec.wavelength.value>=min_wave) &
-                         (obj_skyspec.wavelength.value<=max_wave))[0]
+    keep_idx = np.where((obj_skyspec.wave>=min_wave) &
+                         (obj_skyspec.wave<=max_wave))[0]
 
     # Rebin both spectra onto overlapped wavelength range
     if len(keep_idx) <= 50:
@@ -395,31 +397,31 @@ def spec_flex_shift(obj_skyspec, sky_file=None, arx_skyspec=None, arx_fwhm_pix=N
         return None
 
     # rebin onto object ALWAYS
-    keep_wave = obj_skyspec.wavelength[keep_idx]
+    keep_wave = obj_skyspec.wave[keep_idx]
     arx_skyspec = arx_skyspec.rebin(keep_wave)
     obj_skyspec = obj_skyspec.rebin(keep_wave)
 
     # Deal with bad pixels
     msgs.work("Need to mask bad pixels")
     # Trim edges (rebinning is junk there)
-    arx_skyspec.data['flux'][0,:2] = 0.
-    arx_skyspec.data['flux'][0,-2:] = 0.
-    obj_skyspec.data['flux'][0,:2] = 0.
-    obj_skyspec.data['flux'][0,-2:] = 0.
+    arx_skyspec.flux[:2] = 0.
+    arx_skyspec.flux[-2:] = 0.
+    obj_skyspec.flux[:2] = 0.
+    obj_skyspec.flux[-2:] = 0.
 
     # Set minimum to 0.  For bad rebinning and for pernicious extractions
-    obj_skyspec.data['flux'][0,:] = np.maximum(obj_skyspec.data['flux'][0,:], 0.)
-    arx_skyspec.data['flux'][0,:] = np.maximum(arx_skyspec.data['flux'][0,:], 0.)
+    obj_skyspec.flux[:] = np.maximum(obj_skyspec.flux[:], 0.)
+    arx_skyspec.flux[:] = np.maximum(arx_skyspec.flux[:], 0.)
 
     # clip too large values (>90%) only in obj_skyspec (assuming arx_skyspec is being vetted before)
     # this is used ony for the cross-correlation
-    obj_skyspec_flux = obj_skyspec.flux.value
+    obj_skyspec_flux = obj_skyspec.flux
     _lower, _upper = get_percentile_clipping(obj_skyspec_flux, percent=90.0)
     obj_skyspec_flux = np.clip(obj_skyspec_flux, _lower, _upper)
 
     # Normalize spectra to unit average sky count
     norm = np.sum(obj_skyspec_flux)/obj_skyspec.npix
-    norm2 = np.sum(arx_skyspec.flux.value)/arx_skyspec.npix
+    norm2 = np.sum(arx_skyspec.flux)/arx_skyspec.npix
     if norm <= 0:
         msgs.warn("Bad normalization of object in flexure algorithm")
         msgs.warn("Will try the median")
@@ -443,7 +445,7 @@ def spec_flex_shift(obj_skyspec, sky_file=None, arx_skyspec=None, arx_fwhm_pix=N
         obj_sky_flux = np.clip(obj_sky_flux, obj_lower, obj_upper)
 
     # arx_skyspec
-    _, arx_ampl, _, _, _, _, arx_sky_flux, _ = arc.detect_lines(arx_skyspec.flux.value, sigdetect=5.0)
+    _, arx_ampl, _, _, _, _, arx_sky_flux, _ = arc.detect_lines(arx_skyspec.flux, sigdetect=5.0)
     if arx_ampl.size > 0:
         arx_lower, arx_upper = get_percentile_clipping(arx_ampl, percent=percent_ceil)
         arx_sky_flux = np.clip(arx_sky_flux, arx_lower, arx_upper)
@@ -539,9 +541,9 @@ def get_fwhm_gauss_smooth(arx_skyspec, obj_skyspec, arx_fwhm_pix, spec_fwhm_pix=
     """
 
     Args:
-        arx_skyspec (`linetools.spectra.xspectrum1d.XSpectrum1d`_):
+        arx_skyspec (`onespec.OneSpec`_):
             Archived sky spectrum.
-        obj_skyspec (`linetools.spectra.xspectrum1d.XSpectrum1d`_):
+        obj_skyspec (`onespec.OneSpec`_):
             Sky spectrum associated with the science target.
         arx_fwhm_pix (:obj:`float`):
             Spectral FWHM (in pixels) of the archived sky spectrum.
@@ -555,20 +557,20 @@ def get_fwhm_gauss_smooth(arx_skyspec, obj_skyspec, arx_fwhm_pix, spec_fwhm_pix=
     # if spec_fwhm_pix (typically from wave calibration) is None
     if spec_fwhm_pix is None:
         # pixels
-        spec_fwhm_pix = autoid.measure_fwhm(obj_skyspec.flux.value, sigdetect=4., fwhm=4.)
+        spec_fwhm_pix = autoid.measure_fwhm(obj_skyspec.flux, sigdetect=4., fwhm=4.)
         msgs.info('Measuring spectral FWHM using the boxcar extracted sky spectrum.')
         if spec_fwhm_pix is None:
             msgs.warn('Failed to measure the spectral FWHM using the boxcar extracted sky spectrum. '
                       'Not enough sky lines detected.')
             return None
     # object sky spectral dispersion (Angstrom/pixel)
-    obj_disp = np.median(np.diff(obj_skyspec.wavelength.value))
+    obj_disp = np.median(np.diff(obj_skyspec.wave))
     # Angstrom
     spec_fwhm = spec_fwhm_pix * obj_disp
 
     # determine arxiv sky spectral FWHM (in Angstrom)
     # arxiv sky spectral dispersion (Angstrom/pixel)
-    arx_disp = np.median(np.diff(arx_skyspec.wavelength.value))
+    arx_disp = np.median(np.diff(arx_skyspec.wave))
     arx_fwhm = arx_fwhm_pix * arx_disp
 
     msgs.info(f"Resolution (FWHM) of Archive={arx_fwhm:.2f} Ang and Observation={spec_fwhm:.2f} Ang")
@@ -623,7 +625,8 @@ def spec_flex_shift_global(slit_specs, islit, sky_file, empty_flex_dict,
 
     Args:
         slit_specs (:obj:`list`):
-            A list of `linetools.xspectrum1d`, one for each slit. The spectra stored in
+            A list of :class:`~pypeit.onespec.OneSpec` objects
+            The spectra stored in
             this list are sky spectra, extracted from the center of each slit.
         islit (:obj:`int`):
             Index of the slit where the sky spectrum related to our object is.
@@ -680,8 +683,9 @@ def spec_flex_shift_global(slit_specs, islit, sky_file, empty_flex_dict,
         for key in keys_to_update[:-1]:
             flex_dict[key].append(fdict[key])
         # Interpolate
-        sky_wave_new = flexure_interp(fdict['shift'], slit_specs[islit].wavelength.value)
-        flex_dict['sky_spec'].append(xspectrum1d.XSpectrum1D.from_tuple((sky_wave_new, slit_specs[islit].flux.value)))
+        sky_wave_new = flexure_interp(fdict['shift'], slit_specs[islit].wave)
+        #flex_dict['sky_spec'].append(xspectrum1d.XSpectrum1D.from_tuple((sky_wave_new, slit_specs[islit].flux.value)))
+        flex_dict['sky_spec'].append(onespec.OneSpec(sky_wave_new, None, slit_specs[islit].flux))
     else:
         # No success, come back to it later
         return_later_slits.append(islit)
@@ -776,7 +780,8 @@ def spec_flex_shift_local(slits, slitord, specobjs, islit, sky_file, empty_flex_
         msgs.info(f"Working on spectral flexure for object # {ss} in slit {slits.spat_id[islit]}")
 
         # get 1D spectrum for this object
-        obj_sky = xspectrum1d.XSpectrum1D.from_tuple((sobj.BOX_WAVE[sobj.BOX_MASK], sobj.BOX_COUNTS_SKY[sobj.BOX_MASK]))
+        #obj_sky = xspectrum1d.XSpectrum1D.from_tuple((sobj.BOX_WAVE[sobj.BOX_MASK], sobj.BOX_COUNTS_SKY[sobj.BOX_MASK]))
+        obj_sky = onespec.OneSpec(sobj.BOX_WAVE[sobj.BOX_MASK], None, sobj.BOX_COUNTS_SKY[sobj.BOX_MASK])
 
         # Calculate the shift
         fdict = spec_flex_shift(obj_sky, sky_file=sky_file, mxshft=mxshft, excess_shft=excess_shft,
@@ -852,8 +857,9 @@ def spec_flexure_slit(slits, slitord, slit_bpm, sky_file, method="boxcar", speco
         specobjs (:class:`~pypeit.specobjs.SpecObjs`, optional):
             Spectral extractions
         slit_specs (:obj:`list`, optional):
-            A list of linetools.xspectrum1d, one for each slit. The spectra stored in
+            A list of `onespec.OneSpec`, one for each slit. The spectra stored in
             this list are sky spectra, extracted from the center of each slit.
+            This is only used if ``method='slitcen'``.
         wv_calib (:class:`pypeit.wavecalib.WaveCalib`):
             Wavelength calibration object
         mxshft (:obj:`int`, optional):
@@ -891,7 +897,8 @@ def spec_flexure_slit(slits, slitord, slit_bpm, sky_file, method="boxcar", speco
                            arx_spec=[], sky_spec=[], method=[])
 
     # flex dict keys that we need to update through the routine
-    keys_to_update = ['polyfit', 'shift', 'subpix', 'corr', 'corr_cen', 'smooth', 'method', 'arx_spec', 'sky_spec']
+    keys_to_update = ['polyfit', 'shift', 'subpix', 'corr', 'corr_cen', 
+                      'smooth', 'method', 'arx_spec', 'sky_spec']
 
     # Loop over slits
     # good slits
@@ -994,7 +1001,8 @@ def spec_flexure_slit(slits, slitord, slit_bpm, sky_file, method="boxcar", speco
     return flex_list
 
 
-def spec_flexure_slit_global(sciImg, waveimg, global_sky, par, slits, slitmask, trace_spat, gd_slits, wv_calib, pypeline, det):
+def spec_flexure_slit_global(sciImg, waveimg, global_sky, par, slits, slitmask, 
+                             trace_spat, gd_slits, wv_calib, pypeline, det):
     """Calculate the spectral flexure for every slit
 
     Args:
@@ -1064,7 +1072,7 @@ def get_archive_spectrum(sky_file, obj_skyspec=None, spec_fwhm_pix=None):
             a model sky spectrum will be generated using :func:`~pypeit.wavemodel.nearIR_modelsky`
             and the spectral resolution of obj_skyspec. If obj_skyspec is None, then
             sky_file cannot be 'model'.
-        obj_skyspec (`linetools.spectra.xspectrum1d.XSpectrum1d`_, optional):
+        obj_skyspec (`onespec.OneSpec`_, optional):
             Sky spectrum associated with the science target. This must be provided if sky_file is 'model'.
         spec_fwhm_pix (:obj:`float`, optional):
             Spectral FWHM (in pixels) of the sky spectrum related to our object.
@@ -1078,32 +1086,33 @@ def get_archive_spectrum(sky_file, obj_skyspec=None, spec_fwhm_pix=None):
         # multiple times
         sky_spectrum = io.load_sky_spectrum(sky_file)
         # get arxiv sky spectrum resolution (FWHM in pixels)
-        arx_fwhm_pix = autoid.measure_fwhm(sky_spectrum.flux.value, sigdetect=4., fwhm=4.)
+        arx_fwhm_pix = autoid.measure_fwhm(sky_spectrum.flux, sigdetect=4., fwhm=4.)
         if arx_fwhm_pix is None:
             msgs.error('Failed to measure the spectral FWHM of the archived sky spectrum. '
                        'Not enough sky lines detected.')
     elif obj_skyspec is not None:
         if spec_fwhm_pix is None:
             # measure spec_fwhm_pix
-            spec_fwhm_pix = autoid.measure_fwhm(obj_skyspec.flux.value, sigdetect=4., fwhm=4.)
+            spec_fwhm_pix = autoid.measure_fwhm(obj_skyspec.flux, sigdetect=4., fwhm=4.)
             if spec_fwhm_pix is None:
                 msgs.warn('Failed to measure the spectral FWHM using the boxcar extracted sky spectrum. '
                           'Choose one of the provided sky files.')
         # get the spectral resolution of obj_skyspec
         # obj_skyspec spectral dispersion (Angstrom/pixel)
-        obj_disp = np.median(np.diff(obj_skyspec.wavelength.value))
+        obj_disp = np.median(np.diff(obj_skyspec.wave))
         # FWHM
         spec_fwhm = spec_fwhm_pix * obj_disp
         # Compute the resolution at the midpoints of the spectrum in the spectral direction
-        midpix = obj_skyspec.wavelength.value.size // 2
+        midpix = obj_skyspec.wave.size // 2
         # R = lambda / dlambda
-        res = obj_skyspec.wavelength.value[midpix] / spec_fwhm
+        res = obj_skyspec.wave[midpix] / spec_fwhm
         # get model sky spectrum
         wave_sky, flux_sky = wavemodel.nearIR_modelsky(res,
-                                                       (obj_skyspec.wavelength.value.min() / 10000.,
-                                                        obj_skyspec.wavelength.value.max() / 10000.),
+                                                       (obj_skyspec.wave.min() / 10000.,
+                                                        obj_skyspec.wave.max() / 10000.),
                                                        dlam=obj_disp / 10000., flgd=False)
-        sky_spectrum = xspectrum1d.XSpectrum1D.from_tuple((wave_sky, flux_sky))
+        #sky_spectrum = xspectrum1d.XSpectrum1D.from_tuple((wave_sky, flux_sky))
+        sky_spectrum = onespec.OneSpec(wave_sky, None, flux_sky, fluxed=False)
         arx_fwhm_pix = spec_fwhm_pix
     else:
         msgs.error('Archived sky spectrum cannot be loaded. ')
@@ -1141,7 +1150,7 @@ def get_sky_spectrum(sciimg, ivar, waveimg, thismask, global_sky, box_radius, sl
             extracted.  For example, DET01.
 
     Returns:
-        (`linetools.spectra.xspectrum1d.XSpectrum1D`_): Sky spectrum
+        'onespec.OneSpec`: The boxcar-extracted sky spectrum.
     """
     spec = specobj.SpecObj(PYPELINE=pypeline, SLITID=-1, DET=str(det))
     spec.trace_spec = np.arange(slits.nspec)
@@ -1150,8 +1159,9 @@ def get_sky_spectrum(sciimg, ivar, waveimg, thismask, global_sky, box_radius, sl
     # Extract
     extract.extract_boxcar(sciimg, ivar, thismask, waveimg, global_sky, spec)
     slit_wave, slit_sky = spec.BOX_WAVE[spec.BOX_MASK], spec.BOX_COUNTS_SKY[spec.BOX_MASK]
-    # TODO :: Need to remove this XSpectrum1D dependency - it is required in:  flexure.spec_flex_shift
-    obj_skyspec = xspectrum1d.XSpectrum1D.from_tuple((slit_wave, slit_sky))
+    # OneSpec
+#    obj_skyspec = xspectrum1d.XSpectrum1D.from_tuple((slit_wave, slit_sky))
+    obj_skyspec = onespec.OneSpec(slit_wave, None, slit_sky, fluxed=False)
     return obj_skyspec
 
 
@@ -1276,14 +1286,14 @@ def spec_flexure_qa(slitords, bpm, basename, flex_list,
         # Repackage
         sky_spec = this_flex_dict['sky_spec'][iobj]
         arx_spec = this_flex_dict['arx_spec'][iobj]
-        min_wave = max(np.amin(arx_spec.wavelength.value), np.amin(sky_spec.wavelength.value))*units.AA
-        max_wave = min(np.amax(arx_spec.wavelength.value), np.amax(sky_spec.wavelength.value))*units.AA
+        min_wave = max(np.amin(arx_spec.wave), np.amin(sky_spec.wave))
+        max_wave = min(np.amax(arx_spec.wave), np.amax(sky_spec.wave))
 
         # Sky lines
         sky_lines = np.array([3370.0, 3914.0, 4046.56, 4358.34, 5577.338, 6300.304,
                               7340.885, 7993.332, 8430.174, 8919.610, 9439.660,
-                              10013.99, 10372.88])*units.AA
-        dwv = 20.*units.AA
+                              10013.99, 10372.88])
+        dwv = 20.
         gdsky = np.where((sky_lines > min_wave) & (sky_lines < max_wave))[0]
         if len(gdsky) == 0:
             msgs.warn("No sky lines for Flexure QA")
@@ -1308,18 +1318,18 @@ def spec_flexure_qa(slitords, bpm, basename, flex_list,
             skyline = sky_lines[igdsky]
             ax = plt.subplot(gs[ii//ncol, ii % ncol])
             # Norm
-            pix1 = np.where(np.abs(sky_spec.wavelength-skyline) < dwv)[0]
-            pix2 = np.where(np.abs(arx_spec.wavelength-skyline) < dwv)[0]
+            pix1 = np.where(np.abs(sky_spec.wave-skyline) < dwv)[0]
+            pix2 = np.where(np.abs(arx_spec.wave-skyline) < dwv)[0]
             f1 = np.sum(sky_spec.flux[pix1])
             f2 = np.sum(arx_spec.flux[pix2])
             norm = f1/f2
             # Plot
-            ax.plot(sky_spec.wavelength[pix1], sky_spec.flux[pix1], 'k-', label='Obj',
+            ax.plot(sky_spec.wave[pix1], sky_spec.flux[pix1], 'k-', label='Obj',
                     drawstyle='steps-mid')
-            ax.plot(arx_spec.wavelength[pix2], arx_spec.flux[pix2]*norm, 'r-', label='Arx',
+            ax.plot(arx_spec.wave[pix2], arx_spec.flux[pix2]*norm, 'r-', label='Arx',
                     drawstyle='steps-mid')
             # Axes
-            ax.xaxis.set_major_locator(plt.MultipleLocator(dwv.value))
+            ax.xaxis.set_major_locator(plt.MultipleLocator(dwv))
             ax.set_xlabel('Wavelength')
             ax.set_ylabel('Counts')
 
