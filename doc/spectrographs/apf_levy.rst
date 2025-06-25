@@ -22,15 +22,16 @@ either 1x1 or 2x2.
 Flat Fielding
 -------------
 
-For the flat fields, the pipeline selects the iamges 
-named as WideFlats. These are the flat fields taken
-with the 8 arc-second long and 2 arc-second wide slit.
+For the flat fields, currently the nightly calibrations
+produce 50 "wide flats" but only 12 "narrow flats".
+The 3"  arc-second long slit is used for the narrow flats
+and the 8" arc-second long slit is used for the wide flats.
 
 
 Slit tracing
 ------------
 
-Files labeled as narrow flats are only used for the
+Files labeled as narrow flats are used for the
 slit tracing for data taken with the 3 arc-second long
 slit.
 
