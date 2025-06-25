@@ -395,11 +395,11 @@ class APFLevySpectrograph(spectrograph.Spectrograph):
 
         if decker == '3.0':
             par['reduce']['trim_edge'] = [0, 0]
-            par['reduce']['extraction']['boxcar_radius'] = 0.864
+            par['reduce']['extraction']['boxcar_radius'] = 1.728
             par['reduce']['extraction']['model_full_slit'] = True
             par['reduce']['skysub']['no_local_sky'] = True
             par['reduce']['findobj']['find_trim_edge'] = [0, 0]
-            par['calibrations']['slitedges']['pad'] = 1
+            par['calibrations']['slitedges']['pad'] = 4
             
         return par
 
