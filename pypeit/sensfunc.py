@@ -778,15 +778,6 @@ class SensFunc(datamodel.DataContainer):
         axis.set_title('Fluxed Std Compared to True Spectrum:' + spec_str)
         fig.savefig(self.fstdfile)
 
-        # save the model that was used
-        model_interp_func = scipy.interpolate.interp1d(self.std_dict['wave'].value, self.std_dict['flux'].value,
-                                                       bounds_error=False, fill_value='extrapolate')
-        model_flux_sav = np.zeros_like(self.sens['SENS_FLUXED_STD_FLAM'])
-        for iorddet in range(self.sens['SENS_FLUXED_STD_WAVE'].shape[0]):
-            sens_wave_gpm = self.sens['SENS_FLUXED_STD_WAVE'][iorddet] > 1.0
-            model_flux_sav[iorddet][sens_wave_gpm] = model_interp_func(self.sens['SENS_FLUXED_STD_WAVE'][iorddet][sens_wave_gpm])
-
-        self.sens['SENS_STD_MODEL_FLAM'] = model_flux_sav
 
     @classmethod
     def sensfunc_weights(cls, sensfile, waves, ech_order_vec=None, debug=False, extrap_sens=True, chk_version=True):
