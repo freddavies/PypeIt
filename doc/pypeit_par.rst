@@ -2370,9 +2370,17 @@ Alterations to the default parameters are:
           skip_extraction = True
   [flexure]
       spec_maxshift = 3
+  [fluxcalib]
+      extrap_sens = True
   [sensfunc]
+      extrap_blu = 0.0
+      extrap_red = 0.0
+      algorithm = IR
+      polyorder = 13
       [[UVIS]]
           extinct_correct = False
+      [[IR]]
+          telgridfile = TellPCA_3000_26000_R10000.fits
 
 .. _instr_par-gtc_osiris:
 
@@ -2478,6 +2486,15 @@ Alterations to the default parameters are:
           maxnumber_std = 1
       [[skysub]]
           no_poly = True
+  [fluxcalib]
+      extrap_sens = True
+  [sensfunc]
+      extrap_blu = 0.0
+      extrap_red = 0.0
+      algorithm = IR
+      polyorder = 13
+      [[IR]]
+          telgridfile = TellPCA_3000_26000_R10000.fits
 
 .. _instr_par-gtc_osiris_plus:
 
@@ -2583,6 +2600,15 @@ Alterations to the default parameters are:
           maxnumber_std = 1
       [[skysub]]
           no_poly = True
+  [fluxcalib]
+      extrap_sens = True
+  [sensfunc]
+      extrap_blu = 0.0
+      extrap_red = 0.0
+      algorithm = IR
+      polyorder = 13
+      [[IR]]
+          telgridfile = TellPCA_3000_26000_R10000.fits
 
 .. _instr_par-jwst_nircam:
 
