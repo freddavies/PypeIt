@@ -13,19 +13,25 @@ proc classes: (lbt_mods1r_proc, lbt_mods1b_proc, lbt_mods2r_proc, lbt_mods2b_pro
 
 Four proc classes, one per channel, have been introduced (2025) to work on the pre-processed 
 MODS spectra that are output by the modsCCDRed (https://github.com/rwpogge/modsCCDRed) tasks. 
-These files, which have the _otf.fits suffix, have been overscan-subtracted, trimmed, and 
-flat-fielded by a color-normalized slitless pixel flat. 
+These pre-processed spectra have the suffix, _otf.fits, and have been overscan-subtracted, 
+trimmed, and flat-fielded by a color-normalized slitless pixel flat. 
 
 Unlike the original mods classes, the proc classes do not apply the conversion gain, and so 
-pixel values are in units of ADU. 
+pixel values are in units of ADU. Two implications of this are: (1) The snr that is calculated 
+by pypeit and output in the spec1d*txt files will need to be multiplied by sqrt(gain). User level 
+parameters, such as the snr_threshold used by findobj, i.e. in [reduce][[findobj]], will need to take this 
+into account. The median value of the conversion gain [e-/ADU] is ~2 for the MODS detectors. 
+[Future work: Update the _proc classes to convert the default snr_threshold of 10 to 10/sqrt(2.)]
+(2) The sensitivity function will have units of [erg/cm**2/ADU] instead of [erg/cm**2/photons],
+but so long as the proc class is used to reduce both standard and object, the final flux calibrated
+spectrum will be correct.
 
 
 Edge Tracing
 ++++++++++++
 
-It has been reported that the default ``edge_thresh`` of 100
-for MODS is too high for some setups.  If some of your
-'fainter' slits of the spectrum are missing,
+It has been reported that the default ``edge_thresh`` of 100 for MODS is too high for some setups.  If some of 
+your 'fainter' slits of the spectrum are missing,
 try:
 
 .. code-block:: ini
