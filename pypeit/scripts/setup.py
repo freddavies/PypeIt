@@ -109,7 +109,7 @@ class Setup(scriptbase.ScriptBase):
             if (user_par_fn := Path(args.param_block_file)).exists():
                 with open(user_par_fn, 'r', encoding='utf-8') as user_par_fobj:
                     user_cfgs = [l.rstrip() for l in user_par_fobj.readlines()]
-                ps.update_user_cfg(user_cfgs)
+                ps.append_user_cfg(user_cfgs)
             else:
                 msgs.warn(f"Could not open param_block file {args.param_block_file}. "
                           "Not adding any additional user parameters to the .pypeit file.")

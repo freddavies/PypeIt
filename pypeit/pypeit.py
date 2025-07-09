@@ -211,8 +211,6 @@ class PypeIt:
         """
         Get the spectrum filename
 
-        _extended_summary_
-
         Args:
             science_path (`Path`_):
                 Path to the science files

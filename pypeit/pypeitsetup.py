@@ -225,11 +225,18 @@ class PypeItSetup:
         # Instantiate
         return cls(data_files, cfg_lines=cfg_lines, frametype=frametype)
     
-    def update_user_cfg(self, user_cfg:list=None):
+    def append_user_cfg(self, user_cfg:list=None):
         """
-        Update the user-defined configuration lines
+        Append the user-defined configuration lines
 
-        _extended_summary_
+        If additional user configuration lines are provided, append them to the
+        extant list of configuration lines.
+
+        Caveat emptor: this method does not perform any checking to ensure
+        appended lines are not repeats of existing lines in ``self.user_cfg``.
+        Since user configuration parameters are applied *last* to the set of
+        reduction parameters, any repeated lines appended here will override
+        user parameters earlier in the list.
 
         Args:
             user_cfg (:obj:`list`, optional):
@@ -239,8 +246,6 @@ class PypeItSetup:
         # Append the lines provided to the instance attribute
         if user_cfg is not None:
             self.user_cfg.extend(user_cfg)
-        # TODO: Should there be checking that new lines are not repititive of
-        #       existing configuraiton lines?
 
     @property
     def nfiles(self):
