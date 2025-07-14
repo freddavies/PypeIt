@@ -60,6 +60,7 @@ class APFLevySpectrograph(spectrograph.Spectrograph):
         par['calibrations']['wavelengths']['rms_thresh_frac_fwhm'] = 0.2
         # Reidentification parameters
         par['calibrations']['wavelengths']['method'] = 'reidentify'
+        par['calibrations']['wavelengths']['refframe'] = 'observed'
         # Echelle parameters
         par['calibrations']['wavelengths']['echelle'] = True
         par['calibrations']['wavelengths']['ech_nspec_coeff'] = 4
@@ -398,7 +399,7 @@ class APFLevySpectrograph(spectrograph.Spectrograph):
             par['reduce']['extraction']['model_full_slit'] = True
             par['reduce']['skysub']['no_local_sky'] = True
             par['reduce']['findobj']['find_trim_edge'] = [0, 0]
-            par['calibrations']['slitedges']['pad'] = 4
+            par['calibrations']['slitedges']['pad'] = 5
             
         return par
 
