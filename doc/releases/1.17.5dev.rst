@@ -43,6 +43,8 @@ Functionality/Performance Improvements and Additions
 - Added `SensfuncPar` parameter `trim_std_pixs` to allow the user to "trim" the
   standard star 1D spectrum by a user-defined number of pixels before computing the
   sensitivity function.
+- Added ExtractionPar` parameter `min_frac_prof` to allow the use to set the minimum
+  fraction of the object spatial profile that is not masked in the optimal extraction.
 
 Instrument-specific Updates
 ---------------------------

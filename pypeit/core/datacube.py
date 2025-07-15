@@ -388,6 +388,7 @@ def extract_point_source(wave, flxcube, ivarcube, bpmcube, wcscube, exptime,
     thismask = np.ones_like(flxcube2d, dtype=bool)
 
     # Now do the optimal extraction
+    # NOTE: min_frac_use is now a parset (par['reduce']['extraction']['min_frac_prof']). Should it be used as parset here?
     extract.extract_optimal(flxcube2d, ivarcube2d, gpmcube2d, waveimg, skyimg, thismask, oprof,
                             sobj, min_frac_use=0.05, fwhmimg=None, base_var=None, count_scale=None, noise_floor=None)
 
