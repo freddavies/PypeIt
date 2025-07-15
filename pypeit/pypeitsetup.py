@@ -232,11 +232,12 @@ class PypeItSetup:
         If additional user configuration lines are provided, append them to the
         extant list of configuration lines.
 
-        Caveat emptor: this method does not perform any checking to ensure
-        appended lines are not repeats of existing lines in ``self.user_cfg``.
-        Since user configuration parameters are applied *last* to the set of
-        reduction parameters, any repeated lines appended here will override
-        user parameters earlier in the list.
+        .. important::
+            This method does not perform any checking to ensure appended lines
+            are not repeats of existing lines in ``self.user_cfg``.  Since user
+            configuration parameters are applied *last* to the set of reduction
+            parameters, any repeated lines appended here will override user
+            parameters earlier in the list.
 
         Args:
             user_cfg (:obj:`list`, optional):
