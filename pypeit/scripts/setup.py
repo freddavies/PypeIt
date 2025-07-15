@@ -60,7 +60,7 @@ class Setup(scriptbase.ScriptBase):
                                  'them.')
         parser.add_argument('-p', '--param_block_file', default=None, type=str,
                             help='File containing the additional PypeIt user parameters to be '
-                                 'added to the parameter block of the geerated reduction file')
+                                 'added to the parameter block of the generated reduction file')
         parser.add_argument('-G', '--gui', default=False, action='store_true',
                             help='Run setup in a GUI')        
 

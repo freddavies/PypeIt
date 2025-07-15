@@ -198,7 +198,7 @@ class PypeIt:
             frame (:obj:`int`):
                 Frame index from :attr:`fitstbl`.
             twod (:obj:`bool`), optional:
-                Name for the 2D output file; 1D file otherwise.  (Default: False)
+                Name for the 2D output file; 1D file otherwise.
         
         Returns:
             `Path`_: The path for the output file
@@ -217,7 +217,7 @@ class PypeIt:
             basename (:obj:`str`):
                 Base name for this frame
             twod (:obj:`bool`), optional:
-                Is this a 2D science frame?  (Default: False)
+                Is this a 2D science frame?
 
         Returns:
             `Path`_: The spectrum filename
@@ -1198,9 +1198,9 @@ class PypeIt:
             basename (:obj:`str`):
                 The root name for the output file.
             history (:class:`~pypeit.history.History`), optional:
-                History entries to be added to fits header  (Default: None)
+                History entries to be added to fits header
             skip_write_2d (:obj:`bool`), optional:
-                Skip writing the 2D spectrum to disk  (Default: False)
+                Skip writing the 2D spectrum to disk
         """
         # TODO: Need some checks here that the exposure has been reduced?
 

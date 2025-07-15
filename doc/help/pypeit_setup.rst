@@ -76,7 +76,7 @@
                             tell pypeit_obslog to remove them. (default: False)
       -p, --param_block_file PARAM_BLOCK_FILE
                             File containing the additional PypeIt user parameters to
-                            be added to the parameter block of the geerated
+                            be added to the parameter block of the generated
                             reduction file (default: None)
       -G, --gui             Run setup in a GUI (default: False)
     
