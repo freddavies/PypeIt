@@ -23,16 +23,21 @@ Frame Types
 
 There are a set of standard cailibrations frames that 
 are acquired each night. These include:
-- wide flat 
-- dark
+- flat fields with the 8 arc-second long slit (WideFlat)
+- dark (Dark)
 - arc lamp (ThAr)
-- narrow flat
-- iodine cell flats
+- flat fields with the 3 arc-second long slit (NarrowFlat)
+- flat field images with the iodine cell in the beam (Iodine)
 
 The arc frames are usually taken with the pinhole, 3 and
 8 arc-second long slits. The wide flats are taken
-with the 8 arc-second long slit that are 2 arcseconds in width,
-while the narrow flats are taken with the 3 arc-second long slit.
+with the 8 arc-second long slit that are 2 arcseconds in width. 
+This means they cover pretty much all of the detector. 
+These can be use for the trace frames for the 8 arc-second
+and for pixel flats for all of the data.
+The narrow flats are taken with the 3 arc-second long slit.
+These should be used for the trace frames for the 3 arc-second
+long slit.
 
 Currently the wide flats AND the narrow flats are identified 
 as trace frames in the PypeIt file. *EDIT the PypeIt file to
@@ -45,9 +50,9 @@ Flat Fielding
 -------------
 
 For the flat fields, currently the nightly calibrations
-produce 50 "wide flats" but only 12 "narrow flats".
-The 3"  arc-second long slit is used for the narrow flats
-and the 8" arc-second long slit is used for the wide flats.
+produce 50 "wide flats" but only 12 "narrow flats"
+for each calibration run, so there could be twice
+as many in total of each.
 
 
 Slit tracing
@@ -60,12 +65,10 @@ slit.
 The WideFlat images should also be used for slit tracing 
 for data taken with the 8 arc-second long slit.
 
-**Note**: The WideFlat images will not be automatically
-assigned as a Trace images for the 8 arc-second long slit
-configuration. 
+**Note**: The WideFlat images will be automatically
+assigned as a Trace images for both the 8 arc-second long slit
+configuration and the 3 arc-second long slit configuration.
 
-This must be done manually by the user by editing the
-PypeIt file.
 
 Wavelength Calibration
 ----------------------
