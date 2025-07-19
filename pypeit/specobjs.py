@@ -480,8 +480,36 @@ class SpecObjs:
             indx = self.SLITID == slitorder
         else:
             msgs.error("The '{0:s}' PYPELINE is not defined".format(self[0].PYPELINE))
-        #
+
         return indx
+
+    def slitorder_uniq_id_indices(self, uniq_id):
+        """
+        Return the set of indices matching the unique object identifier. 
+        For MultiSlit this is the SPAT_PIXPOS_ID, for Echelle it is the ECH_FRACPOS_ID.
+        
+        Parameters
+        ----------
+        object_id : int
+            The unique object identifier for the slit/order of interest.
+            
+        Returns
+        -------
+        `numpy.ndarray`_
+            Array of indices with the corresponding object ID. Shape is (nobj,).
+        
+        """
+        if self[0].PYPELINE == 'Echelle':
+            indx = self.ECH_FRACPOS_ID == uniq_id
+        elif self[0].PYPELINE == 'MultiSlit':
+            indx = self.SPAT_PIXPOS_ID == uniq_id
+        elif self[0].PYPELINE == 'SlicerIFU':
+            indx = self.SPAT_PIXPOS_ID == uniq_id
+        else: 
+            msgs.error("The '{0:s}' PYPELINE is not defined".format(self[0].PYPELINE))
+        
+        return indx
+        
 
     def name_indices(self, name):
         """

@@ -208,8 +208,8 @@ class CoAdd2D:
         self.pseudo_dict = None
 
         # Brightest object attributes used for both MultislitCoAdd2D and EchelleCoAdd2D
-        self.objid_bri = None # This will be an array with shape = (nexp,) containing objid of the brightest object in each exposure
-        self.snr_bar_bri = None # This will be an array with shape = (nexp,) containing the S/N of the brightest object in each exposure
+        self.obj_id_bri = None # Array with shape = (nexp,) containing spat_pixpos_id (MultiSlit) or ech_fracpos_id (Echelle) of the brightest object in each exposure
+        self.snr_bar_bri = None # Array with shape = (nexp,) containing the S/N of the brightest object in each exposure
 
         self.use_weights = None # This is a list of length self.nexp that is assigned by the compute_weights method
         self.wave_grid = None
@@ -1350,18 +1350,19 @@ class MultiSlitCoAdd2D(CoAdd2D):
 
         # otherwise, find if there is a bright object we could use
         if len(self.stack_dict['specobjs_list']) > 0 and (offsets == 'auto' or weights == 'auto'):
-            
-            if self.pars['coadd2d']['multi_spatidpixposid4weights'] is not None:
+            # If the user passed in user_obj_ids, we will use these for the brighest object to 
+            # be optionally used for offsets and weights. 
+            if self.par['coadd2d']['user_obj_ids'] is not None:
                 if weights != 'auto':
-                    msgs.error('Parameter `multi_spatpixposid4weights` can only be used if weights are set to `auto`.')
-                if len(self.pars['coadd2d']['multi_spatpixposid4weights']) != self.nexp:
-                    msgs.error('Parameter `multi_spatpixposid4weights` must have the same number of elements as exposures.')
+                    msgs.error('Parameter `user_obj_ids` can only be used if weights are set to `auto`.')
+                if len(self.par['coadd2d']['user_obj_ids']) != self.nexp:
+                    msgs.error('Parameter `user_obj_ids` must have the same number of elements as exposures.')
                 user_obj_exist = np.zeros(self.nexp, dtype=bool)
                 # get the flux, ivar, gpm, and spatial pixel position of the user object
-                fluxes, ivars, gpms, spatid = [], [], [], []
-                self.spat_pixpos_id_weights = self.pars['coadd2d']['multi_spatpixposid4weights']
+                fluxes, ivars, gpms, spatid, spat_pixpos = [], [], [], [], []
+                self.spat_pixpos_id_bri = self.par['coadd2d']['user_obj_ids']
                 for i, sobjs in enumerate(self.stack_dict['specobjs_list']):
-                    user_idx = sobjs.slitorder_spatpixposid_indices(self.spat_pixpos_id_weights[i],toler=self.par['coadd2d']['spat_toler'])
+                    user_idx = sobjs.slitorder_uniq_id_indices(self.spat_pixpos_id_bri[i])
                     if np.any(user_idx):
                         this_sobj = sobjs[user_idx][0]
                         flux_iobj, ivar_iobj, gpm_iobj = self.unpack_specobj(this_sobj)
@@ -1369,18 +1370,24 @@ class MultiSlitCoAdd2D(CoAdd2D):
                             fluxes.append(flux_iobj)
                             ivars.append(ivar_iobj)
                             gpms.append(gpm_iobj)
+                            spat_pixpos.apptend(this_sobj.SPAT_PIXPOS)
                             spatid.append(this_sobj.SLITID)
                             user_obj_exist[i] = True
                 # check if the user object exists in all the exposures
                 if not np.all(user_obj_exist):
-                    msgs.error('Not all of the spatids provided through `multi_spatpixposid4weights` exist in all of the exposures.')
+                    embed()
+                    msgs.error('Not all of the spatids provided through `user_obj_ids` exist in all of the exposures.')
                 # get the needed info about the user object
                 #self.objid_bri = np.repeat(user_objid, self.nexp)
                 #self.spat_pixpos_weights = spat_pixpos
-                self.spatid_weights = np.array(spatid)
-                self.snr_bar_weights, _ = coadd.calc_snr(fluxes, ivars, gpms)                
+                self.spatid_bri = np.array(spatid)
+                self.spat_pixpos_bri = np.array(spat_pixpos)
+                self.snr_bar_bri, _ = coadd.calc_snr(fluxes, ivars, gpms)                
+                self.obj_id_bri = self.spat_pixpos_id_bri                 
             else:
-                self.objid_bri, self.spat_pixpos_id_bri, self.spatid_bri, self.snr_bar_bri = self.get_brightest_obj(self.stack_dict['specobjs_list'], self.spat_ids)
+                # Otherwise, find the brightest object in the stack and obtain the relevant information 
+                self.spat_pixpos_id_bri, self.spat_pixpos_bri, self.spatid_bri, self.snr_bar_bri = self.get_brightest_obj(self.stack_dict['specobjs_list'], self.spat_ids)
+                self.obj_id_bri = self.spat_pixpos_id_bri
 
 
 
@@ -1446,7 +1453,8 @@ class MultiSlitCoAdd2D(CoAdd2D):
             slit_righ = np.full(nspec_pseudo, nspat_pseudo)
             inmask = norm_rebin_stack > 0
             traces_rect = np.zeros((nspec_pseudo, self.nexp))
-            sobjs = specobjs.SpecObjs()
+            #sobjs = specobjs.SpecObjs()
+            user_obj_ids = self.par['coadd2d']['user_obj_ids']
             for iexp in range(self.nexp):
                 sobjs_exp = findobj_skymask.objs_in_slit(
                     sci_list_rebin[0][iexp,:,:], utils.inverse(var_list_rebin[0][iexp,:,:]), thismask, slit_left, slit_righ,
@@ -1454,10 +1462,16 @@ class MultiSlitCoAdd2D(CoAdd2D):
                     trim_edg=self.par['reduce']['findobj']['find_trim_edge'],
                     maxdev=self.par['reduce']['findobj']['find_maxdev'],
                     numiterfit=self.par['reduce']['findobj']['find_numiterfit'],
-                    ncoeff=3, snr_thresh=self.par['reduce']['findobj']['snr_thresh'], nperslit=1,
+                    ncoeff=3, snr_thresh=self.par['reduce']['findobj']['snr_thresh'], 
+                    nperslit=1 if user_obj_ids is None else None, 
                     find_min_max=self.par['reduce']['findobj']['find_min_max'],
                     show_trace=self.debug_offsets, show_peaks=self.debug_offsets)
-                sobjs.add_sobj(sobjs_exp)
+                if self.par['coadd2d']['user_obj_ids'] is not None:
+                     left_edge_orig = self.stack_dict[iexp].select_edges(flexure=self.stack_dict['spat_flexure_list'][iexp])[0]
+                     sobj_orig = self.stack_dist['specobjs_list'][iexp].slitorder_uniq_id(user_obj_ids[iexp])
+                     embed()
+                
+                #sobjs.add_sobj(sobjs_exp)
                 traces_rect[:, iexp] = sobjs_exp.TRACE_SPAT
             # Now deterimine the offsets. Arbitrarily set the zeroth trace to the reference
             med_traces_rect = np.median(traces_rect,axis=0)
@@ -1494,15 +1508,15 @@ class MultiSlitCoAdd2D(CoAdd2D):
         super().compute_weights(weights)
 
         # adjustment for multislit to case 3) Bright object exists and parset `weights` is equal to 'auto'
-        if (self.objid_bri is not None) and (weights == 'auto'):
+        if (self.obj_id_bri is not None) and (weights == 'auto'):
             # compute weights using bright object
-            _, self.use_weights = self.optimal_weights(self.spatid_bri, self.objid_bri, weight_method='constant')
+            _, self.use_weights = self.optimal_weights(self.spatid_bri, self.obj_id_bri, weight_method='constant')
             if self.par['coadd2d']['user_obj'] is not None:
                 msgs.info(f'Weights computed using a unique reference object in slit={self.spatid_bri} provided by the user')
             else:
                 msgs.info(f'Weights computed using a unique reference object in slit={self.spatid_bri} with the highest S/N')
             self.snr_report(self.spatid_bri, self.spat_pixpos_weights, self.snr_bar_bri)
-            embed()
+
 
     def get_brightest_obj(self, specobjs_list, slit_spat_ids):
 
@@ -1517,16 +1531,15 @@ class MultiSlitCoAdd2D(CoAdd2D):
 
         Returns:
             tuple: Returns the following:
-                - objid: ndarray, int, shape=(len(specobjs_list),):
-                  Array of object ids representing the brightest reference object
+                - spat_pixpos_id: ndarray, int, shape=(len(specobjs_list),):
+                  Array of object spat_pixpos_ids representing the brightest reference object
                   in each exposure
-                - spatid_pixpos_id: ndarray, float, shape=(len(specobjs_list),):
+                - spat_pixpos: ndarray, float, shape=(len(specobjs_list),):
                   Array of spatial pixel positions of the brightest reference object
                   in each exposure
                 - spat_id (int): 
                   The SPAT_ID for the slit that the highest S/N ratio object is on
-                - snr_bar: ndarray, float, shape (len(list),): Average
-                  S/N computed over all the exposures for this brightest reference object
+                - snr_bar: ndarray, float, shape (len(list),): RMS S/N computed for this brightest reference object in each exposure
         """
         msgs.info('Finding brightest object')
         nexp = len(specobjs_list)
@@ -1534,7 +1547,7 @@ class MultiSlitCoAdd2D(CoAdd2D):
 
         slit_snr_max = np.zeros((nslits, nexp), dtype=float)
         bpm = np.ones(slit_snr_max.shape, dtype=bool)
-        objid_max = np.zeros((nslits, nexp), dtype=int)
+        spat_pixpos_id_max = np.zeros((nslits, nexp), dtype=int)
         spat_pixpos_max = np.zeros((nslits, nexp), dtype=float)
         # Loop over each exposure, slit, find the brightest object on that slit for every exposure
         for iexp, sobjs in enumerate(specobjs_list):
@@ -1544,8 +1557,8 @@ class MultiSlitCoAdd2D(CoAdd2D):
                     continue
                 ithis = np.abs(sobjs.SLITID - spat_id) <= self.par['coadd2d']['spat_toler']
                 if np.any(ithis):
-                    objid_this = sobjs[ithis].OBJID
-                    spat_pixpos_this = sobjs[ithis].SPAT_PIXPOS_ID
+                    spat_pixpos_id_this = sobjs[ithis].SPAT_PIXPOS_ID
+                    spat_pixpos_this = sobjs[ithis].SPAT_PIXPOS
                     fluxes, ivars, gpms = [], [], []
                     for spec in sobjs[ithis]:
                         flux_iobj, ivar_iobj, gpm_iobj = self.unpack_specobj(spec, spatord_id=spat_id)
@@ -1559,7 +1572,7 @@ class MultiSlitCoAdd2D(CoAdd2D):
                         rms_sn, _ = coadd.calc_snr(fluxes, ivars, gpms)
                         imax = np.argmax(rms_sn)
                         slit_snr_max[islit, iexp] = rms_sn[imax]
-                        objid_max[islit, iexp] = objid_this[imax]
+                        spat_pixpos_id_max[islit, iexp] = spat_pixpos_id_this[imax]
                         spat_pixpos_max[islit, iexp] = spat_pixpos_this[imax]
                         bpm[islit, iexp] = False
 
@@ -1582,10 +1595,10 @@ class MultiSlitCoAdd2D(CoAdd2D):
             slitid = np.argmax(slit_snr)
             snr_bar_mean = slit_snr[slitid]
             snr_bar = slit_snr_max[slitid, :]
-            objid = objid_max[slitid, :]
-            spat_pixpos_id = spat_pixpos_max[slitid, :]
+            spat_pix_pos_id = spat_pixpos_id_max[slitid, :]
+            spat_pixpos = spat_pixpos_max[slitid, :]
 
-        return objid, spat_pixpos_id, slit_spat_ids[slitid], snr_bar
+        return spat_pix_pos_id, spat_pixpos, slit_spat_ids[slitid], snr_bar
 
     def snr_report(self, slitid, spat_pixpos, snr_bar):
         """
@@ -1791,10 +1804,10 @@ class EchelleCoAdd2D(CoAdd2D):
 
         # adjustment for echelle to case 2): a list of offsets is provided by the user
         if isinstance(self.offsets, (list, np.ndarray)):
-            self.objid_bri = None
+            self.obj_id_bri = None
 
         # adjustment for echelle to case 4) parset `offsets` = 'auto' but we have a bright object
-        elif offsets == 'auto' and self.objid_bri is not None:
+        elif offsets == 'auto' and self.obj_id_bri is not None:
             # offsets are not determined, but the bright object is used to construct
             # a reference trace (this is done in coadd using method `reference_trace_stack`)
             self.offsets = None
@@ -1817,12 +1830,12 @@ class EchelleCoAdd2D(CoAdd2D):
         super().compute_weights(weights)
 
         # adjustment for echelle to case 3) Bright object exists and parset `weights` is equal to 'auto'
-        if (self.objid_bri is not None) and (weights == 'auto'):
+        if (self.obj_id_bri is not None) and (weights == 'auto'):
             # computing a list of weights for all the slitord_ids that we than parse in coadd
             slitord_ids = self.stack_dict['slits_list'][0].slitord_id
             self.use_weights = []
             for idx in slitord_ids:
-                _, iweights = self.optimal_weights(idx, self.objid_bri)
+                _, iweights = self.optimal_weights(idx, self.obj_id_bri)
                 self.use_weights.append(iweights)
             if self.par['coadd2d']['user_obj'] is not None:
                 msgs.info('Weights computed using a unique reference object provided by the user')
