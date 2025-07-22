@@ -760,9 +760,7 @@ def ech_cutobj_on_snr(
         # SNR
         for iord in range(norders):
             iorder_vec = order_vec[iord]
-            indx = sobjs_align.slitorder_objid_indices(
-                iorder_vec, uni_obj_id[iobj])
-            #indx = (sobjs_align.ECH_OBJID == uni_obj_id[iobj]) & (sobjs_align.ECH_ORDERINDX == iord)
+            indx = (sobjs_align.ECH_ORDER == iorder_vec) & (sobjs_align.ECH_OBJID == uni_obj_id[iobj])
             #spec = sobjs_align[indx][0]
             inmask_iord = inmask & (slitmask == sobjs_align[indx].SLITID)# gdslit_spat[iord])
             # TODO make the snippet below its own function quick_extraction()
@@ -978,6 +976,7 @@ def ech_pca_traces(
             if spec.ech_frac_was_fit and (spec.ech_snr > 1.0):
                     spec.TRACE_SPAT = xfit_gweight[:,iord]
                     spec.SPAT_PIXPOS = spec.TRACE_SPAT[specmid]
+                    spec.SPAT_PIXPOS_ID = int(np.rint(spec.SPAT_PIXPOS))
 
     #TODO Put in some criterion here that does not let the fractional position change too much during the iterative
     # tracefitting. The problem is spurious apertures identified on one slit can be pulled over to the center of flux
@@ -1890,6 +1889,7 @@ def objs_in_slit(image, ivar, thismask, slit_left, slit_righ,
 
             sobjs[iobj].trace_spec = spec_vec
             sobjs[iobj].SPAT_PIXPOS = sobjs[iobj].TRACE_SPAT[specmid]
+            sobjs[iobj].SPAT_PIXPOS_ID = int(np.rint(sobjs[iobj].SPAT_PIXPOS))
             # Set the idx for any prelminary outputs we print out. These will be updated shortly
             sobjs[iobj].set_name()
 
@@ -1930,6 +1930,7 @@ def objs_in_slit(image, ivar, thismask, slit_left, slit_righ,
         for iobj in range(nobj_reg):
             sobjs[iobj].TRACE_SPAT = xfit_gweight[:, iobj]
             sobjs[iobj].SPAT_PIXPOS = sobjs[iobj].TRACE_SPAT[specmid]
+            sobjs[iobj].SPAT_PIXPOS_ID = int(np.rint(sobjs[iobj].SPAT_PIXPOS))
             sobjs[iobj].set_name()
 
     # Now deal with the hand apertures if a hand_extract_dict was passed in. Add these to the SpecObj objects
@@ -1987,6 +1988,7 @@ def objs_in_slit(image, ivar, thismask, slit_left, slit_righ,
             thisobj.TRACE_SPAT = trace_model + shift
             thisobj.trace_spec = spec_vec
             thisobj.SPAT_PIXPOS = thisobj.TRACE_SPAT[specmid]
+            thisobj.SPAT_PIXPOS_ID = int(np.rint(thisobj.SPAT_PIXPOS))
             thisobj.set_name()
             # assign FWHM
             # TODO -- I think FWHM *has* to be input
