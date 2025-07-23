@@ -656,7 +656,7 @@ class SpecObj(datamodel.DataContainer):
         Returns:
             bool: True if all checks have passed
         """
-        required = ['TRACE_SPAT', 'SPAT_PIXPOS', 'SPAT_FRACPOS',
+        required = ['TRACE_SPAT', 'SPAT_PIXPOS', 'SPAT_PIXPOS_ID', 'SPAT_FRACPOS',
             'trace_spec', 'OBJID', 'FWHM', 'maskwidth', 'NAME',
             'smash_peakflux', 'smash_snr',
             'SLITID', 'DET', 'PYPELINE', 'OBJTYPE']
@@ -684,7 +684,7 @@ class SpecObj(datamodel.DataContainer):
         for attr in self.datamodel.keys():
             if hasattr(self, attr) and getattr(self, attr) is not None:
                 # Special ones
-                if attr in ['DET', 'SLITID', 'SPAT_PIXPOS', 'NAME', 'RA', 
+                if attr in ['DET', 'SLITID', 'SPAT_PIXPOS', 'SPAT_PIXPOS_ID', 'NAME', 'RA', 
                             'DEC', 'MASKDEF_ID', 'MASKDEF_OBJNAME', 'MASKDEF_EXTRACT',
                             'MASKDEF_OBJMAG', 'MASKDEF_OBJMAG_BAND']:
                     rdict[attr] = getattr(self,attr)
