@@ -617,7 +617,7 @@ class CoAdd2D:
             # TODO: Is this even still needed? It seems use_weights is now always a list of length nexp
 
             # reference trace
-            ref_trace_stack = self.reference_trace_stack(slit_idx, offsets=self.offsets, objid=self.obj_id_bri)
+            ref_trace_stack = self.reference_trace_stack(slit_idx, offsets=self.offsets, uniq_obj_id=self.obj_id_bri)
 
             # Perform the 2d coadd
             # NOTE: mask_stack is a gpm, and this is called inmask_stack in
@@ -1254,16 +1254,23 @@ class CoAdd2D:
         pass
 
 
-    def reference_trace_stack(self, slitid, offsets=None, objid=None):
+    def reference_trace_stack(self, slitid, offsets=None, uniq_obj_id=None):
         """
         Dummy method to obtain the stack of reference traces. Overloaded by child methods.
 
-        Args:
-            slitid:
-            offsets:
-            objid:
+        Parameters
+        ----------
+        slitid: int
+            The slit ID for which the reference traces are to be obtained.
+        offsets: list, optional
+            List of offsets to apply to the reference traces. Optional. 
+        uniq_obj_id: list, optional
+            List of object IDs to use for the reference traces. Optional.
 
-        Returns:
+        Returns
+        -------
+        ref_trace_stac: list
+            List of reference traces for the slit specified by slitid.
 
         """
         pass
@@ -1629,16 +1636,24 @@ class MultiSlitCoAdd2D(CoAdd2D):
 
     # TODO add an option here to actually use the reference trace for cases where they are on the same slit and it is
     # single slit???
-    def reference_trace_stack(self, slitid, offsets=None, objid=None):
+    def reference_trace_stack(self, slitid, offsets=None, uniq_obj_id=None):
         """
-        ..todo..  I need a doc string
+        Method to obtain the stack of reference traces for Multislit reductions.
 
-        Args:
-            slitid:
-            offsets:
-            objid:
+        Parameters
+        ----------
+        slitid: int
+            The slit ID for which the reference traces are to be obtained.
+        offsets: list, optional
+            List of offsets to apply to the reference traces. Optional. 
+        uniq_obj_id: list, optional
+            List of object IDs to use for the reference traces. Not used in Multislit reductions.
 
-        Returns:
+        Returns
+        -------
+        ref_trace_stack: list
+            List of reference traces for the slit specified by slitid. Each element in the list corresponds
+            to a different exposure and contains the reference trace for that exposure.
 
         """
 
@@ -1766,20 +1781,22 @@ class EchelleCoAdd2D(CoAdd2D):
 
         # If a user-input object to compute offsets and weights is provided, check if it exists and get the needed info
         if len(self.stack_dict['specobjs_list']) > 0 and self.par['coadd2d']['user_obj_ids'] is not None:
-            if not isinstance(self.par['coadd2d']['user_obj_ids'], int):
-                msgs.error('Parameter `user_obj` must include only the object OBJID.')
+            if len(self.par['coadd2d']['user_obj_ids']) != self.nexp:
+                msgs.error(f'Parameter `user_obj_ids` {self.par['coadd2d']['user_obj_ids']} must have the same number ' \
+                           f'of elements as exposures {self.nexp}.')
             else:
                 # does it exists?
                 user_obj_exist = np.zeros((self.nexp,self.nslits_single), dtype=bool)
                 orders= self.stack_dict['slits_list'][0].slitord_id
                 for iexp, sobjs in enumerate(self.stack_dict['specobjs_list']):
-                    for iord in orders:
+                    for iord, ord in enumerate(orders):
                         # check if the object exists in this exposure
-                        ind = sobjs.slitorder_uniq_id_indices(self.par['coadd2d']['user_obj_ids'][iexp], order=iord)
+                        ind = sobjs.slitorder_uniq_id_indices(self.par['coadd2d']['user_obj_ids'][iexp], order=ord)
                         #ind = (sobjs.ECH_ORDERINDX == iord) & (sobjs.ECH_OBJID == user_objid)
                         flux, ivar, mask = self.unpack_specobj(sobjs[ind][0])
                         if flux is not None and ivar is not None and mask is not None:
-                            user_obj_exist[iexp, iord] = True
+                                user_obj_exist[iexp, iord] = True
+
                             
                 if not np.all(user_obj_exist):
                     msgs.error('Object provided through `user_obj` does not exist in all the exposures.')
@@ -1815,7 +1832,7 @@ class EchelleCoAdd2D(CoAdd2D):
             # offsets are not determined, but the bright object is used to construct
             # a reference trace (this is done in coadd using method `reference_trace_stack`)
             self.offsets = None
-            if self.par['coadd2d']['user_obj'] is not None:
+            if self.par['coadd2d']['user_obj_ids'] is not None:
                 msgs.info('Reference trace about which 2d coadd is performed is computed using user object')
             else:
                 msgs.info('Reference trace about which 2d coadd is performed is computed using the brightest object')
@@ -1932,7 +1949,7 @@ class EchelleCoAdd2D(CoAdd2D):
         msgs.info(msg_string)
 
 
-    def reference_trace_stack(self, slitid, offsets=None, objid=None):
+    def reference_trace_stack(self, slitid, offsets=None, uniq_obj_id=None):
         """
         Utility function for determining the reference trace about
         which 2d coadds are performed.
@@ -1950,35 +1967,39 @@ class EchelleCoAdd2D(CoAdd2D):
         Either offsets or objid must be provided, but the code will
         raise an exception if both are provided.
 
-        Args:
-            slitid (int):
-                The slit or order that we are currently considering
-            stack_dict (dict):
-                Dictionary containing all the images and keys
-                required for performing 2d coadds.
-            offsets (list, `numpy.ndarray`_):
-                An array of offsets with the same dimensionality as
-                the nexp, the numer of images being coadded.
-            objid (list, `numpy.ndarray`_):
-                An array of objids with the same dimensionality as
-                the nexp, the number of images being coadded.
+        Parameters
+        ----------
+        slitid (int):
+            The slit or order that we are currently considering
+        stack_dict (dict):
+            Dictionary containing all the images and keys
+            required for performing 2d coadds.
+        offsets (list, `numpy.ndarray`_):
+            An array of offsets with the same dimensionality as
+            the nexp, the numer of images being coadded.
+        uniq_obj_id (list, `numpy.ndarray`_):
+            An array of obj ids with the same dimensionality as
+            the nexp, the number of images being coadded. This
+            is the ECH_FRACPOS_ID for echelle reductions. 
 
-        Returns:
-            :obj:`list`: A list of reference traces for the 2d coadding that
-            have been offset
+        Returns
+        -------
+        :obj:`list`: A list of reference traces for the 2d coadding that
+        have been offset
 
         """
 
-        if offsets is not None and objid is not None:
-            msgs.error('You can only input offsets or an objid, but not both')
+        if offsets is not None and uniq_obj_id is not None:
+            msgs.error('You can only input offsets or an uniq_obj_id, but not both')
         if isinstance(offsets, (list, np.ndarray)):
             return self.offset_slit_cen(slitid, offsets)
 
-        if objid is not None:
+        if uniq_obj_id is not None:
+            orders = self.stack_dict['slits_list'][0].slitord_id
             specobjs_list = self.stack_dict['specobjs_list']
             ref_trace_stack = []
             for iexp, sobjs in enumerate(specobjs_list):
-                ithis = (sobjs.ECH_ORDERINDX == slitid) & (sobjs.ECH_OBJID == objid[iexp])
+                ithis = sobjs.slitorder_uniq_id_indices(uniq_obj_id[iexp], order=orders[slitid])
                 ref_trace_stack.append(sobjs[ithis][0].TRACE_SPAT)
             return ref_trace_stack
 

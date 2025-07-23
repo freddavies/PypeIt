@@ -1774,6 +1774,10 @@ def objs_in_slit(image, ivar, thismask, slit_left, slit_righ,
         flux_smash, mask=np.logical_not(gpm_smash), sigma_lower=3.0, sigma_upper=3.0)
     flux_smash_recen = flux_smash - flux_smash_med
 
+    # Computing the flux_smash_smth here since it is needed for the case of hand_extract_dict is not None and nobj_reg = 0
+    gauss_smth_sigma = (fwhm/2.3548)
+    flux_smash_smth = scipy.ndimage.gaussian_filter1d(flux_smash_recen, gauss_smth_sigma, mode='nearest')
+
     # Return if none found and no hand extraction
     if not np.any(gpm_smash): 
         sobjs = specobjs.SpecObjs()
@@ -1782,8 +1786,10 @@ def objs_in_slit(image, ivar, thismask, slit_left, slit_righ,
             msgs.info('No objects found automatically.  Consider manual extraction.')
             return sobjs
         else:
+            nobj_reg = 0
+            # Cannot define the SNR if gpm_smash is all False
+            snr_smash_smth = np.zeros_like(flux_smash_smth)
             msgs.info('No objects found automatically.')
-            
     else:
         # Compute the formal corresponding variance over the set of pixels that are not masked by gpm_sigclip
         var_rect = utils.inverse(ivar_rect)
@@ -1793,9 +1799,7 @@ def objs_in_slit(image, ivar, thismask, slit_left, slit_righ,
         snr_smash = flux_smash_recen*np.sqrt(ivar_smash)
 
         # Smooth this SNR image with a Gaussian set by the input fwhm
-        gauss_smth_sigma = (fwhm/2.3548)
         snr_smash_smth = scipy.ndimage.gaussian_filter1d(snr_smash, gauss_smth_sigma, mode='nearest')
-        flux_smash_smth = scipy.ndimage.gaussian_filter1d(flux_smash_recen, gauss_smth_sigma, mode='nearest')
         # Search for spatial direction peaks in the smoothed snr image
         _, _, x_peaks_out, x_width, x_err, igood, _, _ = arc.detect_lines(
             snr_smash_smth, input_thresh=snr_thresh, fit_frac_fwhm=1.5, fwhm=fwhm, min_pkdist_frac_fwhm=0.75,
