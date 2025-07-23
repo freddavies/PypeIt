@@ -1475,7 +1475,7 @@ class MultiSlitCoAdd2D(CoAdd2D):
             if self.par['coadd2d']['user_obj_ids'] is not None:
                 msgs.info(f'The median distance between the original traces and those in the rebinned image for the user_obj_ids is ' \
                           f'{np.median(user_obj_dspats):.2f} pixels')
-            self.debug_offsets=True
+
             # Now deterimine the offsets. Arbitrarily set the zeroth trace to the reference
             med_traces_rect = np.median(traces_rect,axis=0)
             offsets = med_traces_rect[0] - med_traces_rect
@@ -1793,6 +1793,8 @@ class EchelleCoAdd2D(CoAdd2D):
                         # check if the object exists in this exposure
                         ind = sobjs.slitorder_uniq_id_indices(self.par['coadd2d']['user_obj_ids'][iexp], order=ord)
                         #ind = (sobjs.ECH_ORDERINDX == iord) & (sobjs.ECH_OBJID == user_objid)
+                        if (len(ind) == 0) or (not np.any(ind)): 
+                            msgs.error(f'Object with user_obj_id {self.par["coadd2d"]["user_obj_ids"][iexp]} does not exist in exposure {iexp+1} for order {ord}.')
                         flux, ivar, mask = self.unpack_specobj(sobjs[ind][0])
                         if flux is not None and ivar is not None and mask is not None:
                                 user_obj_exist[iexp, iord] = True
