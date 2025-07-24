@@ -96,10 +96,9 @@ class APFLevySpectrograph(spectrograph.Spectrograph):
         par['reduce']['findobj']['maxnumber_sci'] = 1
         par['reduce']['findobj']['maxnumber_std'] = 1
         par['reduce']['findobj']['find_fwhm'] = 4.0
-        par['reduce']['findobj']['snr_thresh'] = 3.0       
+        par['reduce']['findobj']['snr_thresh'] = 3.0
 
         par['reduce']['extraction']['boxcar_radius'] = 1.728 # 4 pixel radius
-        #par['reduce']['extraction']['sn_gauss'] = 400 # basically always use the Gaussian model for optimal extraction
         par['reduce']['skysub']['mask_by_boxcar'] = True
 
         return par
@@ -400,7 +399,9 @@ class APFLevySpectrograph(spectrograph.Spectrograph):
             par['reduce']['skysub']['no_local_sky'] = True
             par['reduce']['findobj']['find_trim_edge'] = [0, 0]
             par['calibrations']['slitedges']['pad'] = 5
-            
+            par['reduce']['extraction']['sn_gauss'] = 400
+            # basically always use the Gaussian model for optimal extraction
+
         return par
 
     @property
