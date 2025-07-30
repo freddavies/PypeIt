@@ -1792,8 +1792,7 @@ class EchelleCoAdd2D(CoAdd2D):
                     for iord, ord in enumerate(orders):
                         # check if the object exists in this exposure
                         ind = sobjs.slitorder_uniq_id_indices(self.par['coadd2d']['user_obj_ids'][iexp], order=ord)
-                        #ind = (sobjs.ECH_ORDERINDX == iord) & (sobjs.ECH_OBJID == user_objid)
-                        if (len(ind) == 0) or (not np.any(ind)): 
+                        if (len(ind) == 0) or (not np.any(ind)):
                             msgs.error(f'Object with user_obj_id {self.par["coadd2d"]["user_obj_ids"][iexp]} does not exist in exposure {iexp+1} for order {ord}.')
                         flux, ivar, mask = self.unpack_specobj(sobjs[ind][0])
                         if flux is not None and ivar is not None and mask is not None:
@@ -1809,7 +1808,7 @@ class EchelleCoAdd2D(CoAdd2D):
 
         elif len(self.stack_dict['specobjs_list']) > 0 and (self.par['coadd2d']['offsets'] == 'auto' or self.par['coadd2d']['weights'] == 'auto'):
             self.obj_id_bri, self.snr_bar_bri = \
-                self.get_brightest_obj(self.stack_dict['specobjs_list'], self.nslits_single)
+                self.get_brightest_obj(self.stack_dict['specobjs_list'], self.stack_dict['slits_list'][0].slitord_id)
         
         
 
@@ -1867,14 +1866,15 @@ class EchelleCoAdd2D(CoAdd2D):
                 msgs.info('Weights computed using a unique reference object with the highest S/N')
                 self.snr_report(self.snr_bar_bri)
 
-    def get_brightest_obj(self, specobjs_list, nslits):
+    def get_brightest_obj(self, specobjs_list, orders):
         """
         Utility routine to find the brightest object in each exposure given a specobjs_list for Echelle reductions.
 
         Args:
             specobjs_list: list
                List of SpecObjs objects.
-            echelle: bool, default=True, optional
+            orders: `numpy.ndarray`_
+                Array of order ids for which the brightest object is to be found.
 
         Returns:
             tuple: Returns the following:
@@ -1893,13 +1893,11 @@ class EchelleCoAdd2D(CoAdd2D):
             msgs.info("Working on exposure {}".format(iexp))
             uni_fracpos_id = np.unique(sobjs.ECH_FRACPOS_ID)
             nobjs = len(uni_fracpos_id)
-            order_snr = np.zeros((nslits, nobjs), dtype=float)
-            bpm = np.ones((nslits, nobjs), dtype=bool)
-            orders = self.stack_dict['slits_list'][0].slitord_id
-            for iord in orders:
+            order_snr = np.zeros((orders.size, nobjs), dtype=float)
+            bpm = np.ones((orders.size, nobjs), dtype=bool)
+            for iord, ord in enumerate(orders):
                 for iobj in range(nobjs):
-                    ind = sobjs.slitorder_uniq_id_indices(uni_fracpos_id[iobj], order=iord)
-                    #ind = (sobjs.ECH_ORDER == iord) & (sobjs.ECH_FRACPOS_ID == uni_fracpos_id[iobj])
+                    ind = sobjs.slitorder_uniq_id_indices(uni_fracpos_id[iobj], order=ord)
                     flux, ivar, mask = self.unpack_specobj(sobjs[ind][0], spatord_id=sobjs[ind][0].ECH_ORDER)
 
                     if flux is not None and ivar is not None and mask is not None:
