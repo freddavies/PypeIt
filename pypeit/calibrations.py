@@ -1065,6 +1065,7 @@ class Calibrations:
         msgs.info('Creating edge tracing calibration frame using files: ')
         for f in raw_trace_files:
             msgs.prindent(f'{Path(f).name}')
+        self.raw_files = raw_trace_files
 
         # Reset the BPM
         self.get_bpm(frame=raw_trace_files[0])
@@ -1121,9 +1122,33 @@ class Calibrations:
         traceImage = None
         edges = None
         self.slits.to_file()
+
+        # State
+        self.slits_state(self.slits.get_path())
+
         if self.user_slits is not None:
             self.slits.user_mask(detname, self.user_slits)
         return self.slits
+
+    def slits_state(self, outfile:str):
+        if self.state is None:
+            return
+        #
+        self.state.update_calib('slits', self.calib_ID, self.det, 
+                                'input_files', self.raw_files)
+        self.state.update_calib('slits', self.calib_ID, self.det, 
+                                'output_files', [str(outfile)])
+        self.state.update_calib('slits', self.calib_ID, self.det, 
+                                'nslits', self.slits.nslits)
+
+        #embed(header='Slit State; 1136 of calibrations.py')
+        for islit in range(self.slits.nslits):
+            slit_ID = int(self.slits.slitord_id[islit])
+            self.state.update_calib('slits', self.calib_ID, self.det, 
+                                'center', self.slits.center[islit],
+                                slit=slit_ID)
+            self.state.update_calib('slits', self.calib_ID, self.det, 
+                                'status', 'success', slit=slit_ID)
 
     def wvcalib_state(self, outfile:str):
         if self.state is None:
@@ -1359,7 +1384,7 @@ class Calibrations:
         for step in self.steps:
             if stop_at_step is not None and step == stop_at_step:
                 force = 'remake'
-                msgs.info(f"Calibrations will stop at {stop_at_step}") 
+                msgs.info(f"Calibrations will stop at {stop_at_step}")
             else:
                 force = None
 
@@ -1371,7 +1396,7 @@ class Calibrations:
 
             # Update state
             if self.state is not None:
-                self.state.update_calib(step, self.calib_ID, self.det, 'status', 
+                self.state.update_calib(step, self.calib_ID, self.det, 'status',
                                     'success' if self.success else 'failed')
                 self.state.write()
             # Drop out?
@@ -1379,7 +1404,7 @@ class Calibrations:
                 self.failed_step = f'get_{step}'
                 return
             if stop_at_step is not None and step == stop_at_step:
-                msgs.info(f"Calibrations stopping at {stop_at_step}") 
+                msgs.info(f"Calibrations stopping at {stop_at_step}")
                 return
         msgs.info("Calibration complete and/or fully loaded!")
         msgs.info("#######################################################################")
