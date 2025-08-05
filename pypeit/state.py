@@ -3,7 +3,11 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Literal
 
 # Hopefully this isn't circular
+import os
 import io
+import json
+
+from IPython import embed
 
 # Calibration state
 class BaseCalibState(BaseModel):
@@ -13,7 +17,7 @@ class BaseCalibState(BaseModel):
     input_files: Optional[List[str]] = None
     output_files: Optional[List[str]] = None
     qa_files: Optional[List[str]] = None
-    status: Literal["complete", "fail", "undone", "running"] = "undone"
+    status: Literal["complete", "fail", "undone", "running", "success"] = "undone"
 
 class BiasCalibState(BaseCalibState):
     step: Literal["bias"] = "bias"
@@ -22,7 +26,7 @@ class BiasCalibState(BaseCalibState):
     std: Optional[float] = None
 
 class WvCalibSlit(BaseModel):
-    status: Literal["success", "fail", "undone"] = "undone"
+    status: Literal["success", "fail", "undone", ] = "undone"
     # Metrics
     rms: Optional[float] = None
 
@@ -45,6 +49,23 @@ class RunPypeItState(BaseModel):
     previous_step: str = 'none'
     bias: Optional[List[BiasCalibState]] = Field(default_factory=list)
     wv_calib: Optional[List[WvCalibState]] = Field(default_factory=list)
+    path: Optional[str] = None
+
+    @property
+    def outfile(self):
+        outfile = self.pypeit_file.replace('.pypeit', '_state.json') if self.path is None else self.path
+        return outfile
+
+    # Load existing state 
+    def load(self, path:str=None):
+        if not os.path.isfile(self.outfile):
+            return self
+        print("Loading existing state from {:s}".format(self.outfile))
+        with open(self.outfile, 'rt') as fh:
+            update_dict = json.load(fh)
+        # Return
+        return RunPypeItState.model_validate(update_dict)
+        
 
     def update_calib(self, step:str, calib_id: int, det: str, key:str, value,
                      slit:str=None):
@@ -77,10 +98,11 @@ class RunPypeItState(BaseModel):
                 self_items[index].slits[slit] = slit_classes[step]()
             setattr(self_items[index].slits[slit], key, value)
 
-    def write(self, path:str=None):
-        outfile = self.pypeit_file.replace('.pypeit', '_state.json') if path is None else path
-        json_string = self.model_dump_json(exclude_none=True)
+    def write(self):
+        json_string = self.model_dump_json(exclude_none=True, indent=4, round_trip=True)
         # Write
-        with io.open(outfile, 'w', encoding='utf-8') as f:
+        with io.open(self.outfile, 'w', encoding='utf-8') as f:
+            #f.write(json.dumps(obj, sort_keys=True, indent=4,
+            #                   separators=(',', ': '), **kwargs))
             f.write(json_string)
         

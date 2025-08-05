@@ -779,7 +779,7 @@ class QL(scriptbase.ScriptBase):
 
         # Find the raw science files
         sci_idx = ps.fitstbl.find_frames('science') if args.sci_files is None \
-                        else np.in1d(ps.fitstbl['filename'].data, args.sci_files)
+                        else np.isin(ps.fitstbl['filename'].data, args.sci_files)
         # TODO: Allow for standard files to be identified?
 
         # Check for any untyped files (that have not been typed) as science
