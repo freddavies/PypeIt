@@ -777,7 +777,7 @@ class GeminiGMOSSHamSpectrograph(GeminiGMOSSpectrograph):
     header_name = 'GMOS-S'
     telescope = telescopes.GeminiSTelescopePar()
     supported = True
-    comment = 'Hamamatsu detector (R400, B480, B600, R831); see :doc:`gemini_gmos`'
+    comment = 'Hamamatsu detector (R150, R400, B480, B600, R831); see :doc:`gemini_gmos`'
 
     def hdu_read_order(self):
         """
@@ -1078,7 +1078,7 @@ class GeminiGMOSNHamSpectrograph(GeminiGMOSNSpectrograph):
     """
     name = 'gemini_gmos_north_ham'
     supported = True
-    comment = 'Hamamatsu detector (R400, B600, R831); Used since Feb 2017; see :doc:`gemini_gmos`'
+    comment = 'Hamamatsu detector (R150, R400, B600, R831); Used since Feb 2017; see :doc:`gemini_gmos`'
 
     def hdu_read_order(self):
         """
