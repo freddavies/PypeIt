@@ -270,9 +270,9 @@ directory:
 .. note::
 
     In terms of the merge with the release branch, beware that you may need to
-    start a new section of the ``CHANGES.rst`` file to reflect a jump in the
-    version number.  This should only be necessary if your branch is the first
-    one after a new tag is released.
+    start a new release version doc that reflects the jump in the version
+    number.  This should only be necessary if your branch is the first one after
+    a new tag is released.  See :ref:`changelog`.
 
 Development Principles and Communication
 ========================================
