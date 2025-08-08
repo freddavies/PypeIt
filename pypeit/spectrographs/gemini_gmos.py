@@ -17,6 +17,7 @@ from pypeit import msgs
 from pypeit.spectrographs import spectrograph
 from pypeit import telescopes
 from pypeit import io
+from pypeit import utils
 from pypeit.core import framematch
 from pypeit.core import parse
 from pypeit.images import detector_container
@@ -681,15 +682,15 @@ class GeminiGMOSSpectrograph(spectrograph.Spectrograph):
 
         # Parse
         maskfile = filename[0]
-        wcs_file = filename[1]
-#         # Add path?
-#         if not os.path.isfile(maskfile):
-#             maskfile = os.path.join(trc_path, maskfile)
-#         if not os.path.isfile(wcs_file):
-#             wcs_file = os.path.join(trc_path, wcs_file)
-#
-#         # Slurp in the slitmask info
-#         self.get_slitmask(maskfile)
+        # wcs_file = filename[1]
+        # Add path?
+        if not os.path.isfile(maskfile):
+            maskfile = os.path.join(trc_path, maskfile)
+        # if not os.path.isfile(wcs_file):
+        #     wcs_file = os.path.join(trc_path, wcs_file)
+
+        # Slurp in the slitmask info
+        self.get_slitmask(maskfile)
 #
 #         # Binning of flat
 #         _, bin_spat = parse.parse_binning(binning)
@@ -747,20 +748,61 @@ class GeminiGMOSSpectrograph(spectrograph.Spectrograph):
 #         right_edges = np.array(right_edges).astype(float)
 #         sortindx = np.argsort(left_edges)
 
+        # DP: THIS SEEMS THE EASIEST WAY TO GET THE SLIT EDGES FROM THE MASKFILE. I NEED INPUTS ON WEATHER THE
+        # APPROACH ABOVE IS BETTER AND WHY.
+        # Get the left and right edges of the slits
         tab = Table.read(maskfile, format='fits')
-        left_edges = tab['specbottom'].value
-        right_edges = tab['spectop'].value
-        sortindx = np.argsort(tab['specbottom'].value)
+        left_edges = tab['specbottom'].data
+        right_edges = tab['spectop'].data
+        # make sure that the order of the edges arrays is the same as the slitmask
+        ids = np.array(tab['ID'].data, dtype=int)
+        idx = utils.index_of_x_eq_y(ids,self.slitmask.slitid, strict=True)
+        left_edges = left_edges[idx]
+        right_edges = right_edges[idx]
+        sortindx = np.argsort(left_edges)
 
         return left_edges, right_edges, sortindx, self.slitmask
 
-    @property
-    def spec_min_max(self, maskfile=None):
-        if maskfile is not None:
-            tab = Table.read(maskfile, format='fits')
-            return tab['specleft'].value, tab['specright'].value
-        else:
-            return None
+    @staticmethod
+    def maskdef_spec_minmax(maskfile=None, maskdef_ids=None, nspec=None, shift=150):
+        """
+        Get the spectral min and max values of each slit from the mask definition file.
+
+        Args:
+            maskfile (:obj:`str`, optional):
+                The mask file to read the maskdef spec minmax from.
+            maskdef_ids (:obj:`list`, optional):
+                The list of maskdef IDs to match to the maskfile values.
+            nspec (:obj:`int`, optional):
+                The number of spectral pixels in the image.
+            shift (:obj:`int`, optional):
+                The shift to apply to the spec minmax. Default is 150.
+                This is used to shift the spec minmax to account for the
+                uncertainty in the maskdef spec minmax values.
+        Returns:
+            :obj:`tuple`: A tuple of two `numpy.ndarray`_ with the spec min and max values.
+            If the maskfile, maskdef_ids, or nspec are not provided, None is returned for both min and max.
+        """
+
+        if maskfile is None or maskdef_ids is None or nspec is None:
+            # If any of these are not provided, we cannot get the maskdef spec minmax
+            # and we will use the whole spectral length instead.
+            msgs.warn('maskfile, maskdef_id, and nspec must be provided to get the maskdef spec minmax. '
+                       'The whole spectral length will be used instead.')
+            return None, None
+        # Get the maskdef spec minmax
+        tab = Table.read(maskfile, format='fits')
+        ids = np.array(tab['ID'].data, dtype=int)
+        idx = utils.index_of_x_eq_y(ids,maskdef_ids, strict=True)
+        specmin =  nspec - tab['specright'].data[idx]
+        specmax = nspec - tab['specleft'].data[idx]
+        # Add the shift
+        # if the tabulated value of specmin is less than 10 (i.e., very close to the edge of the detector),
+        # we do not apply the positive shift
+        _specmin = np.array([s + shift if s > 10 else s for s in specmin]) if shift > 0 else specmin + shift
+        _specmax = np.array([s + shift if s < nspec - 10 else s for s in specmax]) if shift < 0 else specmax + shift
+        return np.vstack((_specmin, _specmax))
+
 
 class GeminiGMOSSHamSpectrograph(GeminiGMOSSpectrograph):
     """

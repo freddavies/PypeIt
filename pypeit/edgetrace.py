@@ -5679,12 +5679,6 @@ class EdgeTraceSet(calibframe.CalibFrame):
             specmin = specmin[indx]/binspec
             specmax = specmax[indx]/binspec
 
-        # maskfiles = self.traceimg.files[0] if self.par['maskdesign_filename'] is None \
-        #     else self.par['maskdesign_filename']
-        # embed()
-        # specmin, specmax = self.spectrograph.spec_min_max(maskfiles[0])
-        # embed()
-
         if self.par['mask_off_detector']:
             # check and mask portions of the slits/orders that are more than 50% off the detector
             _slits = self.edge_fit[:,gpm].reshape(self.nspec, -1, 2)
@@ -5742,6 +5736,14 @@ class EdgeTraceSet(calibframe.CalibFrame):
             _merged_designtab.rename_column('MASKDEF_ID_1', 'MASKDEF_ID')
             # One more item
             _posx_pa = float(self.slitmask.posx_pa)
+            # Use maskdef specmin and specmax
+            if self.maskfile is not None and self.par['maskdesign_trim']:
+                _maskfile = str(Path(self.traceimg.files[0]).parent / self.maskfile) \
+                            if not Path(self.maskfile).exists() else self.maskfile
+                specmin, specmax = self.spectrograph.maskdef_spec_minmax(maskfile=_maskfile,
+                                                                         maskdef_ids=_maskdef_id,
+                                                                         nspec=self.nspec,
+                                                                         shift=self.par['maskdesign_trim_shift'])
         else:
             _maskdef_id = None
             _merged_designtab = None
