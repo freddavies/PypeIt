@@ -760,8 +760,8 @@ class Identify:
         fits_dict : list, optional
             List of dictionaries containing the _fitdict of previous calls, if multi-trace data
         specdata_multi : array, optional
-            Numpy array containing the flux information from all the traces, if multiple traces are
-            being fit.
+            Numpy array containing the flux information from all the traces, if multiple traces are 
+            being fit. 
         wvcalib : :class:`pypeit.wavecalib.WaveCalib`, optional
             Wavelength solution
         lines_pix_arr : array, optional
@@ -819,9 +819,7 @@ class Identify:
                             f'does not match the number of traces: {len(wvcalib.wv_fits)}' + msgs.newline() +
                             'Please try again...')
                             continue
-                        
-                        #orders were successfully parsed!
-                        #we're ready to exit the loop.
+                        # we are done, break out of the loop
                         break
 
                 make_arxiv = ''

@@ -6,7 +6,6 @@ Module containing routines used by 3D datacubes.
 
 import os
 
-import matplotlib.pyplot as plt
 from astropy import wcs, units
 from astropy.coordinates import AltAz, SkyCoord
 from astropy.io import fits

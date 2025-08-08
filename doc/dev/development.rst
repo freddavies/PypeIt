@@ -290,9 +290,9 @@ implications:
  * Any input needed from the user for your feature should be provided by
    :ref:`parameters` (preferred) or as a command-line argument.
 
- * When developing and debugging, you may need to interact with the code
-   using `pdb`_ or `IPython.embed`_; however, these instances should be
-   removed before performing a pull request.
+ * When developing and debugging, you may need to interact with the code using
+   `IPython.embed`_; however, these instances should be removed before
+   performing a pull request.
 
  * The success or failure of any given procedure must be assessed via
    automatically generated quality-assessment figures (preferred) or via
@@ -428,8 +428,9 @@ To add new tests to the development suite
        `PypeIt Development Suite`_ repo under ``sensfunc_files``,
        ``fluxing_files``, ``coadd1d_files``, ``coadd2d_files``, respectively.
 
-    #. Edit ``test_setups.py`` in the `PypeIt Development Suite`_ under
-       ``test_scripts``. Follow the instructions at the top of that file.
+    #. Edit the ``test_scripts/test_setups.py`` file in the `PypeIt Development
+       Suite`_ to include the new setup among the tests to perform.  Follow the
+       instructions at the top of that file.
 
     #. Run the full development test suite to completion. Once all tests pass,
        the ``test_priority_file`` will be updated with the new test. This file
@@ -437,10 +438,14 @@ To add new tests to the development suite
        utilization.  Commit ``test_priority_list`` and any other files added to
        the dev-suite repository and submit a pull request.
 
+The :ref:`dev-suite` also contains unit tests that require use of data in the
+``RAW_DATA`` directory and "vet" tests that are set of unit tests that require
+output files from PypeIt scripts.  The former typically test simple
+functionality of the PypeIt code, whereas the latter (vet tests) check the
+results of the PypeIt scripts against the expected performance/result.
+
 .. _unit-tests:
 
-Unit Tests
-~~~~~~~~~~
 Unit Tests (GitHub CI)
 ----------------------
 
@@ -466,9 +471,9 @@ failing.
 
 .. warning::
 
-    Running these tests generates some files that should be ignored.  **Please
-    do not add these test files to the repository.**  We try to include clean-up
-    as part of the tests, but these are not always caught.
+    Running these tests may generate files that should be ignored.  **Please do
+    not add these test files to the repository.**  We try to include clean-up as
+    part of the tests, but these are not always caught.
 
 Note also that the use of `pytest`_ requires the test dependencies to be
 installed. It is also possible, and often preferable, to run tests within their
@@ -527,7 +532,7 @@ A typical PypeIt development workflow is as follows:
         The :ref:`dev-suite` is *extensive* and takes significant computing
         resources and time.  The PypeIt development team consistently executes
         these tests using cloud computing.  We recommend you ensure that your
-        pypeit branch successfully runs on either a specific instrument of
+        PypeIt branch successfully runs on either a specific instrument of
         interest or ``shane_kast_blue`` first, and then someone on the PypeIt
         development team can execute the tests in the cloud.  From the top-level
         directory of the :ref:`dev-suite`, you can run all tests for
@@ -569,8 +574,9 @@ A typical PypeIt development workflow is as follows:
         git push
 
  * `Submit a Pull Request (PR)
-   <https://github.com/pypeit/PypeIt/compare>`_. Unless otherwise
-   requested, all PRs should be submitted to the ``develop`` branch.
+   <https://github.com/pypeit/PypeIt/compare>`_ from your fork to the main
+   repository. Unless otherwise requested, all PRs should be submitted to the
+   ``develop`` branch.
 
 .. note::
 
@@ -583,8 +589,8 @@ A typical PypeIt development workflow is as follows:
 Pull Request Acceptance Requirements
 ====================================
 
-Once you've submitted a pull request, we'll review your PR and provide
-comments on the code.  The minimum requirements for acceptance of a PR
+Once you've submitted a pull request, two developers will review your PR and
+provide comments on the code.  The minimum requirements for acceptance of a PR
 are as follows:
 
  * If your PR introduces a new instrument (see :ref:`new_spec`) that PypeIt
@@ -644,6 +650,8 @@ are as follows:
 
  * At least two reviewers must accept the code.
 
+.. _tagging:
+
 Tagging Protocol
 ================
 
@@ -668,16 +676,15 @@ follows:
    following updates to ``staged`` before merging (``develop`` is a protected
    branch and cannot be directly edited):
 
-        * Update the documentation by executing ``cd doc ; make clean ; make
-          html``, add any updated files, and correct any issued errors/warnings.
-
         * Fix any test failures.  As necessary, an accompanying :ref:`dev-suite`
           PR may be issued that includes test fixes required code changes.  If
           no code changes are required, a :ref:`dev-suite` PR should be issued
           that merges its ``develop`` branch directly into its ``main`` branch.
 
-        * Make any final updates to ``CHANGES.rst`` and reset the relevant
-          version header to be the intended tag number.
+        * Make any final updates to the development log, and rename the log to
+          the new tagged version (e.g., move ``1.14.1dev.rst`` to either
+          ``1.14.1.rst`` or ``1.15.0.rst``).  The ``doc/whatsnew.rst`` should
+          also be updated to reflect the file name change.
 
         * Update the list of supported versions in the ``SECURITY.md`` file.
 
@@ -708,6 +715,7 @@ follows:
 
     .. code-block:: bash
 
+        git checkout 1.14.0
         # Make sure you have the most recent version of twine installed
         pip install twine --upgrade
         pip install build --upgrade
