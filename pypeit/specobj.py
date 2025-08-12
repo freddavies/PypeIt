@@ -23,6 +23,7 @@ from pypeit import utils
 from pypeit import datamodel
 from pypeit.images.detector_container import DetectorContainer
 from pypeit.images.mosaic import Mosaic
+from pypeit.spectrographs.util import load_spectrograph
 
 
 class SpecObj(datamodel.DataContainer):
@@ -137,8 +138,8 @@ class SpecObj(datamodel.DataContainer):
                                             'used for this extraction'),
                  'BOX_CHI2': dict(otype=np.ndarray, atype=float,
                                   descr='Reduced chi2 of the model fit for this spectral pixel'),
-                 'BOX_RADIUS': dict(otype=float, descr='Size of boxcar radius (pixels)'),
-                 'SPAT_BOX_RADIUS': dict(otype=float, descr='Size of boxcar radius (arcsec)'),
+                 'BOX_R_PIX': dict(otype=float, descr='Size of boxcar radius (pixels)'),
+                 'BOX_R_ASEC': dict(otype=float, descr='Size of boxcar radius (arcsec)'),
                  'S2N': dict(otype=float, descr='Median signal to noise ratio of the extracted spectrum'
                                                 '(OPT if available, otherwise BOX)'),
                  #
@@ -163,6 +164,7 @@ class SpecObj(datamodel.DataContainer):
                  'DETECTOR': dict(otype=(DetectorContainer, Mosaic),
                                   descr='Object with the detector or mosaic metadata'),
                  'PYPELINE': dict(otype=str, descr='Name of the PypeIt pipeline mode'),
+                 'PYP_SPEC': dict(otype=str, descr='PypeIt spectrograph name'),
                  # TODO: It's unclear if OBJTYPE has to be one among a set of
                  # specific keywords.
                  'OBJTYPE': dict(otype=str, descr='Object type (e.g., standard, science)'),
@@ -237,7 +239,7 @@ class SpecObj(datamodel.DataContainer):
                 ]
 
     def __init__(self, PYPELINE, DET, OBJTYPE='unknown',
-                 SLITID=None, ECH_ORDER=None, ECH_ORDERINDX=None):
+                 SLITID=None, ECH_ORDER=None, ECH_ORDERINDX=None, PYP_SPEC=None):
 
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
         _d = dict([(k,values[k]) for k in args[1:]])
@@ -373,55 +375,56 @@ class SpecObj(datamodel.DataContainer):
                 break
         return SN
 
-    def med_fwhm(self, platescale):
+    def med_fwhm(self):
         """Return median spatial FWHM of the spectrum
-
-        Args:
-            platescale (float):
-                Platescale in arcsec/pixel. Required to convert FWHM from pixels to arcsec.
 
         Returns:
             float: Median spatial FWHM in arcsec
         """
         FWHM = 0.
         if self['FWHMFIT'] is not None and self['OPT_COUNTS'] is not None:
-            FWHM = np.median(self['FWHMFIT']) * platescale
+            FWHM = np.median(self['FWHMFIT']) * self.platescale
         return FWHM
 
-    def boxcar_arcsec(self, platescale):
+    def boxcar_arcsec(self):
         """Return the boxcar radius in arcsec
-
-        Args:
-            platescale (float):
-                Platescale in arcsec/pixel. Required to convert boxcar radius from pixels to arcsec.
 
         Returns:
             float: Boxcar radius in arcsec
         """
 
         boxcar_arcsec = 0.
-        if self['BOX_RADIUS'] is not None and self['BOX_COUNTS'] is not None:
-            boxcar_arcsec = self['BOX_RADIUS'] * platescale
+        if self['BOX_R_PIX'] is not None and self['BOX_COUNTS'] is not None:
+            boxcar_arcsec = self['BOX_R_PIX'] * self.platescale
         return boxcar_arcsec
 
-    def platescale(self, spectrograph=None):
+    @property
+    def platescale(self):
         """Return the platescale in arcsec/pixel and includes the binning factor
-
-        Args:
-            spectrograph (:class:`pypeit.spectrographs.spectrograph.Spectrograph`, optional):
-                Spectrograph object. Required for Echelle data to calculate platescale in arcsec/pixel.
 
         Returns:
             float: Platescale in arcsec/pixel
         """
-        if self.PYPELINE == 'Echelle' and spectrograph is None:
+        embed()
+        if self.PYPELINE == 'Echelle' and self.spectrograph is None:
             msgs.error("Spectrograph must be provided for Echelle data to calculate platescale in arcsec/pixel.")
         elif self.PYPELINE == 'Echelle':
-            idx = np.where(spectrograph.orders==self['ECH_ORDER'])[0][0]
-            return spectrograph.order_platescale(spectrograph.orders, self['DETECTOR']['binning'])[idx]
+            idx = np.where(self.spectrograph.orders==self['ECH_ORDER'])[0][0]
+            return self.spectrograph.order_platescale(self.spectrograph.orders, self['DETECTOR']['binning'])[idx]
         else:
             _, binspatial = parse.parse_binning(self['DETECTOR']['binning'])
             return self['DETECTOR']['platescale'] * binspatial
+
+    @property
+    def spectrograph(self):
+        """Return the spectrograph object
+
+        Returns:
+            :class:`~pypeit.spectrographs.spectrograph.Spectrograph`: Spectrograph object
+        """
+        if self.PYP_SPEC is None:
+            msgs.error("PYP_SPEC must be set to access the spectrograph")
+        return load_spectrograph(self.PYP_SPEC)
 
     def set_name(self):
         """

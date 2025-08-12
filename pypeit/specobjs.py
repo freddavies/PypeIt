@@ -944,7 +944,7 @@ class SpecObjs:
             # Wave RMS
             wave_rms.append(specobj.WAVE_RMS)
             # Boxcar width
-            boxsize.append(2*specobj.SPAT_BOX_RADIUS)
+            boxsize.append(2*specobj.BOX_R_ASEC)
             # Optimal profile (FWHM)
             opt_fwhm.append(specobj.SPAT_FWHM)
             # S2N -- default to boxcar

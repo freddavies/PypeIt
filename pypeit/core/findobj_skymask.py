@@ -637,7 +637,7 @@ def ech_fill_in_orders(sobjs:specobjs.SpecObjs,
                 thisobj.maskwidth = this_salign[imin].maskwidth
                 thisobj.smash_peakflux = this_salign[imin].smash_peakflux
                 thisobj.smash_snr = this_salign[imin].smash_snr
-                thisobj.BOX_RADIUS = this_salign[imin].BOX_RADIUS
+                thisobj.BOX_R_PIX = this_salign[imin].BOX_R_PIX
                 thisobj.ECH_FRACPOS = uni_frac[iobj]
                 thisobj.ECH_OBJID = uni_obj_id[iobj]
                 thisobj.OBJID = uni_obj_id[iobj]
@@ -1896,7 +1896,7 @@ def objs_in_slit(image, ivar, thismask, slit_left, slit_righ,
                 sobjs[iobj].FWHM = get_fwhm(fwhm, nsamp, sobjs[iobj].smash_peakflux, sobjs[iobj].SPAT_FRACPOS, flux_smash_smth)
 
             # assign BOX_RADIUS
-            sobjs[iobj].BOX_RADIUS = boxcar_rad
+            sobjs[iobj].BOX_R_PIX = boxcar_rad
 
         if len(sobjs) == 0 and hand_extract_dict is None:
             # TODO: Why is this not done way above?
@@ -1994,9 +1994,9 @@ def objs_in_slit(image, ivar, thismask, slit_left, slit_righ,
                 thisobj.FWHM = fwhm
             # assign BOX_RADIUS (pixels!)
             if hand_extract_boxcar[iobj] > 0.:
-                thisobj.BOX_RADIUS = hand_extract_boxcar[iobj]
+                thisobj.BOX_R_PIX = hand_extract_boxcar[iobj]
             else:
-                thisobj.BOX_RADIUS = boxcar_rad
+                thisobj.BOX_R_PIX = boxcar_rad
             # Finish
             sobjs.add_sobj(thisobj)
 
