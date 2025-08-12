@@ -4,7 +4,7 @@ Wrapper to the linetools XSpecGUI
 .. include common links, assuming primary doc root is up one directory
 .. include:: ../include/links.rst
 """
-import os.path
+from pathlib import Path
 from IPython import embed
 
 from pypeit.scripts import scriptbase
@@ -123,7 +123,7 @@ class Show1DSpec(scriptbase.ScriptBase):
             from pypeit.display.display import show_1dspec
 
             # in case Ginga is invoked in another directory
-            file_path = os.path.abspath(args.file)
+            file_path = str(Path(args.file).absolute())
             show_1dspec(file_path, ext=exten,
                         masked=args.masked, extraction=args.extract,
                         fluxed=args.flux)
