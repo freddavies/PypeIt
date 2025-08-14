@@ -45,14 +45,26 @@ class SlitEdgesState(BaseCalibState):
     nslits: Optional[int] = None
     slits: Optional[Dict[int, SlitEdges]] = Field(default_factory=dict)
 
+
+class TiltsSlit(BaseModel):
+    status: Literal["success", "fail", "undone", ] = "undone"
+    # Metrics
+    rms: Optional[float] = None
+
+class TiltsState(BaseCalibState):
+    step: Literal["tilts"] = "tilts"
+    slits: Optional[Dict[int, TiltsSlit]] = Field(default_factory=dict)
+
 calib_classes = {
     'bias': BiasCalibState,
     'wv_calib': WvCalibState,
+    'tilts': TiltsState,
     'slits': SlitEdgesState
 }
 
 slit_classes = {
     'wv_calib': WvCalibSlit,
+    'tilts': TiltsSlit,
     'slits': SlitEdges
 }
 
@@ -61,8 +73,9 @@ class RunPypeItState(BaseModel):
     current_step: str
     previous_step: str = 'none'
     bias: Optional[List[BiasCalibState]] = Field(default_factory=list)
-    wv_calib: Optional[List[WvCalibState]] = Field(default_factory=list)
     slits: Optional[List[SlitEdgesState]] = Field(default_factory=list)
+    wv_calib: Optional[List[WvCalibState]] = Field(default_factory=list)
+    tilts: Optional[List[TiltsState]] = Field(default_factory=list)
     path: Optional[str] = None
 
     @property
@@ -88,7 +101,7 @@ class RunPypeItState(BaseModel):
             self.previous_step = self.current_step
         self.current_step = step
         # Select items so far
-        if step not in ['bias', 'wv_calib', 'slits']:
+        if step not in ['bias', 'wv_calib', 'slits', 'tilts']:
             return
         # Grab the entry
         self_items = getattr(self, step)

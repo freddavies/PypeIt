@@ -1269,6 +1269,32 @@ class Calibrations:
         # Return
         return self.wv_calib
 
+    def tilts_state(self, buildTilts, outfile:str):
+        if self.state is None:
+            return
+        # Update
+        self.state.update_calib('tilts', self.calib_ID, self.det, 
+                                'output_files', [str(outfile)])
+        for islit in range(self.slits.nslits):
+            slit_ID = int(self.slits.slitord_id[islit])
+            # Status
+            if self.slits.bitmask.flagged(
+                self.slits.mask[islit], flag='BADTILTCALIB'):
+                status = 'fail'
+            else:
+                status = 'success'
+            self.state.update_calib('tilts', self.calib_ID, self.det, 
+                                'status', status, slit=slit_ID)
+            #embed(header='1288 of calibrations')
+            # Metrics
+            if status == 'success':
+                rms = buildTilts.all_fit_dict[islit]['pypeitFit'].calc_fit_rms(
+                    x2=buildTilts.all_fit_dict[islit]['pypeitFit'].x2)
+
+                self.state.update_calib(
+                    'tilts', self.calib_ID, self.det, 
+                    'rms', rms, slit=slit_ID)
+
     def get_tilts(self, force:str=None):
         """
         Load or generate the wavelength tilts calibration frame
@@ -1327,9 +1353,13 @@ class Calibrations:
             self.par['wavelengths'], det=self.det, qa_path=self.qa_path,
             spat_flexure=_spat_flexure, measured_fwhms=measured_fwhms)
 
-        # TODO still need to deal with syntax for LRIS ghosts. Maybe we don't need it
+        # Write
         self.wavetilts = buildwaveTilts.run(doqa=self.write_qa, show=self.show)
         self.wavetilts.to_file()
+
+        # State
+        self.tilts_state(buildwaveTilts, self.wavetilts.get_path())
+
         return self.wavetilts
 
     def process_load_selection(self, frame, cal_file, force):
