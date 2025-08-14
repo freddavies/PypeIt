@@ -157,6 +157,9 @@ class GeminiGMOSSpectrograph(spectrograph.Spectrograph):
         Returns:
             object: Metadata value read from the header(s).
         """
+        # dithoff is the offset (qoffset) used for the dithering. It's common with GMOS to dither
+        # both in the spectral and spatial direction. Therefore, adding the info about the
+        # spatial dither offset in the pypeit file can be helpful to the user.
         if meta_key == 'dithoff':
             if headarr[0].get('OBSTYPE') == 'OBJECT':
                 return round(headarr[0].get('QOFFSET'),2)
