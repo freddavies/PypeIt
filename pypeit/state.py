@@ -45,7 +45,6 @@ class SlitEdgesState(BaseCalibState):
     nslits: Optional[int] = None
     slits: Optional[Dict[int, SlitEdges]] = Field(default_factory=dict)
 
-
 class TiltsSlit(BaseModel):
     status: Literal["success", "fail", "undone", ] = "undone"
     # Metrics
@@ -55,10 +54,15 @@ class TiltsState(BaseCalibState):
     step: Literal["tilts"] = "tilts"
     slits: Optional[Dict[int, TiltsSlit]] = Field(default_factory=dict)
 
+class FlatsState(BaseCalibState):
+    step: Literal["flats"] = "flats"
+    types: Optional[List[str]] = []
+
 calib_classes = {
     'bias': BiasCalibState,
     'wv_calib': WvCalibState,
     'tilts': TiltsState,
+    'flats': FlatsState,
     'slits': SlitEdgesState
 }
 
@@ -76,6 +80,7 @@ class RunPypeItState(BaseModel):
     slits: Optional[List[SlitEdgesState]] = Field(default_factory=list)
     wv_calib: Optional[List[WvCalibState]] = Field(default_factory=list)
     tilts: Optional[List[TiltsState]] = Field(default_factory=list)
+    flats: Optional[List[FlatsState]] = Field(default_factory=list)
     path: Optional[str] = None
 
     @property
@@ -101,7 +106,7 @@ class RunPypeItState(BaseModel):
             self.previous_step = self.current_step
         self.current_step = step
         # Select items so far
-        if step not in ['bias', 'wv_calib', 'slits', 'tilts']:
+        if step not in ['bias', 'wv_calib', 'slits', 'tilts', 'flats']:
             return
         # Grab the entry
         self_items = getattr(self, step)
@@ -112,14 +117,19 @@ class RunPypeItState(BaseModel):
             if item.calib_id == calib_id and item.det == det:
                 found_it = True
                 break
+
         # Create it?
         if not found_it:
             item = calib_classes[step](calib_id=calib_id, det=det)
             self_items.append(item)
             index = -1
+
         # Set
         if slit is None:
-            setattr(self_items[index], key, value)
+            if isinstance(getattr(self_items[index],key), list):
+                getattr(self_items[index],key).append(value)
+            else:
+                setattr(self_items[index], key, value)
         else:
             if slit not in self_items[index].slits.keys():
                 self_items[index].slits[slit] = slit_classes[step]()

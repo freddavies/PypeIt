@@ -772,6 +772,18 @@ class Calibrations:
 
         return self.msscattlight
 
+    def flats_state(self, outfile:str):
+        if self.state is None:
+            return
+        #
+        #self.state.update_calib('bias', self.calib_ID, self.det, 
+        #                        'input_files', self.raw_files)
+        #self.state.update_calib('bias', self.calib_ID, self.det, 
+        #                        'output_files', [str(outfile)])
+        #self.state.update_calib('bias', self.calib_ID, self.det, 'mean', self.msbias.image.mean())
+        #self.state.update_calib('bias', self.calib_ID, self.det, 'std', self.msbias.image.std())
+
+
     def get_flats(self, force:str=None):
         """
         Load or generate the flat-field calibration images.
@@ -929,6 +941,13 @@ class Calibrations:
             # sensitivity corrections to the illumflat
             self.flatimages = pixelflatImages
 
+            # State
+            self.state.update_calib('flats', self.calib_ID, self.det, 
+                                'types', 'pixelflat')
+            if pix_is_illum:
+                self.state.update_calib('flats', self.calib_ID, self.det, 
+                                'types', 'illumflat')
+
         # Only build illum_flat if the input files are different from the pixel flat
         if not pix_is_illum and len(raw_illum_files) > 0:
             # Reset the BPM
@@ -971,6 +990,10 @@ class Calibrations:
                                                  qa_path=self.qa_path, calib_key=calib_key)
             # Generate
             illumflatImages = illumFlatField.run(doqa=self.write_qa, show=self.show)
+
+            # State
+            self.state.update_calib('flats', self.calib_ID, self.det, 
+                                'types', 'illumflat')
 
         # Merge the illum flat with the pixel flat
         if pixelflatImages is not None:
