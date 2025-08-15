@@ -1400,6 +1400,7 @@ class Spectrograph:
         Returns:
             Value recovered for (each) keyword.  Can be None.
         """
+        headarr = None
         if isinstance(inp, (str, Path, fits.HDUList)):
             headarr = self.get_headarr(inp)
         elif inp is None or isinstance(inp, list):
@@ -1408,7 +1409,7 @@ class Spectrograph:
             headarr = [inp]
         else:
             msgs.error(f'Unrecognized type for input: {type(inp)}')
-        
+
         if headarr is None:
             if required:
                 msgs.error(f'Unable to access required metadata value for {meta_key}.  Input is '
