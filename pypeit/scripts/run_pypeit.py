@@ -84,7 +84,8 @@ class RunPypeIt(scriptbase.ScriptBase):
         import os
         from IPython import embed
 
-        from pypeit import pypeit
+        #from pypeit import pypeit
+        from pypeit import x_pypeit
         from pypeit import msgs
 
         # Load options from command line
@@ -94,7 +95,7 @@ class RunPypeIt(scriptbase.ScriptBase):
         logname = splitnm[0] + ".log"
 
         # Instantiate the main pipeline reduction object
-        pypeIt = pypeit.PypeIt(args.pypeit_file, verbosity=args.verbosity,
+        pypeIt = x_pypeit.PypeIt(args.pypeit_file, verbosity=args.verbosity,
                                reuse_calibs=args.reuse_calibs, overwrite=args.overwrite,
                                redux_path=args.redux_path, calib_only=args.calib_only,
                                logname=logname, show=args.show)

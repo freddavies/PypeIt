@@ -1421,7 +1421,7 @@ class Calibrations:
         if force == 'reload' or (self.reuse_calibs and _cal_file.exists()): 
             return frame['class'].from_file(_cal_file, chk_version=self.chk_version)
 
-    def run_the_steps(self, stop_at_step:str=None):
+    def run_the_steps(self, stop_at_step:str=None, reload_only:bool=False):
         """
         Run full the full recipe of calibration steps.
         """
@@ -1434,7 +1434,9 @@ class Calibrations:
 
         self.success = True
         for step in self.steps:
-            if stop_at_step is not None and step == stop_at_step:
+            if reload_only:
+                force = 'reload'
+            elif stop_at_step is not None and step == stop_at_step:
                 force = 'remake'
                 msgs.info(f"Calibrations will stop at {stop_at_step}")
             else:

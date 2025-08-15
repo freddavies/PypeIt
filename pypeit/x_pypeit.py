@@ -177,7 +177,7 @@ class PypeIt:
         # Init
         self.det = None
         self.tstart = None
-        self.basename = None
+        #self.basename = None
         self.obstime = None
 
     @property
@@ -387,10 +387,9 @@ class PypeIt:
                     # exposure
                     history = History(self.fitstbl.frame_paths(frames[0]))
                     history.add_reduce(calib_ID, self.fitstbl, frames, bg_frames)
-                    std_spec2d, std_sobjs = self.new_reduce_exposure(frames, bg_frames=bg_frames)
-                    #std_spec2d, std_sobjs = self.reduce_exposure(frames, bg_frames=bg_frames)
+                    std_spec2d, std_sobjs = self.reduce_exposure(frames, bg_frames=bg_frames)
                     # TODO come up with sensible naming convention for save_exposure for combined files
-                    self.save_exposure(frames[0], std_spec2d, std_sobjs, self.basename, history)
+                    self.save_exposure(frames[0], std_spec2d, std_sobjs, basename, history)
                 else:
                     msgs.info('Output file: {:s} already exists'.format(self.fitstbl.construct_basename(frames[0])) +
                               '. Set overwrite=True to recreate and overwrite.')
@@ -495,6 +494,8 @@ class PypeIt:
         """
         return spectrograph.select_detectors(subset=detnum if slitspatnum is None else slitspatnum)
 
+ 
+
     def reduce_exposure(self, frames, bg_frames=None, std_outfile=None):
         """
         Reduce a single exposure
@@ -514,6 +515,9 @@ class PypeIt:
             extraction.
 
         """
+        # Grab useful meta data
+        objtype_out, calib_key, obstime, basename, binning = get_sci_metadata(
+            self.spectrograph, self.fitstbl, frames[0], self.det)
 
         # if show is set, clear the ginga channels at the start of each new sci_ID
         if self.show:
@@ -549,10 +553,6 @@ class PypeIt:
         all_specobjs_extract = specobjs.SpecObjs()
         # list of global_sky obtained during objfind and used in extraction
         initial_sky_list = []
-        # list of sciImg
-        sciImg_list = []
-        # list of bkg_redux_sciimg
-        bkg_redux_sciimg_list = []
         # List of detectors with successful calibration
         calibrated_det = []
         # list of successful slits calibrations to be used in the extraction loop
@@ -580,95 +580,18 @@ class PypeIt:
                                           slitspatnum=self.par['rdx']['slitspatnum'])
         msgs.info(f'Detectors to work on: {detectors}')
 
-        # Loop on Detectors -- Calibrate (usually just loading), process image, find objects
-        # TODO: Attempt to put in a multiprocessing call here?
-        for self.det in detectors:
-            msgs.info(f'Reducing detector {self.det}')
-            # run/load calibration
-            self.caliBrate = self.calib_one(frames, self.det)
-            if not self.caliBrate.success:
-                msgs.warn(f'Calibrations for detector {self.det} were unsuccessful!  The step '
-                          f'that failed was {self.caliBrate.failed_step}.  Continuing by '
-                          f'skipping this detector.')
-                continue
+        # Proccess or load processed frames
+        load_processed = False
+        if load_processed:
+            load_processed_frames()
+        else:
+            sciImg_list, bkg_redux_sciimg_list = process_frames(
+                self.spectrograph, self.fitstbl, self.par, frames,
+                   detectors, self.calibrations_path, bg_frames=bg_frames)
+            # Write intermediate files
 
-            # we save only the detectors that had a successful calibration,
-            # and we use only those in the extract loop below
-            calibrated_det.append(self.det)
-            # we also save the successful slit calibrations because they are used and modified
-            # in the slitmask stuff in between the two loops
-            calib_slits.append(self.caliBrate.slits)
-            # global_sky, skymask and sciImg are needed in the extract loop
-            initial_sky, sobjs_obj, sciImg, bkg_redux_sciimg, objFind = self.objfind_one(
-                frames, self.det, bg_frames=bg_frames, std_outfile=std_outfile)
-            if len(sobjs_obj)>0:
-                all_specobjs_objfind.add_sobj(sobjs_obj)
-            initial_sky_list.append(initial_sky)
-            sciImg_list.append(sciImg)
-            bkg_redux_sciimg_list.append(bkg_redux_sciimg)
-            objFind_list.append(objFind)
+        # Find objects
 
-        # slitmask stuff
-        if len(calibrated_det) > 0 and self.par['reduce']['slitmask']['assign_obj']:
-            # get object positions from slitmask design and slitmask offsets for all the detectors
-            spat_flexure = np.array([ss.spat_flexure for ss in sciImg_list])
-            # Grab platescale with binning
-            bin_spec, bin_spat = parse.parse_binning(self.binning)
-            platescale = np.array([ss.detector.platescale*bin_spat for ss in sciImg_list])
-            # get the dither offset if available and if desired
-            dither_off = None
-            if self.par['reduce']['slitmask']['use_dither_offset']:
-                if 'dithoff' in self.fitstbl.keys():
-                    dither_off = self.fitstbl['dithoff'][frames[0]]
-
-            calib_slits = slittrace.get_maskdef_objpos_offset_alldets(
-                all_specobjs_objfind, calib_slits, spat_flexure, platescale,
-                self.par['calibrations']['slitedges']['det_buffer'],
-                self.par['reduce']['slitmask'], dither_off=dither_off)
-            # determine if slitmask offsets exist and compute an average offsets over all the detectors
-            calib_slits = slittrace.average_maskdef_offset(
-                calib_slits, platescale[0], self.spectrograph.list_detectors(mosaic='MSC' in calib_slits[0].detname))
-            # slitmask design matching and add undetected objects
-            all_specobjs_objfind = slittrace.assign_addobjs_alldets(
-                all_specobjs_objfind, calib_slits, spat_flexure, platescale,
-                self.par['reduce']['slitmask'], self.par['reduce']['findobj']['find_fwhm'])
-
-        # Extract
-        for i, self.det in enumerate(calibrated_det):
-            # re-run (i.e., load) calibrations
-            self.caliBrate = self.calib_one(frames, self.det)
-            self.caliBrate.slits = calib_slits[i]
-
-            detname = sciImg_list[i].detector.name
-
-            # TODO: pass back the background frame, pass in background
-            # files as an argument. extract one takes a file list as an
-            # argument and instantiates science within
-            if all_specobjs_objfind.nobj > 0:
-                all_specobjs_on_det = all_specobjs_objfind[all_specobjs_objfind.DET == detname]
-            else:
-                all_specobjs_on_det = all_specobjs_objfind
-
-            # Extract
-            all_spec2d[detname], tmp_sobjs \
-                    = self.extract_one(frames, self.det, sciImg_list[i], bkg_redux_sciimg_list[i], objFind_list[i],
-                                       initial_sky_list[i], all_specobjs_on_det)
-            # Hold em
-            if tmp_sobjs.nobj > 0:
-                all_specobjs_extract.add_sobj(tmp_sobjs)
-
-            # Add calibration associations to the SpecObjs object
-            all_specobjs_extract.calibs = calibrations.Calibrations.get_association(
-                                    self.fitstbl, self.spectrograph, self.calibrations_path,
-                                    self.fitstbl[frames[0]]['setup'],
-                                    self.fitstbl.find_frame_calib_groups(frames[0])[0], self.det,
-                                    must_exist=True, proc_only=True)
-
-            # JFH TODO write out the background frame?
-
-            # TODO -- Save here?  Seems like we should.  Would probably need to use update_det=True
-
-        # Return
         return all_spec2d, all_specobjs_extract
 
     def get_sci_metadata(self, frame, det):
@@ -1309,4 +1232,99 @@ class PypeIt:
         # Generate sets string
         return '<{:s}: pypeit_file={}>'.format(self.__class__.__name__, self.pypeit_file)
 
+def load_calibrations_for_frame(spectrograph, fitstbl, par, frame, det,
+                                calibrations_path:str):
 
+    # Instantiate Calibrations class
+    user_slits = slittrace.merge_user_slit(par['rdx']['slitspatnum'],
+                                            par['rdx']['maskIDs'])
+    caliBrate = calibrations.Calibrations.get_instance(
+        fitstbl, par['calibrations'], spectrograph,
+        calibrations_path, 
+        reuse_calibs=True, user_slits=user_slits,
+        load_only=True,
+        chk_version=par['rdx']['chk_version'])
+    caliBrate.set_config(frame, det, par['calibrations'])
+    caliBrate.run_the_steps(reload_only=True)
+
+    return caliBrate
+
+def process_frames(spectrograph, fitstbl, par, frames:list,
+                   detectors:list, calibrations_path:str,
+                   bg_frames:list=None):
+    # list of sciImg
+    sciImg_list = []
+    # list of bkg_redux_sciimg
+    bkg_redux_sciimg_list = []
+    # Loop on the detectors
+    for det in detectors:
+        msgs.info(f'Reducing detector {det}')
+        # run/load calibration
+        caliBrate = load_calibrations_for_frame(
+            spectrograph, fitstbl, par, frames[0], det, calibrations_path)
+        if not caliBrate.success:
+            msgs.error(f'Calibrations for detector {det} were unsuccessful!  The step '
+                        f'that failed was {caliBrate.failed_step}.')  
+            continue
+
+        # Process
+        sciImg, bkg_redux_sciimg = pypeit_steps.process_one(
+            spectrograph, fitstbl, caliBrate,
+            par, frames, det, bg_frames=bg_frames)
+
+        # List em up
+        sciImg_list.append(sciImg)
+        bkg_redux_sciimg_list.append(bkg_redux_sciimg)
+
+    # Return
+    return sciImg_list, bkg_redux_sciimg_list
+
+def intermediate_filename(itype:str, basename:str, det_name:str, inter_path:str='Intermediate'):
+    """
+    Construct the intermediate file name for a given type and detector
+
+    Args:
+        itype (:obj:`str`):
+            Type of intermediate file
+        det_name (:obj:`str`):
+            Name of the detector
+        inter_path (:obj:`str`, optional):
+            Path to the intermediate files
+
+    Returns:
+        :obj:`str`: The full path to the intermediate file
+    """
+    return Path(inter_path) / f'{itype}_{basename}_{det_name}.fits'
+
+def calc_flexure(fitstbl, objtype:str, frames:list, par:dict,
+                 sciImg):
+
+
+
+def find_objects():
+
+    for self.det in detectors:
+        msgs.info(f'Reducing detector {self.det}')
+        # run/load calibration
+        self.caliBrate = self.calib_one(frames, self.det)
+        if not self.caliBrate.success:
+            msgs.warn(f'Calibrations for detector {self.det} were unsuccessful!  The step '
+                        f'that failed was {self.caliBrate.failed_step}.  Continuing by '
+                        f'skipping this detector.')
+            continue
+
+        # we save only the detectors that had a successful calibration,
+        # and we use only those in the extract loop below
+        calibrated_det.append(self.det)
+        # we also save the successful slit calibrations because they are used and modified
+        # in the slitmask stuff in between the two loops
+        calib_slits.append(self.caliBrate.slits)
+        # global_sky, skymask and sciImg are needed in the extract loop
+        initial_sky, sobjs_obj, sciImg, bkg_redux_sciimg, objFind = self.objfind_one(
+            frames, self.det, bg_frames=bg_frames, std_outfile=std_outfile)
+        if len(sobjs_obj)>0:
+            all_specobjs_objfind.add_sobj(sobjs_obj)
+        initial_sky_list.append(initial_sky)
+        sciImg_list.append(sciImg)
+        bkg_redux_sciimg_list.append(bkg_redux_sciimg)
+        objFind_list.append(objFind)
