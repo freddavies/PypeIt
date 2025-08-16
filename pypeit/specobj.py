@@ -235,7 +235,9 @@ class SpecObj(datamodel.DataContainer):
                  'max_spat',
                  # Echelle
                  'ech_frac_was_fit',
-                 'ech_snr'
+                 'ech_snr',
+                 # spectrograph
+                '_spectrograph',
                 ]
 
     def __init__(self, PYPELINE, DET, OBJTYPE='unknown',
@@ -422,9 +424,13 @@ class SpecObj(datamodel.DataContainer):
         Returns:
             :class:`~pypeit.spectrographs.spectrograph.Spectrograph`: Spectrograph object
         """
-        if self.PYP_SPEC is None:
+        # some checks first
+        if self._spectrograph is None and self.PYP_SPEC is None:
             msgs.error("PYP_SPEC must be set to access the spectrograph")
-        return load_spectrograph(self.PYP_SPEC)
+        # get it
+        if self._spectrograph is None:
+            self._spectrograph = load_spectrograph(self.PYP_SPEC)
+        return self._spectrograph
 
     def set_name(self):
         """

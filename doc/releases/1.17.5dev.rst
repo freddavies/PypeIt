@@ -75,9 +75,10 @@ Script Changes
 Datamodel Changes
 -----------------
 
-- The ``SpecObj`` datamodel has been updated (v1.1.12) to include the ``SPAT_BOX_RADIUS``
-  attribute, which contains the information about the size of the boxcar radius in arcsec,
-  while the already existing ``BOX_RADIUS`` attribute contains the boxcar radius in pixels.
+- The ``SpecObj`` datamodel has been updated (v1.1.12) to include the ``BOX_R_ASEC``
+  attribute, which contains the information about the size of the boxcar radius in
+  arcsec. In addition, the already existing ``BOX_RADIUS`` attribute, which contains
+  the boxcar radius in pixels, had the name changed to ``BOX_R_PIX``.
 
 
 

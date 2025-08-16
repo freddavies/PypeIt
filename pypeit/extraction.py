@@ -410,7 +410,7 @@ class Extract:
         if len(remove_idx) > 0:
             self.sobjs.remove_sobj(remove_idx)
 
-        # Add PYP_SPEC, DETECTOR container, S/N ratio, FWHM and BOX_RADIUS in ARCSEC for each extracted object
+        # Add PYP_SPEC, DETECTOR container, S/N ratio, FWHM and BOX_R_ASEC for each extracted object
         for sobj in self.sobjs:
             sobj.PYP_SPEC = self.spectrograph.name
             sobj.DETECTOR = self.sciImg.detector
