@@ -15,17 +15,19 @@ f/6.1 beam.
 
 .. include:: ../include/links.rst
 """
+import pathlib
+
+import astropy.io.fits
+import astropy.table
+import astropy.time
 import numpy as np
 
-from astropy.table import Table
-from astropy.time import Time
-
-from pypeit import io
 from pypeit import msgs
 from pypeit import telescopes
 from pypeit.core import framematch
 from pypeit.core import parse
 from pypeit.images import detector_container
+import pypeit.par.parset
 from pypeit.spectrographs import spectrograph
 
 
@@ -348,7 +350,7 @@ class LDTDeVenySpectrograph(spectrograph.Spectrograph):
 
         return par
 
-    def check_frame_type(self, ftype:str, fitstbl:Table, exprng=None):
+    def check_frame_type(self, ftype:str, fitstbl:astropy.table.Table, exprng=None):
         """
         Check for frames of the provided type.
 
@@ -425,7 +427,7 @@ class LDTDeVenySpectrograph(spectrograph.Spectrograph):
         """
         return super().pypeit_file_keys() + ['dispangle','slitwid','lampstat01']
 
-    def get_lamps(self, fitstbl:Table) -> list:
+    def get_lamps(self, fitstbl:astropy.table.Table) -> list:
         """
         Extract the list of arc lamps used from header
 
@@ -450,15 +452,19 @@ class LDTDeVenySpectrograph(spectrograph.Spectrograph):
             )
         ]
 
-    def config_specific_par(self, scifile, inp_par=None):
+    def config_specific_par(
+            self,
+            scifile:str|list|pathlib.Path|astropy.io.fits.Header|astropy.table.Table,
+            inp_par:pypeit.par.parset.ParSet=None
+        ):
         """
         Modify the PypeIt parameters to hard-wired values used for
         specific instrument configurations.
 
         Args:
-            scifile (:obj:`str`):
-                File to use when determining the configuration and how
-                to adjust the input parameters.
+            scifile (:obj:`str`, :obj:`list`, `Path`_, `astropy.io.fits.Header`_, `astropy.table.Row`_):
+                Input filename, an `astropy.io.fits.Header`_ object, or a list
+                of `astropy.io.fits.Header`_ objects.  Or a Row from the metadata table.
             inp_par (:class:`~pypeit.par.parset.ParSet`, optional):
                 Parameter set used for the full run of PypeIt.  If None,
                 use :func:`default_pypeit_par`.
@@ -467,11 +473,18 @@ class LDTDeVenySpectrograph(spectrograph.Spectrograph):
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
-        # Start with instrument-wide parameters
+        # Start with instrument-wide parameters (does not actually use `scifile`)
         par = super().config_specific_par(scifile, inp_par=inp_par)
 
         # Adjust parameters based on DeVeny grating used
-        grating = self.get_meta_value(scifile, 'dispname')
+        if isinstance(scifile, astropy.table.Table):
+            # The method was passed a metadata table row
+            grating = scifile['dispname'].data[0]
+            binning = scifile['binning'].data[0]
+        else:
+            # The method was passed the raw file info in one form or another
+            grating = self.get_meta_value(scifile, 'dispname')
+            binning = self.get_meta_value(scifile, 'binning')
 
         # TODO: Compute resolving power on the fly  (e.g., from p200_dbsp)
         # par['sensfunc']['UVIS']['resolution'] = resolving_power.decompose().value
@@ -553,7 +566,7 @@ class LDTDeVenySpectrograph(spectrograph.Spectrograph):
             pass
 
         # Adjust parameters based on CCD binning
-        binspec, binspat = parse.parse_binning(self.get_meta_value(scifile, 'binning'))
+        binspec, binspat = parse.parse_binning(binning)
         par['reduce']['findobj']['find_fwhm'] /= binspat  # Specified in pixels and not arcsec
         par['flexure']['spec_maxshift'] //= binspec  # Must be an integer
         par['sensfunc']['UVIS']['resolution'] /= binspec
@@ -784,7 +797,7 @@ class LDTDeVenySpectrograph(spectrograph.Spectrograph):
 
         # Attempt to directly return the AstroPy Time object
         try:
-            return Time(dt_str, format='isot')
+            return astropy.time.Time(dt_str, format='isot')
         except ValueError:
             # Split out all pieces of the datetime, and recompile
             date, time = dt_str.split("T")
@@ -806,4 +819,4 @@ class LDTDeVenySpectrograph(spectrograph.Spectrograph):
             # Reconstitute the DATE-OBS string, and return the Time() object
             date = f"{int(yea):04d}-{int(mon):02d}-{int(day):02d}"
             time = f"{int(hou):02d}:{int(mnt):02d}:{float(sec):09.6f}"
-            return Time(f"{date}T{time}", format='isot')
+            return astropy.time.Time(f"{date}T{time}", format='isot')

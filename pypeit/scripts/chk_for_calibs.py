@@ -128,9 +128,12 @@ class ChkForCalibs(scriptbase.ScriptBase):
                 answers['pass'][i] = False
                 answers['scifiles'][i] = None
                 continue
-            #
-            spectrograph_cfg_lines \
-                    = ps.spectrograph.config_specific_par(config_specific_file).to_config()
+
+            # Send the Row of the metadata table corresponding to the file
+            csf_idx = ps.fitstbl['filename'] == config_specific_file
+            spectrograph_cfg_lines = (
+                ps.spectrograph.config_specific_par(ps.fitstbl[csf_idx]).to_config()
+            )
 
             #   - Build the full set, merging with any user-provided
             #     parameters

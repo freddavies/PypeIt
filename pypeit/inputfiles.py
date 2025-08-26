@@ -634,8 +634,11 @@ class InputFile:
             if _files is not None:
                 config_specific_file = _files[0]
 
+        # Send the Row of the metadata table corresponding to the file
+        csf_idx = self.data['filename'] == Path(config_specific_file).name
         spec_par = spec.default_pypeit_par() if config_specific_file is None \
-                    else spec.config_specific_par(config_specific_file)
+                    else spec.config_specific_par(self.data[csf_idx])
+
         par = PypeItPar.from_cfg_lines(cfg_lines=spec_par.to_config(),
                                        merge_with=(self.cfg_lines,))
         return spec, par, config_specific_file
