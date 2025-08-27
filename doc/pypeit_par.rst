@@ -753,6 +753,7 @@ Class Instantiation: :class:`~pypeit.par.pypeitpar.ExtractionPar`
 Key                   Type        Options  Default  Description                                                                                                                                                                                                                                                                                  
 ====================  ==========  =======  =======  =============================================================================================================================================================================================================================================================================================
 ``boxcar_radius``     int, float  ..       1.5      Boxcar radius in arcseconds used for boxcar extraction                                                                                                                                                                                                                                       
+``min_frac_prof``     float       ..       0.05     For each spectral pixel, if the sum of the normalized object profile across the spatial direction is less than this value, the optimal extraction will also be masked.                                                                                                                       
 ``model_full_slit``   bool        ..       False    If True local sky subtraction will be performed on the entire slit. If False, local sky subtraction will be applied to only a restricted region around each object. This should be set to True for either multislit observations using narrow slits or echelle observations with narrow slits
 ``return_negative``   bool        ..       False    If ``True`` the negative traces will be extracted and saved to disk                                                                                                                                                                                                                          
 ``skip_extraction``   bool        ..       False    Do not perform an object extraction                                                                                                                                                                                                                                                          
@@ -3332,6 +3333,7 @@ Alterations to the default parameters are:
       [[skysub]]
           global_sky_std = False
       [[extraction]]
+          min_frac_prof = 0.9
           model_full_slit = True
   [fluxcalib]
       extrap_sens = True
