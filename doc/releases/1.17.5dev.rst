@@ -49,6 +49,8 @@ Functionality/Performance Improvements and Additions
 - Allow the user to skip writing 2D science spectrum files.  Note that this should
   only be invoked after careful inspection of a sample of 2D reduced spectra and
   when the user is completely satisfied of the quality of the extracted 1D spectra.
+- Added ``ExtractionPar`` parameter ``min_frac_prof`` to allow the user to set the minimum
+  fraction of the object spatial profile that is not masked in the optimal extraction.
 
 Instrument-specific Updates
 ---------------------------

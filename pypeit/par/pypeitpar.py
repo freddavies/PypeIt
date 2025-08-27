@@ -4562,7 +4562,7 @@ class ExtractionPar(ParSet):
     see :ref:`parameters`.
     """
 
-    def __init__(self, boxcar_radius=None, std_prof_nsigma=None, sn_gauss=None,
+    def __init__(self, boxcar_radius=None, std_prof_nsigma=None, min_frac_prof=None, sn_gauss=None,
                  model_full_slit=None, skip_extraction=None, skip_optimal=None,
                  use_2dmodel_mask=None, use_user_fwhm=None, return_negative=None):
 
@@ -4598,6 +4598,12 @@ class ExtractionPar(ParSet):
         dtypes['std_prof_nsigma'] = float
         descr['std_prof_nsigma'] = 'prof_nsigma parameter for Standard star extraction.  Prevents undesired rejection. ' \
                                    'NOTE: Not consumed by the code at present.'
+
+        defaults['min_frac_prof'] = 0.05
+        dtypes['min_frac_prof'] = float
+        descr['min_frac_prof'] = 'For each spectral pixel, if the sum of the normalized object profile' \
+                                 ' across the spatial direction is less than this value,' \
+                                 ' the optimal extraction will also be masked. '
 
         defaults['sn_gauss'] = 4.0
         dtypes['sn_gauss'] = [int, float]
@@ -4640,7 +4646,7 @@ class ExtractionPar(ParSet):
         k = np.array([*cfg.keys()])
 
         # Basic keywords
-        parkeys = ['boxcar_radius', 'std_prof_nsigma', 'sn_gauss', 'model_full_slit',
+        parkeys = ['boxcar_radius', 'std_prof_nsigma', 'min_frac_prof', 'sn_gauss', 'model_full_slit',
                    'skip_extraction', 'skip_optimal', 'use_2dmodel_mask', 'use_user_fwhm', 'return_negative']
 
         badkeys = np.array([pk not in parkeys for pk in k])
