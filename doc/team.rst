@@ -34,7 +34,7 @@ TBD.  Likely to include:
 - Joseph Hennawi (@jhennawi)
 - Brad Holden (@bpholden)
 - Debora Pelliccia (@debora-pe)
-- J. Xavier Prochaska (@profxj)
+- J\. Xavier Prochaska (@profxj)
 - Dusty Reichwein (@badpandabear)
 - Kyle Westfall (@kbwestfall)
 
@@ -76,7 +76,7 @@ GitHub `here <https://github.com/pypeit/PypeIt/graphs/contributors>`__.
 - Silvia Onorato (@SilviaOnorato)
 - Debora Pelliccia (@debora-pe)
 - Timothy Pickering (@tepickering)
-- J. Xavier Prochaska (@profxj)
+- J\. Xavier Prochaska (@profxj)
 - Dusty Reichwein (@badpandabear)
 - Nathan Sandford (@NathanSandford)
 - Vasco Schiavo (@VascoSch92) 

@@ -164,7 +164,7 @@ PypeIt gratefully acknowledges funding from:
   * NASA ADAP (A20-0412, 20-1018)
   * NSF (TI-2346210, OAC-2410837)
   * JWST (JWST-AR-05464.001-A)
-  * W. M. Keck Observatory
+  * W\. M\. Keck Observatory
   * University of California Observatories
 
 We also critically rely on important in-kind, open-source contributions from
