@@ -370,9 +370,11 @@ class APFLevySpectrograph(spectrograph.Spectrograph):
         if isinstance(scifile, astropy.table.Table):
             # The method was passed a metadata table row
             decker = scifile['decker'][0]
+            binning = scifile['binning'][0]
         else:
             # The method was passed the raw file info in one form or another
             decker = self.get_meta_value(scifile, 'decker')
+            binning = self.get_meta_value(scifile, 'binning')
 
         if decker == '3.0':
             par['reduce']['trim_edge'] = [0, 0]
@@ -382,8 +384,6 @@ class APFLevySpectrograph(spectrograph.Spectrograph):
             par['calibrations']['slitedges']['pad'] = 5
             par['reduce']['extraction']['sn_gauss'] = 400
             # basically always use the Gaussian model for optimal extraction
-
-        binning = self.get_meta_value(scifile, 'binning')
 
         if binning == "2,2":
             par['calibrations']['slitedges']['min_edge_side_sep'] = 2.0

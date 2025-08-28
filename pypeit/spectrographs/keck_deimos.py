@@ -350,7 +350,6 @@ class KeckDEIMOSSpectrograph(spectrograph.Spectrograph):
 
         # Adjust parameters based on instrument configuration
         if isinstance(scifile, astropy.table.Table):
-            msgs.warn(f"These are the column names: {scifile.colnames}")
             # The method was passed a metadata table row
             grating = scifile['dispname'][0]
             binning = scifile['binning'][0]

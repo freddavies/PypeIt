@@ -139,7 +139,7 @@ class KeckLRISSpectrograph(spectrograph.Spectrograph):
         # Start with instrument-wide parameters (does not actually use `scifile`)
         par = super().config_specific_par(scifile, inp_par=inp_par)
 
-        # Adjust parameters based on DeVeny grating used
+        # Adjust parameters based on settings used
         if isinstance(scifile, astropy.table.Table):
             # The method was passed a metadata table row
             decker = scifile['decker'][0]
@@ -1007,7 +1007,7 @@ class KeckLRISBSpectrograph(KeckLRISSpectrograph):
         # Start with instrument-wide parameters (does not actually use `scifile`)
         par = super().config_specific_par(scifile, inp_par=inp_par)
 
-        # Adjust parameters based on DeVeny grating used
+        # Adjust parameters based on settings used
         if isinstance(scifile, astropy.table.Table):
             # The method was passed a metadata table row
             grating = scifile['dispname'][0]
