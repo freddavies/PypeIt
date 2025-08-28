@@ -305,32 +305,32 @@ class NOTALFOSCSpectrograph(spectrograph.Spectrograph):
             # The method was passed the raw file info in one form or another
             grating = self.get_meta_value(scifile, 'dispname')
 
-        # Wavelength calibrations
-        match grating:
-            case 'Grism_#3':
+        # Wavelength calibrations (metadata has already removed the '#')
+        match grating.replace('#',''):
+            case 'Grism_3':
                 par['calibrations']['wavelengths']['reid_arxiv'] = 'not_alfosc_grism3.fits'
-            case 'Grism_#4':
+            case 'Grism_4':
                 par['calibrations']['wavelengths']['reid_arxiv'] = 'not_alfosc_grism4.fits'
                 par['calibrations']['wavelengths']['lamps'] = ['HeI','NeI']
-            case 'Grism_#5':
+            case 'Grism_5':
                 par['calibrations']['wavelengths']['reid_arxiv'] = 'not_alfosc_grism5.fits'
-            case 'Grism_#7':
+            case 'Grism_7':
                 par['calibrations']['wavelengths']['reid_arxiv'] = 'not_alfosc_grism7.fits'
-            case 'Grism_#8':
+            case 'Grism_8':
                 par['calibrations']['wavelengths']['reid_arxiv'] = 'not_alfosc_grism8.fits'
-            case 'Grism_#10':
+            case 'Grism_10':
                 par['calibrations']['wavelengths']['reid_arxiv'] = 'not_alfosc_grism10.fits'
-            case 'Grism_#11':
+            case 'Grism_11':
                 par['calibrations']['wavelengths']['reid_arxiv'] = 'not_alfosc_grism11.fits'
-            case 'Grism_#17':
+            case 'Grism_17':
                 par['calibrations']['wavelengths']['reid_arxiv'] = 'not_alfosc_grism17.fits'
-            case 'Grism_#18':
+            case 'Grism_18':
                 par['calibrations']['wavelengths']['reid_arxiv'] = 'not_alfosc_grism18.fits'
                 par['calibrations']['wavelengths']['lamps'] = ['HeI','NeI','ArI','ArII']
-            case 'Grism_#19':
+            case 'Grism_19':
                 par['calibrations']['wavelengths']['reid_arxiv'] = 'not_alfosc_grism19.fits'
                 par['calibrations']['wavelengths']['lamps'] = ['HeI','NeI','ArI','ArII']
-            case 'Grism_#20':
+            case 'Grism_20':
                 par['calibrations']['wavelengths']['reid_arxiv'] = 'not_alfosc_grism20.fits'
             case _:
                 msgs.warn('not_alfosc.py: YOU NEED TO ADD IN THE WAVELENGTH SOLUTION FOR THIS GRISM')

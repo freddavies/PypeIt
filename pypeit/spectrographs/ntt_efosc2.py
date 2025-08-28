@@ -311,17 +311,17 @@ class NTTEFOSC2Spectrograph(spectrograph.Spectrograph):
             # The method was passed the raw file info in one form or another
             grating = self.get_meta_value(scifile, 'dispname')
 
-        # Wavelength calibrations
-        match grating:
-            case 'Gr#6':
+        # Wavelength calibrations (metadata has already removed the '#')
+        match grating.replace('#',''):
+            case 'Gr6':
                 par['calibrations']['wavelengths']['reid_arxiv'] = 'ntt_efosc2_Gr6.fits'
-            case 'Gr#5':
+            case 'Gr5':
                 par['calibrations']['wavelengths']['reid_arxiv'] = 'ntt_efosc2_Gr5.fits'
                 # Fringes are affecting this Grism significantly, skip flat fielding
                 par['scienceframe']['process']['use_pixelflat'] = False
                 par['scienceframe']['process']['use_illumflat'] = False
                 par['scienceframe']['process']['use_specillum'] = False
-            case 'Gr#4':
+            case 'Gr4':
                 par['calibrations']['wavelengths']['reid_arxiv'] = 'ntt_efosc2_Gr4.fits'
 
         return par

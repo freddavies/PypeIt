@@ -317,7 +317,7 @@ class KeckLRISSpectrograph(spectrograph.Spectrograph):
             and used to constuct the :class:`~pypeit.metadata.PypeItMetaData`
             object.
         """
-        return super().configuration_keys() + ['amp', 'binning']
+        return super().configuration_keys() + ['amp', 'binning', 'decker']
 
     def config_independent_frames(self):
         """

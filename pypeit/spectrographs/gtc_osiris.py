@@ -963,7 +963,7 @@ class GTCOSIRISSpectrograph(spectrograph.Spectrograph):
             and used to constuct the :class:`~pypeit.metadata.PypeItMetaData`
             object.
         """
-        return ['dispname', 'decker', 'binning']
+        return ['dispname', 'decker', 'binning', 'idname']
 
     def raw_header_cards(self):
         """

@@ -195,7 +195,7 @@ class MMTBlueChannelSpectrograph(spectrograph.Spectrograph):
             and used to constuct the :class:`~pypeit.metadata.PypeItMetaData`
             object.
         """
-        return ['dispname', 'dispangle', 'filter1']
+        return ['dispname', 'dispangle', 'filter1', 'cenwave']
 
     def raw_header_cards(self):
         """
@@ -412,7 +412,7 @@ class MMTBlueChannelSpectrograph(spectrograph.Spectrograph):
             :class:`~pypeit.metadata.PypeItMetaData` instance to print to the
             :ref:`pypeit_file`.
         """
-        return super().pypeit_file_keys() + ['cenwave','lampstat01']
+        return super().pypeit_file_keys() + ['lampstat01']
 
     def check_frame_type(self, ftype, fitstbl, exprng=None):
         """

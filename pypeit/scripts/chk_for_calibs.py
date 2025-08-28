@@ -130,7 +130,7 @@ class ChkForCalibs(scriptbase.ScriptBase):
                 continue
 
             # Send the Row of the metadata table corresponding to the file
-            csf_idx = ps.fitstbl['filename'] == config_specific_file
+            csf_idx = ps.fitstbl['filename'] == Path(config_specific_file).name
             spectrograph_cfg_lines = (
                 ps.spectrograph.config_specific_par(ps.fitstbl[csf_idx]).to_config()
             )

@@ -350,6 +350,7 @@ class KeckDEIMOSSpectrograph(spectrograph.Spectrograph):
 
         # Adjust parameters based on instrument configuration
         if isinstance(scifile, astropy.table.Table):
+            msgs.warn(f"These are the column names: {scifile.colnames}")
             # The method was passed a metadata table row
             grating = scifile['dispname'][0]
             binning = scifile['binning'][0]
@@ -361,9 +362,6 @@ class KeckDEIMOSSpectrograph(spectrograph.Spectrograph):
             binning = self.get_meta_value(scifile, 'binning')
             decker = self.get_meta_value(scifile, 'decker')
             amp = self.get_meta_value(scifile, 'amp')
-
-
-        headarr = self.get_headarr(scifile)
 
         # When using LVM mask or AMPMODE = SINGLE:A reduce only detectors 3,7
         if ('LVMslit' in decker) or (amp == 'SINGLE:A'):

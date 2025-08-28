@@ -425,7 +425,10 @@ class LDTDeVenySpectrograph(spectrograph.Spectrograph):
             :class:`~pypeit.metadata.PypeItMetaData` instance to print to the
             :ref:`pypeit_file`.
         """
-        return super().pypeit_file_keys() + ['dispangle','slitwid','lampstat01']
+        pypeit_keys = super().pypeit_file_keys()
+        pypeit_keys.remove('decker')  # Until the decker is actually installed
+        pypeit_keys.remove('cenwave')
+        return  pypeit_keys + ['dispangle', 'slitwid', 'lampstat01']
 
     def get_lamps(self, fitstbl:astropy.table.Table) -> list:
         """

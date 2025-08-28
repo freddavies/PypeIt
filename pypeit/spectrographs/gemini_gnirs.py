@@ -194,7 +194,7 @@ class GeminiGNIRSSpectrograph(spectrograph.Spectrograph):
             and used to constuct the :class:`~pypeit.metadata.PypeItMetaData`
             object.
         """
-        return ['decker', 'dispname', 'dispangle']
+        return ['decker', 'dispname', 'dispangle', 'camera_pos']
 
     def raw_header_cards(self):
         """
