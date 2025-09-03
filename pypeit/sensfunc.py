@@ -65,6 +65,10 @@ class SensFunc(datamodel.DataContainer):
             If None, defaults will be used.
         debug (:obj:`bool`, optional):
             Run in debug mode, sending diagnostic information to the screen.
+        chk_version (:obj:`bool`, optional):
+            Check the version of the data model.
+        write_qa (:obj:`bool`, optional):
+            If True, write QA plots to PDF files.
     """
     version = '1.0.2'
     """Datamodel version."""
@@ -130,6 +134,7 @@ class SensFunc(datamodel.DataContainer):
                  'splice_multi_det',
                  'meta_spec',
                  'std_dict',
+                 'write_qa',
                  'chk_version'
                 ]
 
@@ -196,7 +201,7 @@ class SensFunc(datamodel.DataContainer):
     # Superclass factory method generates the subclass instance
     @classmethod
     def get_instance(cls, spec1dfile, sensfile, par, par_fluxcalib=None, debug=False,
-                     chk_version=True):
+                     write_qa=True, chk_version=True):
         """
         Instantiate the relevant subclass based on the algorithm provided in
         ``par``.
@@ -204,10 +209,10 @@ class SensFunc(datamodel.DataContainer):
         return next(c for c in cls.__subclasses__()
                     if c.__name__ == f"{par['algorithm']}SensFunc")(
                         spec1dfile, sensfile, par, par_fluxcalib=par_fluxcalib, debug=debug,
-                        chk_version=chk_version)
+                        write_qa=write_qa, chk_version=chk_version)
 
     def __init__(self, spec1dfile, sensfile, par, par_fluxcalib=None, debug=False,
-                 chk_version=True):
+                 write_qa=True, chk_version=True):
 
         # Instantiate as an empty DataContainer
         super().__init__()
@@ -218,6 +223,7 @@ class SensFunc(datamodel.DataContainer):
         self.sensfile = sensfile
         self.par = par
         self.chk_version = chk_version
+        self.write_qa = write_qa
         # Spectrograph
         header = fits.getheader(self.spec1df)
         self.PYP_SPEC = header['PYP_SPEC']
@@ -474,7 +480,8 @@ class SensFunc(datamodel.DataContainer):
         self.throughput, self.throughput_splice = self.compute_throughput()
 
         # Write out QA and throughput plots
-        self.write_QA()
+        if self.write_qa:
+            self.write_QA()
 
     def flux_std(self):
         """
@@ -1111,9 +1118,9 @@ class UVISSensFunc(SensFunc):
     """Algorithm used for the sensitivity calculation."""
 
     def __init__(self, spec1dfile, sensfile, par, par_fluxcalib=None, debug=False,
-                 chk_version=True):
+                 write_qa=True, chk_version=True):
         super().__init__(spec1dfile, sensfile, par, par_fluxcalib=par_fluxcalib, debug=debug,
-                         chk_version=chk_version)
+                         write_qa=write_qa, chk_version=chk_version)
 
         # Add some cards to the meta spec. These should maybe just be added
         # already in unpack object
