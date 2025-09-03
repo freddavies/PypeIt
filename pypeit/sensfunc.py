@@ -17,6 +17,7 @@ from astropy import table
 
 from pypeit import msgs
 from pypeit import specobjs
+from pypeit import specobj
 from pypeit import utils
 from pypeit import io
 from pypeit.core import coadd
@@ -268,6 +269,15 @@ class SensFunc(datamodel.DataContainer):
         self.std_dict = flux_calib.get_standard_spectrum(star_type=self.par['star_type'],
                                                          star_mag=self.par['star_mag'],
                                                          ra=star_ra, dec=star_dec)
+        # check if this is the right standard star for the observation, i.e., if there is overlap in the wavelength
+        # coverage between the archival and observed standard star spectrum
+        overlap = np.intersect1d(self.wave_cnts, self.std_dict['wave'].value)
+        if overlap.size == 0:
+            msgs.error(f'No wavelength overlap between the archival and observed standard star spectrum. '
+                       'This is not the right standard star for your observations.')
+        elif overlap.size/self.nspec_in < 0.8:
+            msgs.warn(f'Only {overlap.size/self.nspec_in:.1%} of the observed wavelength range is covered by the '
+                      f'archival standard star. This may not be the right standard star for your observations. ')
 
     def unpack_std(self):
         """
@@ -315,22 +325,28 @@ class SensFunc(datamodel.DataContainer):
             elif hdul[1].header.get('DMODCLS') == 'OneSpec':
                 spec = OneSpec.from_file(self.spec1df, chk_version=self.chk_version)
                 if spec.head0['PYPELINE'] == 'Echelle':
-                    msgs.error('Standard star 1D spectra from OneSpec class cannot be used for Echelle data.')
+                    msgs.error('Standard star 1D spectrum from OneSpec class cannot be used for Echelle data.')
                 if spec.fluxed:
-                    msgs.error('Standard star 1D spectra from OneSpec class is already fluxed '
+                    msgs.error('Standard star 1D spectrum from OneSpec class is already fluxed '
                                'and cannot be used to generate the sensitivity function.')
                 if spec.ext_mode != self.par['extr']:
-                    msgs.warn(f'Standard star 1D spectra from OneSpec class was obtained using the {spec.ext_mode} '
+                    msgs.warn(f'Standard star 1D spectrum from OneSpec class was obtained using the {spec.ext_mode} '
                                f'extraction, while the requested extraction is {self.par["extr"]}.'
-                               f'{spec.ext_mode} extraction will be used.')
+                               f'The available {spec.ext_mode} extraction will be used instead.')
                 if self.par['use_flat']:
-                    msgs.warn('Standard star 1D spectra from OneSpec class does not contain the flat spectrum. '
-                               'The blaze function cannot be estimated.')
+                    msgs.warn('"use_flat" set to True, but standard star 1D spectrum from OneSpec class '
+                              'does not contain the flat spectrum. The blaze function cannot be estimated.')
+                    self.extr = spec.ext_mode
 
-                wave, counts, counts_ivar, counts_mask, log10_blaze_function, meta_spec, header, sobjs_std = \
-                    spec.wave_grid_mid, spec.flux, spec.ivar, spec.mask.astype(bool), None, spec.spect_meta, spec.head0, None
+                wave, counts, counts_ivar, counts_mask, log10_blaze_function, meta_spec, header = \
+                    spec.wave_grid_mid, spec.flux, spec.ivar, spec.mask.astype(bool), None, spec.spect_meta, spec.head0
                 # add some meta data
                 meta_spec['ECH_ORDERS'] = None
+                # create sobjs_std
+                sobj = specobj.SpecObj.from_arrays(spec.head0['PYPELINE'], wave, counts, counts_ivar, mode=self.extr)
+                # add mask from OneSpec, since `from_arrays` creates a mask based on the flux ivar
+                sobj[f'{self.extr}_MASK'] |= counts_mask
+                sobjs_std = specobjs.SpecObjs(specobjs=np.array([sobj]), header=spec.head0)
             else:
                 msgs.error('Unrecognized class for the 1D spectrum file. Cannot read in the standard')
 
@@ -450,8 +466,7 @@ class SensFunc(datamodel.DataContainer):
             self.wave_splice, self.zeropoint_splice = self.splice()
 
         # Flux the standard star with this sensitivity function and add it to the output table
-        if self.sobjs_std is not None:
-            self.flux_std()
+        self.flux_std()
 
         # Compute the throughput
         self.throughput, self.throughput_splice = self.compute_throughput()
@@ -803,9 +818,6 @@ class SensFunc(datamodel.DataContainer):
         fig.savefig(self.thrufile)
 
         # Plot fluxed standard star for all orders/det
-        if self.sobjs_std is None:
-            msgs.warn('Cannot plot fluxed standard star when using a Onespec 1D standard star spectrum')
-            pass
         fig = plt.figure(figsize=(12,8))
         axis = fig.add_axes([0.1, 0.1, 0.8, 0.8])
         axis.plot(self.std_dict['wave'].value, self.std_dict['flux'].value, color='green',linewidth=3.0,
