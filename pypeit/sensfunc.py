@@ -271,12 +271,14 @@ class SensFunc(datamodel.DataContainer):
                                                          ra=star_ra, dec=star_dec)
         # check if this is the right standard star for the observation, i.e., if there is overlap in the wavelength
         # coverage between the archival and observed standard star spectrum
-        overlap = np.intersect1d(self.wave_cnts, self.std_dict['wave'].value)
-        if overlap.size == 0:
+
+        overlap = (self.wave_cnts[:,0] <= self.std_dict['wave'].value.max()) & \
+                  (self.wave_cnts[:,0] >= self.std_dict['wave'].value.min())
+        if np.sum(overlap) == 0:
             msgs.error(f'No wavelength overlap between the archival and observed standard star spectrum. '
                        'This is not the right standard star for your observations.')
-        elif overlap.size/self.nspec_in < 0.8:
-            msgs.warn(f'Only {overlap.size/self.nspec_in:.1%} of the observed wavelength range is covered by the '
+        elif np.sum(overlap)/self.nspec_in < 0.8:
+            msgs.warn(f'Only {np.sum(overlap)/self.nspec_in:.1%} of the observed wavelength range is covered by the '
                       f'archival standard star. This may not be the right standard star for your observations. ')
 
     def unpack_std(self):
@@ -331,10 +333,10 @@ class SensFunc(datamodel.DataContainer):
                                'and cannot be used to generate the sensitivity function.')
                 if spec.ext_mode != self.par['extr']:
                     msgs.warn(f'Standard star 1D spectrum from OneSpec class was obtained using the {spec.ext_mode} '
-                               f'extraction, while the requested extraction is {self.par["extr"]}.'
+                               f'extraction, while the requested extraction is {self.par["extr"]}. '
                                f'The available {spec.ext_mode} extraction will be used instead.')
                 if self.par['use_flat']:
-                    msgs.warn('"use_flat" set to True, but standard star 1D spectrum from OneSpec class '
+                    msgs.error('"use_flat" set to True, but standard star 1D spectrum from OneSpec class '
                               'does not contain the flat spectrum. The blaze function cannot be estimated.')
                     self.extr = spec.ext_mode
 
@@ -796,7 +798,6 @@ class SensFunc(datamodel.DataContainer):
             axis.plot(self.wave[gpm,idet], self.throughput[gpm,idet], color=(rr, gg, bb),
                       linestyle='-', linewidth=2.5, label=thru_title[idet], zorder=5*idet)
             # Determine the wavelength limits for the plot
-            embed()
             if (_wave_min is None) or (np.min(self.wave[gpm,idet]) < _wave_min):
                 _wave_min = np.min(self.wave[gpm,idet])
             if (_wave_max is None) or (np.max(self.wave[gpm,idet]) > _wave_max):
