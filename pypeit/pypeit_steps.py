@@ -1,6 +1,8 @@
 import numpy as np
 import copy
 
+from astropy.table import Table
+
 from pypeit import msgs
 from pypeit.calibframe import CalibFrame
 from pypeit.images import buildimage
@@ -8,9 +10,14 @@ from pypeit import specobjs
 from pypeit import find_objects
 from pypeit import extraction
 from pypeit.core import parse
+from pypeit.manual_extract import ManualExtractionObj
+from pypeit import spec2dobj
+from pypeit.core import wave
 
 from pypeit import slittrace
 from pypeit import calibrations
+
+from linetools import utils as ltu
 
 from IPython import embed
 
@@ -56,35 +63,14 @@ def process_one_det(spectrograph, fitstbl, caliBrate, par, frames:list,
     """
     Process one set of files
 
-    sci_ID and det need to have been set internally prior to calling this method
-
-    Parameters
-    ----------
-    frames : :obj:`list`
-        List of frames to extract; stacked if more than one is provided
-    det : :obj:`int`
-        Detector number (1-indexed)
-    bg_frames : :obj:`list`, optional
-        List of frames to use as the background. Can be empty.
-    std_outfile : :obj:`str`, optional
-        Filename for the standard star spec1d file. Passed directly to
-        :func:`~pypeit.specobjs.get_std_trace`.
-
     Returns
     -------
-    global_sky : `numpy.ndarray`_
-        Initial global sky model
-    sobjs_obj : :class:`~pypeit.specobjs.SpecObjs`
-        List of objects found
     sciImg : :class:`~pypeit.images.pypeitimage.PypeItImage`
         Science image
     bkg_redux_sciimg : :class:`~pypeit.images.pypeitimage.PypeItImage`
         Science image before background subtraction
         if self.bkg_redux is True, otherwise None.
         It's used to generate a global sky model without bkg subtraction.
-    objFind : :class:`~pypeit.find_objects.FindObjects`
-        Object finding speobject
-
     """
     # Grab some meta-data needed for the reduction from the fitstbl
     objtype, setup, obstime, basename, binning \
@@ -153,12 +139,11 @@ def process_one_det(spectrograph, fitstbl, caliBrate, par, frames:list,
 def findobj_on_det(sciImg, spectrograph, fitstbl, par, frames:list, 
                         det, calibrations_path:str, std_outfile:str=None, 
                         show:bool=False,
-                        **findobj_kwargs):
+                        extras=None):
 
     # Grab some meta-data needed for the reduction from the fitstbl
     objtype, setup, obstime, basename, binning \
             = get_sci_metadata(spectrograph, fitstbl, frames[0], det)
-
 
     # Is this a standard star?
     std_redux = objtype == 'standard'
@@ -175,34 +160,31 @@ def findobj_on_det(sciImg, spectrograph, fitstbl, par, frames:list,
     caliBrate = load_calibrations_for_frame(
         spectrograph, fitstbl, par, frames[0], det, calibrations_path)
 
-    if par['reduce']['skysub']['user_regions'] in [None, '']:
-        initial_skymask = None
-    else:
-        # Build the initial sky mask
-        initial_skymask = load_skyregions(
-            initial_slits=spectrograph.pypeline != 'SlicerIFU',
-            scifile=sciImg.files[0], frame=frames[0])
-
     msgs.info(f'Reducing detector {det}')
 
     # Instantiate Reduce object
     # Required for pypeline specific object
     # At instantiaton, the fullmask in self.sciImg is modified
-    objFind = find_objects.FindObjects.get_instance(
-        sciImg, caliBrate.slits,
-        spectrograph, par, objtype,
-        wv_calib=caliBrate.wv_calib,
-        waveTilts=caliBrate.wavetilts,
-        initial_skymask=initial_skymask,
-        std_redux=std_redux,
-        basename=basename,
-        show=show,
-        **findobj_kwargs)
+    objFind = instantiate_objfind(sciImg, spectrograph, fitstbl,
+                                  par, frames, det, caliBrate,
+                                  extras['bkg_redux'],
+                                  extras['find_negative'], show=show)
+    #find_objects.FindObjects.get_instance(
+    #    sciImg, caliBrate.slits,
+    #    spectrograph, par, objtype,
+    #    wv_calib=caliBrate.wv_calib,
+    #    waveTilts=caliBrate.wavetilts,
+    #    initial_skymask=initial_skymask,
+    #    std_redux=std_redux,
+    #    basename=basename,
+    #    show=show,
+    #    **findobj_kwargs)
         #bkg_redux=self.bkg_redux,
         #manual=manual_obj,
         #find_negative=self.find_negative,
 
     # Do it
+    #embed(header='187 of pypeit_steps.py')
     initial_sky, sobjs_obj = objFind.run(std_trace=std_trace, 
                                          show_peaks=show)
 
@@ -367,8 +349,9 @@ def adjust_for_slitmask(sciImg_dict, spectrograph, fitstbl, par, detectors,
 
 def extract_one(spectrograph, fitstbl, par, 
                 frames, det, caliBrate, sciImg, bkg_redux_sciimg, 
-                objFind, initial_sky, sobjs_obj, 
+                initial_sky, sobjs_obj, 
                 bkg_redux:bool=False,
+                find_negative:bool=False,
                 show:bool=False):
     """
     Extract Objects in a single exposure/detector pair
@@ -414,6 +397,12 @@ def extract_one(spectrograph, fitstbl, par,
     # Is this a standard star?
     std_redux = 'standard' in objtype
 
+    # Instantiate a new objFind object
+    objFind = instantiate_objfind(sciImg, spectrograph, fitstbl,
+                                  par, frames, det, caliBrate,
+                                  bkg_redux, 
+                                  find_negative)
+
     ## TODO JFH I think all of this about determining the final global sky should be moved out of this method
     ## and preferably into the FindObjects class. I see why we are doing it like this since for multislit we need
     # to find all of the objects first using slitmask meta data,  but this comes at the expense of a much more complicated
@@ -440,6 +429,7 @@ def extract_one(spectrograph, fitstbl, par,
         bkg_redux_global_sky = objFind.global_skysub(skymask=skymask, bkg_redux_sciimg=bkg_redux_sciimg,
                                                     reinit_bpm=False, update_crmask=False, show=self.show)
 
+    # TODO -- worry about this
     scaleImg = objFind.scaleimg
 
     # Each spec2d file includes the slits object with unique flagging
@@ -493,7 +483,7 @@ def extract_one(spectrograph, fitstbl, par,
             waveImg = caliBrate.wv_calib.build_waveimg(tilts, slits, spat_flexure=objFind.spat_flexure_shift)
 
     # Apply a reference frame correction to each object and the waveimg
-    vel_corr, waveImg = self.refframe_correct(slits, 
+    vel_corr, waveImg = refframe_correct(spectrograph, par, slits, 
                                               fitstbl["ra"][frames[0]], 
                                               fitstbl["dec"][frames[0]],
                                               obstime, slitgpm=slitgpm, 
@@ -532,7 +522,8 @@ def extract_one(spectrograph, fitstbl, par,
     spec2DObj.process_steps = sciImg.process_steps
 
     spec2DObj.calibs = calibrations.Calibrations.get_association(
-                                fitstbl, spectrograph, calibrations_path,
+                                fitstbl, spectrograph, 
+                                caliBrate.calib_dir, #calibrations_path,
                                 fitstbl[frames[0]]['setup'],
                                 fitstbl.find_frame_calib_groups(frames[0])[0], det,
                                 must_exist=True, proc_only=True)
@@ -542,3 +533,98 @@ def extract_one(spectrograph, fitstbl, par,
 
     # Return
     return spec2DObj, sobjs
+
+def instantiate_objfind(sciImg, spectrograph, fitstbl, par, frames, det,
+                        caliBrate, bkg_redux, find_negative,
+                        show:bool=False):
+    objtype, setup, obstime, basename, binning \
+            = get_sci_metadata(spectrograph, fitstbl, frames[0], det)
+
+    # Deal with manual extraction
+    row = fitstbl[frames[0]]
+    manual_obj = ManualExtractionObj.by_fitstbl_input(
+        row['filename'], row['manual'], spectrograph) if len(row['manual'].strip()) > 0 else None
+
+    # TODO - Move this into FindObjects class
+    if par['reduce']['skysub']['user_regions'] in [None, '']:
+        initial_skymask = None
+    else:
+        # Build the initial sky mask
+        initial_skymask = load_skyregions(
+            initial_slits=spectrograph.pypeline != 'SlicerIFU',
+            scifile=sciImg.files[0], frame=frames[0])
+
+    objFind = find_objects.FindObjects.get_instance(
+        sciImg, caliBrate.slits,
+        spectrograph, par, objtype,
+        wv_calib=caliBrate.wv_calib,
+        waveTilts=caliBrate.wavetilts,
+        initial_skymask=initial_skymask,
+        bkg_redux=bkg_redux,
+        manual=manual_obj,
+        find_negative=find_negative,
+        basename=basename,
+        show=show)
+
+    return objFind
+
+
+# TODO :: Should this be moved outside of this class?
+def refframe_correct(spectrograph, par, slits, ra, dec, obstime, slitgpm=None, 
+                     waveimg=None, sobjs=None):
+    """ Correct the calibrated wavelength to the user-supplied reference frame
+
+    Args:
+        slits (:class:`~pypeit.slittrace.SlitTraceSet`):
+            Slit trace set object
+        ra (float, str):
+            Right Ascension
+        dec (float, str):
+            Declination
+        obstime (`astropy.time.Time`_):
+            Observation time
+        slitgpm (`numpy.ndarray`_, None, optional):
+            1D boolean array indicating the good slits (True). If None, the gpm will be taken from slits
+        waveimg (`numpy.ndarray`_, optional)
+            Two-dimensional image specifying the wavelength of each pixel
+        sobjs (:class:`~pypeit.specobjs.SpecObjs`, None, optional):
+            Spectrally extracted objects
+
+    """
+    if slitgpm is None:
+        slitgpm = (slits.mask == 0)
+    # Correct Telescope's motion
+    refframe = par['calibrations']['wavelengths']['refframe']
+    vel_corr = 0.0
+    if refframe in ['heliocentric', 'barycentric'] \
+            and par['calibrations']['wavelengths']['reference'] != 'pixel':
+        msgs.info("Performing a {0} correction".format(par['calibrations']['wavelengths']['refframe']))
+        # Calculate correction
+        radec = ltu.radec_to_coord((ra, dec))
+        vel, vel_corr = wave.geomotion_correct(radec, obstime,
+                                                spectrograph.telescope['longitude'],
+                                                spectrograph.telescope['latitude'],
+                                                spectrograph.telescope['elevation'],
+                                                refframe)
+        # Apply correction to objects
+        msgs.info('Applying {0} correction = {1:0.5f} km/s'.format(refframe, vel))
+        if (sobjs is not None) and (sobjs.nobj != 0):
+            # Loop on slits to apply
+            gd_slitord = slits.slitord_id[slitgpm]
+            for slitord in gd_slitord:
+                indx = sobjs.slitorder_indices(slitord)
+                this_specobjs = sobjs[indx]
+                # Loop on objects
+                for specobj in this_specobjs:
+                    if specobj is None:
+                        continue
+                    specobj.apply_helio(vel_corr, refframe)
+
+        # Apply correction to wavelength image
+        if waveimg is not None:
+            waveimg *= vel_corr
+    else:
+        msgs.info('A wavelength reference frame correction will not be performed.')
+
+    # Return the value of the correction and the corrected wavelength image
+    return vel_corr, waveimg

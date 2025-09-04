@@ -356,7 +356,7 @@ class PypeItImage(datamodel.DataContainer):
         # to L.A.Cosmic?  For now, I'm doing the simple thing of just using the
         # bad pixel mask, but what other flags from ``fullmask`` should be
         # included?
-        bpm = self.fullmask.bpm
+        bpm = self.fullmask.flagged('BPM')
 
         # TODO: These saturation and non-linear values are typically for the raw
         # pixel value.  E.g., a saturation of 65535 is because the digitization
