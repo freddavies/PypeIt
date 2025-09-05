@@ -312,7 +312,7 @@ nearest 5Å.
    you should go back and edit the FITS headers with the proper values and
    rerun step #1 above.
 
-   The ``ldt_deveny.calib`` file enumerates all of the PypeIt frametypes found,
+   The ``ldt_deveny.calib`` file enumerates all of the PypeIt frame types found,
    the calibration files associated therewith, and the raw data frames combined
    to produce them. This version of the calibration association file is
    informational only, but it may be helpful for thinking about grouping frames
@@ -865,7 +865,7 @@ on the specific requirements of your science program.  Please see the
    The script will produce an output sensitivity function file in the working
    directory -- you may name the output file anything you like, but it is
    generally helpful to use  something identifiable to the setup and/or date of
-   the observation. The figure below shows the thoughput plot for the
+   the observation. The figure below shows the throughput plot for the
    spectrophotometric standard star G191-B2B taken on 2022-11-02UT (the same
    night as the other DV6 data shown above).
 
@@ -949,7 +949,7 @@ Loading PypeIt 1D Spectra into ``specutils`` for Analysis
 PypeIt is a package for reducing spectroscopic data from raw frames collected
 at the telescope to 1D spectra, ready for analysis. To do the actual analysis
 in service of your particular science program, you will need to employ other
-tools. One possibility is the Astropy-coordinated package ``specutils``\ [5]_.
+tools. One possibility is the AstroPy-coordinated package ``specutils``\ [5]_.
 
 As of ``v1.12.2``, PypeIt includes a loader for importing pipeline outputs into
 ``specutils``, and can import either the ``spec1d`` (all objects in a frame) or
@@ -1205,7 +1205,7 @@ the example frame used in this document).
    in the plot to "surface" or to "submerge" unwanted objects.
 
 The most commonly modified parameter is ``snr_thresh``, which limits the search
-to sources with peak flux in excess of the theshold times the RMS of the
+to sources with peak flux in excess of the threshold times the RMS of the
 smashed image. The default is S/N = 50, but you may wish to modify this
 parameter to find more/fewer objects. For instance, if you wish the code to
 automatically find fainter objects with peak flux 10σ above the estimated RMS
@@ -1424,7 +1424,7 @@ are shown below.
         :class: with-shadow
 
     .. image:: ../figures/deveny_flexure_qa2.png
-        :alt: Cross-corrlation between science sky and archived sky
+        :alt: Cross-corelation between science sky and archived sky
         :class: with-shadow
 
     Example of PypeIt flexure QA for a science frame of BD+28 4211. *Left:*
