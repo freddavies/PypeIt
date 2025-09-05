@@ -375,7 +375,7 @@ class PypeIt:
                     # exposure
                     history = History(self.fitstbl.frame_paths(frames[0]))
                     history.add_reduce(calib_ID, self.fitstbl, frames, bg_frames)
-                    std_spec2d, std_sobjs = self.reduce_exposure(frames, bg_frames=bg_frames)
+                    std_spec2d, std_sobjs = self.reduce_exposure(frames, calib_ID, bg_frames=bg_frames)
                     # TODO come up with sensible naming convention for save_exposure for combined files
                     self.save_exposure(frames[0], std_spec2d, std_sobjs, history)
                 else:
@@ -430,8 +430,9 @@ class PypeIt:
                     history.add_reduce(calib_ID, self.fitstbl, frames, bg_frames)
 
                     # TODO -- Should we reset/regenerate self.slits.mask for a new exposure
-                    sci_spec2d, sci_sobjs = self.reduce_exposure(frames, bg_frames=bg_frames,
-                                                                 std_outfile=std_outfile)
+                    sci_spec2d, sci_sobjs = self.reduce_exposure(
+                        frames, calib_ID, bg_frames=bg_frames, 
+                        std_outfile=std_outfile)
 
                     # TODO: come up with sensible naming convention for
                     # save_exposure for combined files
@@ -478,7 +479,7 @@ class PypeIt:
 
  
 
-    def reduce_exposure(self, frames, bg_frames=None, std_outfile=None):
+    def reduce_exposure(self, frames, calib_ID, bg_frames=None, std_outfile=None):
         """
         Reduce a single exposure
 
@@ -541,8 +542,20 @@ class PypeIt:
         msgs.info(f'Detectors to work on: {detectors}')
 
         # #####################################
+        # Calibrations
+        for det in detectors:
+            msgs.info(f'Calibrating detector {det}')
+            # run/load calibration
+            caliBrate = self.calib_one(frames, det, calib_ID)
+            if not caliBrate.success:
+                msgs.warn(f'Calibrations for detector {det} were unsuccessful!  The step '
+                          f'that failed was {caliBrate.failed_step}.  Continuing by '
+                          f'skipping this detector.')
+                continue
+
+        # #####################################
         # Proccess or load processed frames
-        load_processed = False
+        load_processed = True
         if load_processed:
             load, write = True, False
         else:
@@ -559,7 +572,7 @@ class PypeIt:
         extras = dict(bkg_redux=self.bkg_redux,
                 find_negative=self.find_negative,
                 show=self.show)
-        load_findobj = False
+        load_findobj = True
         if load_findobj:
             load, write = True, False
             all_specobjs_objfind = None

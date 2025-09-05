@@ -776,8 +776,8 @@ def findobj_on_exposure(sciImg_dict:dict, spectrograph,
     # Spec1D
     spec1d_filename = intermediate_filename('spec1d', basename, 'all')
     if load:
-        all_specobjs_objfind = specobjs.SpecObjs.from_fitsfile(spec1d_filename) 
-    elif write & all_specobjs_objfind.nobj > 0:
+        all_specobjs_objfind = specobjs.SpecObjs.from_fitsfile(spec1d_filename)
+    elif write: 
         all_specobjs_objfind.write_to_fits({}, spec1d_filename)
 
     # Return
