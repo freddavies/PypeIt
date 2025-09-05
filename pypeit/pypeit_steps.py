@@ -673,7 +673,7 @@ def process_frames(spectrograph, fitstbl, par, frames:list,
 
         msgs.info(f'Reducing detector {det}')
         # run/load calibration
-        caliBrate = pypeit_steps.load_calibrations_for_frame(
+        caliBrate = load_calibrations_for_frame(
             spectrograph, fitstbl, par, frames[0], det, calibrations_path)
         if not caliBrate.success:
             msgs.error(f'Calibrations for detector {det} were unsuccessful!  The step '
