@@ -989,6 +989,7 @@ def local_skysub_extract(sciimg, sciivar, tilts, waveimg, global_sky, thismask, 
                     msgs.warn('WARNING: LOCAL SKY SUBTRACTION NOT PERFORMED')
 
         outmask_extract = outmask.copy() if use_2dmodel_mask else inmask.copy()
+        embed(header='992 of skysub.py')
 
         # Now that the iterations of profile fitting and sky subtraction are completed,
         # loop over the objwork objects in this grouping and perform the final extractions.

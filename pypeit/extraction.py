@@ -375,7 +375,6 @@ class Extract:
                                        extract_sky, sobj, fwhmimg=self.fwhmimg, base_var=self.sciImg.base_var,
                                        count_scale=self.sciImg.img_scale,
                                        noise_floor=self.sciImg.noise_floor)
-                embed(header='378 of extraction.py')
 
             # Fill up extra bits and pieces
             self.objmodel = np.zeros_like(self.sciImg.image)
