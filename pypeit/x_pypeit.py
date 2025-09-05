@@ -304,7 +304,7 @@ class PypeIt:
             for self.det in detectors:
                 msgs.info(f'Working on detector {self.det}')
 
-                self.caliBrate = self.calib_one(grp_frames, self.det)
+                self.caliBrate = self.calib_one(grp_frames, self.det, calib_ID)
                 if not self.caliBrate.success:
                     msgs.warn(f'Calibrations for detector {self.det} were unsuccessful!  The step '
                               f'that failed was {self.caliBrate.failed_step}.  Continuing to next '
@@ -601,7 +601,7 @@ class PypeIt:
 
         return all_spec2d, all_specobjs_extract
 
-    def calib_one(self, frames, det, stop_at_step:str=None):
+    def calib_one(self, frames, det, calib_ID, stop_at_step:str=None):
         """
         Run Calibration for a single exposure/detector pair
 
@@ -638,6 +638,7 @@ class PypeIt:
             
         # These need to be separate to accomodate COADD2D
         caliBrate.set_config(frames[0], det, self.par['calibrations'])
+        caliBrate.calib_ID = calib_ID
 
         # Run
         caliBrate.run_the_steps(stop_at_step=stop_at_step)
