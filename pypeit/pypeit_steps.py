@@ -469,7 +469,6 @@ def extract_one(spectrograph, fitstbl, par,
             tilts, slits = exTract.run()
         slitgpm = np.logical_not(exTract.extract_bpm)
         slitshift = exTract.slitshift
-        embed(header='471 of pypeit_steps.py')
     else:
         msgs.info(f"Extraction skipped for {basename} on det={det}")
         # TODO

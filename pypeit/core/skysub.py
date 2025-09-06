@@ -936,7 +936,6 @@ def local_skysub_extract(sciimg, sciivar, tilts, waveimg, global_sky, thismask, 
                         'Old bsp = {:5.2f}'.format(bsp_now) + '; New bsp = {:5.2f}'.format(1.2 ** (iterbsp) * bsp))
                     msgs.warn('***************************************')
 
-            embed(header='939 of skysub.py')
             if sky_bmodel.any():
                 skyimage.flat[isub] = sky_bmodel
                 objimage.flat[isub] = obj_bmodel
@@ -990,7 +989,6 @@ def local_skysub_extract(sciimg, sciivar, tilts, waveimg, global_sky, thismask, 
                     msgs.warn('WARNING: LOCAL SKY SUBTRACTION NOT PERFORMED')
 
         outmask_extract = outmask.copy() if use_2dmodel_mask else inmask.copy()
-        embed(header='992 of skysub.py')
 
         # Now that the iterations of profile fitting and sky subtraction are completed,
         # loop over the objwork objects in this grouping and perform the final extractions.
