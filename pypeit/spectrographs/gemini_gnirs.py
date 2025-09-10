@@ -490,17 +490,10 @@ class GeminiGNIRSEchelleSpectrograph(GeminiGNIRSSpectrograph):
         """
         # Start with instrument-wide parameters (does not actually use `scifile`)
         par = super().config_specific_par(scifile, inp_par=inp_par)
+        # NOTE: The super() method sets ``self.dispname``
 
         # TODO The ``self.``` are hacks for now until we figure out how to set
         #      dispname and other meta information in the spectrograph class itself
-
-        # Adjust parameters based on grating and camera position
-        if isinstance(scifile, astropy.table.Table):
-            # The method was passed a metadata table row
-            self.dispname = scifile['dispname'][0]
-        else:
-            # The method was passed the raw file info in one form or another
-            self.dispname = self.get_meta_value(scifile, 'dispname')
 
         # 32/mmSB_G5533 setup, covering XYJHK with short blue camera
         if '32/mm' in self.dispname:
@@ -521,6 +514,7 @@ class GeminiGNIRSEchelleSpectrograph(GeminiGNIRSSpectrograph):
 
             # Tilts
             par['calibrations']['tilts']['tracethresh'] = [5.0, 10, 10, 10, 10, 10]
+
         # 10/mmLBSX_G5532 setup, covering YJHK with the long blue camera and SXD prism
         elif '10/mmLBSX' in self.dispname:
             # Edges
@@ -536,6 +530,7 @@ class GeminiGNIRSEchelleSpectrograph(GeminiGNIRSSpectrograph):
 
             # Tilts
             par['calibrations']['tilts']['tracethresh'] = [10, 10, 10, 10]
+
         else:
             msgs.error('Unrecognized GNIRS dispname')
 
@@ -874,13 +869,18 @@ class GNIRSIFUSpectrograph(GeminiGNIRSSpectrograph):
         spec_bins = np.arange(1+num_wave) - 0.5
         return xbins, ybins, spec_bins
 
-    def pypeit_file_keys(self):
+    def configuration_keys(self):
         """
-        Define the list of keys to be output into a standard ``PypeIt`` file.
+        Return the metadata keys that define a unique instrument
+        configuration.
+
+        This list is used by :class:`~pypeit.metadata.PypeItMetaData` to
+        identify the unique configurations among the list of frames read
+        for a given reduction.
 
         Returns:
-            :obj:`list`: The list of keywords in the relevant
-            :class:`~pypeit.metadata.PypeItMetaData` instance to print to the
-            :ref:`pypeit_file`.
+            :obj:`list`: List of keywords of data pulled from file headers
+            and used to constuct the :class:`~pypeit.metadata.PypeItMetaData`
+            object.
         """
-        return super().pypeit_file_keys() + ['filter1']
+        return super().configuration_keys() + ['filter1']

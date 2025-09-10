@@ -469,8 +469,9 @@ class Spectrograph:
                 if not allow_missing:
                     msgs.error(f"Core Meta Key: {key} not present in your fitstbl/Header")
         # Configuration Keys -- In addition to Core Meta,
-        #   other Config-Specific values; optional
-        for key in self.configuration_keys():
+        #   other Config-Specific values and keys listed in the PypeIt File;
+        #   OPTIONAL
+        for key in self.configuration_keys() + self.pypeit_file_keys():
             if key not in subheader:
                 try:
                     subheader[key] = row_fitstbl[key]

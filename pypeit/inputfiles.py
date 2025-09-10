@@ -260,7 +260,7 @@ class InputFile:
         return None if self.config is None else self.config.write()
 
     @property
-    def filenames(self):
+    def filenames(self) -> list[str]:
         """ List of path + filename's
         Wrapper to :func:`~pypeit.inputfiles.InputFile.path_and_files`.
         See that function for a full description.
@@ -441,7 +441,7 @@ class InputFile:
                 break
         return start, end
 
-    def path_and_files(self, key:str, skip_blank=False, include_commented_out=False, check_exists=True):
+    def path_and_files(self, key:str, skip_blank=False, include_commented_out=False, check_exists=True) -> list[str]:
         """Generate a list of the filenames with 
         the full path from the column of the data `astropy.table.Table`_
         specified by `key`.  The files must exist and be 
@@ -637,7 +637,6 @@ class InputFile:
         # Get the configuration-specific parameters based on the file
         spec_par = spec.default_pypeit_par() if config_specific_file is None \
                     else spec.config_specific_par(config_specific_file)
-
         par = PypeItPar.from_cfg_lines(cfg_lines=spec_par.to_config(),
                                        merge_with=(self.cfg_lines,))
         return spec, par, config_specific_file
@@ -701,11 +700,13 @@ class PypeItFile(InputFile):
         # set of file names each time they are requested.  However, this should
         # only be done once in the code below because as soon as a relevant file
         # is found the loops are discontinued using `break`.
+        filenames = self.filenames.copy()
 
+        # Search for the first science/standard frame
         config_specific_file = None
         for idx, row in enumerate(self.data):
             if 'science' in row['frametype'] or 'standard' in row['frametype']:
-                config_specific_file = self.filenames[idx]
+                config_specific_file = filenames[idx]
                 break
 
         # If no science/standard frames available, search for an arc/trace
@@ -713,18 +714,19 @@ class PypeItFile(InputFile):
         if config_specific_file is None:
             for idx, row in enumerate(self.data):
                 if 'arc' in row['frametype'] or 'trace' in row['frametype']:
-                    config_specific_file = self.filenames[idx]
+                    config_specific_file = filenames[idx]
                     break
 
-        if config_specific_file is not None:
-            self.get_spectrograph()._check_extensions(config_specific_file)
+        # If we still don't have a file matching the above, just use the first one
+        if config_specific_file is None and filenames is not None:
+            config_specific_file = filenames[0]
 
+        # Load the spectrograph
         spec = self.get_spectrograph()
 
-        if config_specific_file is None:
-            _files = self.filenames
-            if _files is not None:
-                config_specific_file = _files[0]
+        # Check file extensions
+        if config_specific_file is not None:
+            spec._check_extensions(config_specific_file)
 
         # Send the Row of the metadata table corresponding to the file
         csf_idx = self.data['filename'] == Path(config_specific_file).name

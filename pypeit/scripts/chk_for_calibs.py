@@ -42,22 +42,20 @@ class ChkForCalibs(scriptbase.ScriptBase):
 
         """
 
-        from pathlib import Path
         import os
+        import pathlib
         import time
 
-        from IPython import embed
-
+        import astropy.table
         import numpy as np
 
-        from astropy import table
-
-        from pypeit.pypeitsetup import PypeItSetup
         from pypeit import calibrations
         from pypeit import msgs
         from pypeit.par import PypeItPar
+        from pypeit.pypeitsetup import PypeItSetup
 
-        import shutil
+        from IPython import embed
+
 
         # Check that the spectrograph is provided if using a file root
         if args.root is not None:
@@ -84,7 +82,7 @@ class ChkForCalibs(scriptbase.ScriptBase):
 
         # Setup the table. Need to use object type for strings so that
         # they're not truncated.
-        answers = table.Table()
+        answers = astropy.table.Table()
         answers['setups'] = list(uniq_cfg.keys())
         # Add the configuration columns
         for setup, setup_dict in uniq_cfg.items():
@@ -130,7 +128,7 @@ class ChkForCalibs(scriptbase.ScriptBase):
                 continue
 
             # Send the Row of the metadata table corresponding to the file
-            csf_idx = ps.fitstbl['filename'] == Path(config_specific_file).name
+            csf_idx = ps.fitstbl['filename'] == pathlib.Path(config_specific_file).name
             spectrograph_cfg_lines = (
                 ps.spectrograph.config_specific_par(ps.fitstbl[csf_idx]).to_config()
             )
@@ -163,7 +161,7 @@ class ChkForCalibs(scriptbase.ScriptBase):
             # TODO: This is nearly an exact copy of the code in
             # `pypeit/scripts/setup.py`.  Consolidate somehow?
             # Output directory is hard-coded to be 'setup_files'
-            output_path = Path().absolute() / 'setup_files'
+            output_path = pathlib.Path().absolute() / 'setup_files'
             if not output_path.exists():
                 output_path.mkdir(parents=True)
             # Write the sorted file,

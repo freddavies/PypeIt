@@ -185,12 +185,14 @@ class GeminiFLAMINGOS2Spectrograph(GeminiFLAMINGOSSpectrograph):
             grating = self.get_meta_value(scifile, 'dispname')
 
         # TODO: Should we allow the user to override these?
-        if grating == 'JH_G5801':
-            par['calibrations']['wavelengths']['method'] = 'full_template'
-            par['calibrations']['wavelengths']['reid_arxiv'] = 'Flamingos2_JH_JH.fits'
-        elif grating == 'HK_G5802':
-            par['calibrations']['wavelengths']['method'] = 'full_template'
-            par['calibrations']['wavelengths']['reid_arxiv'] = 'Flamingos2_HK_HK.fits'
+        match grating:
+            case 'JH_G5801':
+                par['calibrations']['wavelengths']['method'] = 'full_template'
+                par['calibrations']['wavelengths']['reid_arxiv'] = 'Flamingos2_JH_JH.fits'
+            case 'HK_G5802':
+                par['calibrations']['wavelengths']['method'] = 'full_template'
+                par['calibrations']['wavelengths']['reid_arxiv'] = 'Flamingos2_HK_HK.fits'
+
         return par
 
     def check_frame_type(self, ftype, fitstbl, exprng=None):

@@ -161,6 +161,7 @@ def define_additional_meta(nlamps=20):
                        'idname': dict(dtype=str, comment='Instrument supplied frametype (e.g. bias)'),
                        'instrument': dict(dtype=str, comment='Header supplied instrument name'),
                        'mode': dict(dtype=str, comment='Observing mode'),
+                       'nodpix': dict(dtype=int, comment='Number of rows shuffled when nodding, used for Gemini/GMOS'),
                        'object': dict(dtype=str, comment='Alternative object name (cf. target)'),
                        'obstime': dict(dtype=str, comment='Observation time'),
                        'oscansec': dict(dtype=str, comment='Overscan section (windowing)'),

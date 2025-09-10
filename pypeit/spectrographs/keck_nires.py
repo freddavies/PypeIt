@@ -432,7 +432,7 @@ class KeckNIRESSpectrograph(spectrograph.Spectrograph):
             :ref:`pypeit_file`.
         """
         pypeit_keys = super().pypeit_file_keys()
-        pypeit_keys += ['dithpat', 'dithpos', 'dithoff','frameno']
+        pypeit_keys += ['dithpat', 'dithpos', 'dithoff', 'frameno']
         return pypeit_keys
 
     def check_frame_type(self, ftype, fitstbl, exprng=None):

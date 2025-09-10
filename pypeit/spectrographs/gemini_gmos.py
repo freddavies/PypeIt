@@ -15,15 +15,15 @@ import astropy.wcs
 import numpy as np
 
 from pypeit import msgs
-from pypeit.spectrographs import spectrograph
 from pypeit import telescopes
 from pypeit import io
 from pypeit.core import framematch
+from pypeit.core.mosaic import build_image_mosaic_transform
 from pypeit.core import parse
 from pypeit.images import detector_container
 from pypeit.images.mosaic import Mosaic
-from pypeit.core.mosaic import build_image_mosaic_transform
 from pypeit.par import parset
+from pypeit.spectrographs import spectrograph
 from pypeit.spectrographs.slitmask import SlitMask
 
 from IPython import embed
@@ -144,6 +144,8 @@ class GeminiGMOSSpectrograph(spectrograph.Spectrograph):
         # Dithering
         self.meta['dithpos'] = dict(ext=0, card='QOFFSET')
         self.meta['dithoff'] = dict(card=None, compound=True)
+        # Nodding
+        self.meta['nodpix'] = dict(card=None, compound=True)
 
     def compound_meta(self, headarr, meta_key):
         """
@@ -167,7 +169,11 @@ class GeminiGMOSSpectrograph(spectrograph.Spectrograph):
                 return round(headarr[0].get('QOFFSET'),2)
             else:
                 return 0.0
-        elif meta_key == 'binning':
+
+        if meta_key == 'nodpix':
+            return headarr[0].get('NODPIX', 0)
+
+        if meta_key == 'binning':
             # binning in the raw frames
             ccdsum = headarr[1].get('CCDSUM')
             if ccdsum is not None:
@@ -179,7 +185,8 @@ class GeminiGMOSSpectrograph(spectrograph.Spectrograph):
             if binning is None:
                 msgs.error('Binning not found')
             return binning
-        elif meta_key == 'mjd':
+
+        if meta_key == 'mjd':
             obsepoch = headarr[0].get('OBSEPOCH')
             if obsepoch is not None:
                 return astropy.time.Time(obsepoch, format='jyear').mjd
@@ -223,7 +230,7 @@ class GeminiGMOSSpectrograph(spectrograph.Spectrograph):
         """
         return super().configuration_keys() + ['dispangle', 'datasec']
 
-    def raw_header_cards(self):
+    def raw_header_cards(self) -> list[str]:
         """
         Return additional raw header cards to be propagated in
         downstream output files for configuration identification.
@@ -241,7 +248,7 @@ class GeminiGMOSSpectrograph(spectrograph.Spectrograph):
             :obj:`list`: List of keywords from the raw data files that should
             be propagated in output files.
         """
-        return ['GRATING', 'FILTER1', 'MASKNAME', 'CENTWAVE', 'CCDSUM', 'OBSEPOCH', 'NODPIX']
+        return ['GRATING', 'FILTER1', 'MASKNAME', 'CENTWAVE', 'CCDSUM', 'OBSEPOCH']
 
     def pypeit_file_keys(self):
         """
@@ -371,19 +378,13 @@ class GeminiGMOSSpectrograph(spectrograph.Spectrograph):
         if isinstance(scifile, astropy.table.Table):
             # The method was passed a metadata table row
             decker = scifile['decker'][0]
-            binning = scifile['binning'][0]
         else:
             # The method was passed the raw file info in one form or another
             decker = self.get_meta_value(scifile, 'decker')
-            binning = self.get_meta_value(scifile, 'binning')
 
         # Turn PCA off for long slits
         if 'arcsec' in decker:
             par['calibrations']['slitedges']['sync_predict'] = 'nearest'
-
-        # Allow for various binning
-        # TODO: This doesn't do anything!
-        binning = parse.parse_binning(binning)
 
         return par
 
@@ -1093,7 +1094,7 @@ class GeminiGMOSSHamSpectrograph(GeminiGMOSSpectrograph):
         bin_spec, _ = parse.parse_binning(binning)
         if 2022.07 < obs_epoch < astropy.time.Time("2023-12-14", format='isot').jyear:
             par['calibrations']['slitedges']['follow_span'] = 290*bin_spec
-        #
+
         return par
 
 
@@ -1296,6 +1297,44 @@ class GeminiGMOSNHamNSSpectrograph(GeminiGMOSNHamSpectrograph):
 
     def __init__(self):
         super().__init__()
+        self.nod_shuffle_pix = None # Nod & Shuffle
+
+    def config_specific_par(
+            self,
+            scifile:str|list|pathlib.Path|astropy.io.fits.Header|astropy.table.Table,
+            inp_par:parset.ParSet=None
+        ):
+        """
+        Modify the PypeIt parameters to hard-wired values used for
+        specific instrument configurations.
+
+        In this case, simply slurp the NOD&Shuffle value for use elsewhere
+        in this class.
+
+        Args:
+            scifile (:obj:`str`, :obj:`list`, `Path`_, `astropy.io.fits.Header`_, `astropy.table.Table`_):
+                Input filename, an `astropy.io.fits.Header`_ object, or a list
+                of `astropy.io.fits.Header`_ objects.  Or a row from the metadata table.
+            inp_par (:class:`~pypeit.par.parset.ParSet`, optional):
+                Parameter set used for the full run of PypeIt.  If None,
+                use :func:`default_pypeit_par`.
+
+        Returns:
+            :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
+            adjusted for configuration specific parameter values.
+        """
+        # Start with instrument-wide parameters (does not actually use `scifile`)
+        par = super().config_specific_par(scifile, inp_par=inp_par)
+
+        # Adjust parameters based on decker and binning used
+        if isinstance(scifile, astropy.table.Table):
+            # The method was passed a metadata table row
+            self.nod_shuffle_pix = scifile['nodpix'][0]
+        else:
+            # The method was passed the raw file info in one form or another
+            self.nod_shuffle_pix = self.get_meta_value(scifile, 'nodpix')
+
+        return par
 
     def get_rawimage(self, raw_file, det):
         """
@@ -1332,9 +1371,8 @@ class GeminiGMOSNHamNSSpectrograph(GeminiGMOSNHamSpectrograph):
         """
         detpar, array, hdu, exptime, rawdatasec_img, oscansec_img \
                 = super().get_rawimage(raw_file, det)
-        nod_shuffle_pix = self.get_headarr(raw_file)[0]['NODPIX']
 
-        if nod_shuffle_pix is None \
+        if self.nod_shuffle_pix is None \
                 or hdu[0].header['object'] not in ['GCALflat', 'CuAr', 'Bias']:
             # No need to adjust output
             return detpar, array, hdu, exptime, rawdatasec_img, oscansec_img
@@ -1354,7 +1392,7 @@ class GeminiGMOSNHamNSSpectrograph(GeminiGMOSNHamSpectrograph):
         for i in range(nimg):
             xbin, ybin = parse.parse_binning(_detpar[i].binning)
             # TODO: Should double check NOD&SHUFFLE was not on
-            nodpix = int(nod_shuffle_pix/xbin)
+            nodpix = int(self.nod_shuffle_pix/xbin)
             #48 is a solid value for the unusful rows in GMOS data
             row1, row2 = nodpix + int(48/xbin), 2*nodpix+int(48/xbin)
             # Shuffle me
@@ -1363,6 +1401,38 @@ class GeminiGMOSNHamNSSpectrograph(GeminiGMOSNHamSpectrograph):
             array = _array[0]
 
         return detpar, array, hdu, exptime, rawdatasec_img, oscansec_img
+
+    def raw_header_cards(self) -> list[str]:
+        """
+        Return additional raw header cards to be propagated in
+        downstream output files for configuration identification.
+
+        The list of raw data FITS keywords should be those used to populate
+        the :meth:`~pypeit.spectrographs.spectrograph.Spectrograph.configuration_keys`
+        or are used in :meth:`~pypeit.spectrographs.spectrograph.Spectrograph.config_specific_par`
+        for a particular spectrograph, if different from the name of the
+        PypeIt metadata keyword.
+
+        This list is used by :meth:`~pypeit.spectrographs.spectrograph.Spectrograph.subheader_for_spec`
+        to include additional FITS keywords in downstream output files.
+
+        Returns:
+            :obj:`list`: List of keywords from the raw data files that should
+            be propagated in output files.
+        """
+        return super().raw_header_cards() + ['NODPIX']
+    
+    def pypeit_file_keys(self):
+        """
+        Define the list of keys to be output into a standard ``PypeIt`` file.
+
+        Returns:
+            :obj:`list`: The list of keywords in the relevant
+            :class:`~pypeit.metadata.PypeItMetaData` instance to print to the
+            :ref:`pypeit_file`.
+        """
+        return super().pypeit_file_keys() + ['nodpix']
+
 
 class GeminiGMOSNE2VSpectrograph(GeminiGMOSNSpectrograph):
     """

@@ -366,7 +366,7 @@ class APFLevySpectrograph(spectrograph.Spectrograph):
         # Start with instrument-wide parameters (does not actually use `scifile`)
         par = super().config_specific_par(scifile, inp_par=inp_par)
 
-        # Adjust parameters based on decker used
+        # Adjust parameters based on decker and binning used
         if isinstance(scifile, astropy.table.Table):
             # The method was passed a metadata table row
             decker = scifile['decker'][0]
