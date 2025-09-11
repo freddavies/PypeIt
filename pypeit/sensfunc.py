@@ -249,8 +249,8 @@ class SensFunc(datamodel.DataContainer):
         self.sobjs_std = specobjs.SpecObjs.from_fitsfile(
                                 self.spec1df, chk_version=self.chk_version).get_std(
                                     multi_spec_det=self.par['multi_spec_det'], split_mosaic=True)
-        # splice together also mosaic reduced spectra that have been split
-        if self.sobjs_std.SPEC_DET is not None and np.unique(self.sobjs_std.SPEC_DET[self.sobjs_std.SPEC_DET > 0]).size > 1:
+        # splice together also mosaic-reduced spectra that have been split
+        if self.sobjs_std.SPEC_DET[0] is not None and np.unique(self.sobjs_std.SPEC_DET[self.sobjs_std.SPEC_DET > 0]).size > 1:
             self.splice_multi_det = True
 
         if self.sobjs_std is None:
@@ -673,6 +673,8 @@ class SensFunc(datamodel.DataContainer):
                         bb = (order_or_det[idet] - np.min(order_or_det)) \
                                 / np.maximum(np.max(order_or_det) - np.min(order_or_det), 1)
                         sens_wave_gpm = self.sens['SENS_WAVE'][idet] > 1.0
+                        if not np.any(sens_wave_gpm):
+                            continue
                         axis.plot(self.sens['SENS_WAVE'][idet,sens_wave_gpm],
                                   self.sens['SENS_ZEROPOINT_FIT'][idet,sens_wave_gpm],
                                   color=(rr, gg, bb), linestyle='-', linewidth=2.5,
@@ -688,7 +690,7 @@ class SensFunc(datamodel.DataContainer):
                         if (tmin is None) or (np.min(self.sens['SENS_ZEROPOINT_FIT'][idet,sens_wave_gpm]) < tmin):
                             tmin = np.min(self.sens['SENS_ZEROPOINT_FIT'][idet,sens_wave_gpm])
                         if (tmax is None) or (np.max(self.sens['SENS_ZEROPOINT_FIT'][idet,sens_wave_gpm]) > tmax):
-                            tmax = np.max(self.sens['SENS_ZEROPOINT_FIT'][idet,sens_wave_gpm])
+                            tmax = np.fmin(22, np.max(self.sens['SENS_ZEROPOINT_FIT'][idet,sens_wave_gpm]))
 
                     # If we are splicing, overplot the spliced zeropoint
                     if self.splice_multi_det:
@@ -723,6 +725,8 @@ class SensFunc(datamodel.DataContainer):
             bb = (order_or_det[idet] - np.min(order_or_det)) \
                     / np.maximum(np.max(order_or_det) - np.min(order_or_det), 1)
             gpm = (self.throughput[:, idet] >= 0.0)
+            if not np.any(gpm):
+                continue
             axis.plot(self.wave[gpm,idet], self.throughput[gpm,idet], color=(rr, gg, bb),
                       linestyle='-', linewidth=2.5, label=thru_title[idet], zorder=5*idet)
             # Determine the wavelength limits for the plot
@@ -731,7 +735,7 @@ class SensFunc(datamodel.DataContainer):
             if (_wave_max is None) or (np.max(self.wave[gpm,idet]) > _wave_max):
                 _wave_max = np.max(self.wave[gpm,idet])
             if (tmax is None) or (np.max(self.throughput[gpm,idet]) > tmax):
-                tmax = np.max(self.throughput[gpm,idet])
+                tmax = np.fmin(0.5, np.max(self.throughput[gpm,idet]))
         if self.splice_multi_det:
             axis.plot(self.wave_splice[wave_slice_gpm].flatten(),
                       self.throughput_splice[wave_slice_gpm].flatten(), color='black',
@@ -959,6 +963,8 @@ class IRSensFunc(SensFunc):
         e = self.telluric.model['IND_UPPER']+1
         self.sens['POLYORDER_VEC'] = self.telluric.model['POLYORDER_VEC']
         for i in range(self.norderdet):
+            if self.telluric.obj_dict_list[i] is None:
+                continue
             # Compute and assign the zeropint_data from the input data and the
             # best-fit telluric model
             self.sens['SENS_WAVE'][i,s[i]:e[i]] = self.telluric.wave_grid[s[i]:e[i]]
