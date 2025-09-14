@@ -22,18 +22,13 @@ class ReducebyStep(scriptbase.ScriptBase):
         parser.add_argument('frame', type=str, help='Raw science/standard frame to reduce as listed in your PypeIt file, e.g. b28.fits.gz.')
         parser.add_argument('step', type=str, help="Reduction step to perform")
 
-        parser.add_argument('--det', default=None, type=str,
-                            help='Detector name or number.  If a number, the name is constructed '
-                                 'assuming the reduction is for a single detector.  If a string, '
-                                 'it must match the name of the detector object (e.g., DET01 for '
-                                 'a detector, MSC01 for a mosaic). If not set, the first available detector'
-                                 'in the spec2d file will be shown')
+        parser.add_argument('--det', default=None, type=int,
+                            help='Detector number. Required, but the list of options is provided if None is give')
         parser.add_argument('--show', default=False, action='store_true',
                             help='Show reduction steps via plots (which will block further '
                                  'execution until clicked on) and outputs to ginga. Requires '
                                  'remote control ginga session via '
                                  '"ginga --modules=RC,SlitWavelength &"')
-
         return parser
 
 
@@ -61,9 +56,18 @@ class ReducebyStep(scriptbase.ScriptBase):
         pypeIt = pypeit.PypeIt(args.pypeit_file, logname=logname, show=args.show) 
         pypeIt.reuse_calibs = True
 
-        # Detectors
-        detectors = pypeIt.spectrograph.select_detectors(subset=args.det)
-        det = detectors[0]
+        # Detector
+        detectors = pypeIt.spectrograph.select_detectors()
+        if args.det is None:
+            print("---------------------------------------------------------------------")
+            print("---------------------------------------------------------------------")
+            print("---------------------------------------------------------------------")
+            print(f"No detector provided (--det). Choose from one of these: {detectors}.") 
+            print("---------------------------------------------------------------------")
+            return
+        elif args.det not in detectors:
+            msgs.error(f"Detector {args.det} not found. Choose from one of these: {detectors}.")
+        det = args.det
 
         # Find the frame
         row = np.where(pypeIt.fitstbl['filename'] == args.frame)[0]
