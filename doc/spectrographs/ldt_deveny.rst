@@ -56,8 +56,8 @@ EMI Pickup Noise
 
 See the `LDT Observer Tools package documentation
 <https://lowellobservatory.github.io/LDTObserverTools/scrub_deveny_pickup.html>`_
-for information about the EMI pickup noise seen in the DeVeny detector from
-approximately 2019 to mid-2025.
+for information about the EMI pickup noise seen in the DeVeny detector since
+approximately 2019.
 
 
 Using PypeIt with the LDT/DeVeny Spectrograph
@@ -96,12 +96,13 @@ instructions.
     Before you get too far, it is important to understand that PypeIt
     reorients all 2D image data (from any spectrograph) so that the spectral
     axis is vertical with increasing wavelength corresponding to increasing
-    pixel number. In the case of DeVeny data, this amounts to a 90º CW
-    rotation of the images with respect to the original files. Don't Panic!
+    pixel number. In the case of DeVeny data, this amounts to a 90\
+    :math:`^\circ` CW rotation of the images with respect to the original
+    files. Don't Panic!
 
 .. tip::
 
-   At the :ref:`bottom of this page <deveny_workflow>` there is a “cheat sheet”
+   At the :ref:`bottom of this page <deveny_workflow>` there is a "cheat sheet"
    of common DeVeny PypeIt workflows.
 
 
@@ -245,7 +246,7 @@ you will see in your reduction files) are:
 
 The PypeIt metadata key ``cenwave`` is the computed central wavelength of the
 spectrum in Angstroms, derived from the grating and tilt angle,  rounded to the
-nearest 5Å.
+nearest 5\ :math:`\mathring{A}`.
 
 #. **Run** ``pypeit_setup``
 
@@ -283,7 +284,7 @@ nearest 5Å.
    The ``ldt_deveny.sorted`` file is divided into sections enumerating the
    unique instrument configurations and the list of frames associated
    therewith. Each unique configuration is given a capital letter identifier
-   (A, B, C, D…).  Below are example headers from a file for LDT/DeVeny data taken with
+   (A, B, C, D...).  Below are example headers from a file for LDT/DeVeny data taken with
    two different order-blocking filters on the same night:
 
    ::
@@ -392,7 +393,7 @@ of the file format and common edits a user may wish to make.
    present in your ``.pypeit`` file. If needed, simply copy the needed lines
    from one file to the other so that both setups have access to, *e.g.*,
    the bias frames. The ordering of table rows in the :ref:`pypeit_file` does
-   not matter, so don't worry about adding lines in the “proper” location.
+   not matter, so don't worry about adding lines in the "proper" location.
 
 #. Check the ``frametype`` of all files. For DeVeny reductions, you need at
    least one file with each of the following Frame Types (see
@@ -446,7 +447,7 @@ of the file format and common edits a user may wish to make.
    :ref:`deveny_groups` for a more tailored outline.  For LDT/DeVeny,
    care must be exercised in grouping arc frames for wavelength calibration.
    Given the large shifts along the spectral axis of the DeVeny CCD caused by
-   flexure (~±10 pixels), some observers prefer to take *in situ* arcs at the
+   flexure (:math:`\sim\pm` 10 pixels), some observers prefer to take *in situ* arcs at the
    location of each object rather than rely upon PypeIt's flexure correction
    based on night sky lines (see :ref:`deveny_flexure` for a discussion of
    flexure corrections). The ensemble of *in situ* arcs should definitely
@@ -564,7 +565,7 @@ produced (in the order in which they are created):
 -  :ref:`wave_calib` -- Contains the 1D wavelength solution for this setup.
    Inspect the wavelength solution using the ``pypeit_chk_wavecalib`` script.
    Below is an example output from data taken with the DV2 grating
-   (:math:`\theta_{\rm grangle} = 22.54^\circ`, :math:`\lambda_c = 5195`\ Å):
+   (:math:`\theta_{\rm grangle} = 22.54^\circ`, :math:`\lambda_c = 5195\mathring{A}`):
 
    ::
 
@@ -857,7 +858,7 @@ on the specific requirements of your science program.  Please see the
    from your observed spectrophotometric standard star that translates the
    count rate (in :math:`{\rm e}^- / {\rm s}`) on the detector as a function of
    wavelength into a flux density (in units of
-   :math:`10^{-17} {\rm erg} / {\rm s} / {\rm cm}^2 /` Å). Due to factors such
+   :math:`10^{-17} {\rm erg} / {\rm s} / {\rm cm}^2 / \mathring{A}`). Due to factors such
    as grating blaze and the transmission function of the optics in the
    telescope and spectrograph, this sensitivity function will not be uniform
    and requires careful fitting.
@@ -884,7 +885,7 @@ on the specific requirements of your science program.  Please see the
    calibration proceeds as expected.  See :ref:`pypeit_flux_setup` for a
    description of necessary edits.  The most common for DeVeny users will be to
    specify the sensitivity function file(s) to be used and specify the ``UVIS``
-   algorithm be used (for observations blueward of :math:`\sim9000`\ Å):
+   algorithm be used (for observations blueward of ~9000\ :math:`\mathring{A}`):
 
    .. code-block:: ini
 
@@ -914,7 +915,7 @@ on the specific requirements of your science program.  Please see the
          :class: with-shadow
 
       Example of flux-calibrated spectra for the objects shown above. As with
-      the uncalibrated spectra, the red dashed line indicates the 1-σ
+      the uncalibrated spectra, the red dashed line indicates the 1-:math:`\sigma`
       uncertainty in the data.
 
 
@@ -935,7 +936,7 @@ Performing a Telluric Correction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 For observations done at the extreme red end of the DeVeny's range
-(:math:`\gtrsim 9000`\ Å), you will want to perform a telluric correction to
+(:math:`\gtrsim 9000 \mathring{A}`), you will want to perform a telluric correction to
 minimize the effects of atmospheric emission on your data. If you need to
 perform this step, please read through the :ref:`telluric_correction`
 documentation, and let LDT staff know the use case and how well it worked.
@@ -1018,7 +1019,7 @@ method. In some cases, however, including the line lists from all energized
 lamps in the matching can produce spurious results (*e.g.*, using the Hg or Cd
 lists with very red spectra, or the Ne list with very blue spectra). For
 example, say you energized all four DeVeny lamps when taking arc-line spectra
-with DV8, centered around 8000 Å.  Especially if the first pass of
+with DV8, centered around 8000\ :math:`\mathring{A}`.  Especially if the first pass of
 ``run_pypeit`` fails to produce a workable wavelength solution, you may want to
 restrict the lists for matching to only Ne and Ar via:
 
@@ -1208,7 +1209,7 @@ The most commonly modified parameter is ``snr_thresh``, which limits the search
 to sources with peak flux in excess of the threshold times the RMS of the
 smashed image. The default is S/N = 50, but you may wish to modify this
 parameter to find more/fewer objects. For instance, if you wish the code to
-automatically find fainter objects with peak flux 10σ above the estimated RMS
+automatically find fainter objects with peak flux 10\ :math:`\sigma` above the estimated RMS
 in the integrated slit profile, you would add the following to the Parameter
 Block:
 
@@ -1277,7 +1278,7 @@ in your PypeIt Reduction File.
     is unaffected by CCD binning.
 
 All of the above applies equally well to nights with exceptional seeing
-(≤0.8"), where tightening up these parameters might be necessary to properly
+(:math:`\leq`\ 0.8"), where tightening up these parameters might be necessary to properly
 find and extract your spectra or to extended objects whose profiles along the
 slit are much wider than the seeing disk.
 
@@ -1373,7 +1374,7 @@ Beyond the Red
 ^^^^^^^^^^^^^^
 
 If your spectra are exclusively in the very red end of the DeVeny range
-(:math:`\lambda \gtrsim 7000`\ Å), and you are :ref:`flux calibrating
+(:math:`\lambda \gtrsim 7000 \mathring{A}`), and you are :ref:`flux calibrating
 <fluxing>` your data, you will need to correct for telluric absorption (at
 wavelengths below this value, the UVIS extinction model is used for the
 sensitivity function). You must specify the IR algorithm when creating the
@@ -1432,7 +1433,7 @@ are shown below.
     sky spectrum above Mt. Hamilton, CA (red). *Right:* The cross-correlation
     between the red and black sky spectra (blue dots) and a parabolic fit
     (black) for determining the location of maximum correlation
-    (“``flex_shift``”).
+    ("``flex_shift``").
 
 If you wish to have **no** flexure correction applied, you may specify the
 following:
@@ -1636,7 +1637,7 @@ for troubleshooting. The most efficient method of contact is to use the
 Cheat Sheet for Common DeVeny Workflows
 =======================================
 
-Listed here is a brief “cheat sheet” of commands for a common DeVeny
+Listed here is a brief "cheat sheet" of commands for a common DeVeny
 workflow for quick reference.
 
 -  Set up the PypeIt Reduction File(s)
