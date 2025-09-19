@@ -17,15 +17,15 @@ from astropy import table
 
 from pypeit import msgs
 from pypeit import specobjs
+from pypeit import specobj
 from pypeit import utils
+from pypeit import io
 from pypeit.core import coadd
 from pypeit.core import flux_calib
 from pypeit.core import telluric
-from pypeit.core import fitting
 from pypeit.core.wavecal import wvutils
 from pypeit.core import meta
-from pypeit.core import flat
-from pypeit.core.moment import moment1d
+from pypeit.onespec import OneSpec
 
 from pypeit.spectrographs.util import load_spectrograph
 from pypeit import datamodel
@@ -65,6 +65,10 @@ class SensFunc(datamodel.DataContainer):
             If None, defaults will be used.
         debug (:obj:`bool`, optional):
             Run in debug mode, sending diagnostic information to the screen.
+        chk_version (:obj:`bool`, optional):
+            Check the version of the data model.
+        write_qa (:obj:`bool`, optional):
+            If True, write QA plots to PDF files.
     """
     version = '1.0.2'
     """Datamodel version."""
@@ -131,6 +135,7 @@ class SensFunc(datamodel.DataContainer):
                  'splice_multi_det',
                  'meta_spec',
                  'std_dict',
+                 'write_qa',
                  'chk_version'
                 ]
 
@@ -197,7 +202,7 @@ class SensFunc(datamodel.DataContainer):
     # Superclass factory method generates the subclass instance
     @classmethod
     def get_instance(cls, spec1dfile, sensfile, par, par_fluxcalib=None, debug=False,
-                     chk_version=True):
+                     write_qa=True, chk_version=True):
         """
         Instantiate the relevant subclass based on the algorithm provided in
         ``par``.
@@ -205,10 +210,10 @@ class SensFunc(datamodel.DataContainer):
         return next(c for c in cls.__subclasses__()
                     if c.__name__ == f"{par['algorithm']}SensFunc")(
                         spec1dfile, sensfile, par, par_fluxcalib=par_fluxcalib, debug=debug,
-                        chk_version=chk_version)
+                        write_qa=write_qa, chk_version=chk_version)
 
     def __init__(self, spec1dfiles, sensfile, par, par_fluxcalib=None, debug=False,
-                 chk_version=True):
+                 write_qa=True, chk_version=True):
 
         # Instantiate as an empty DataContainer
         super().__init__()
@@ -219,6 +224,7 @@ class SensFunc(datamodel.DataContainer):
         self.sensfile = sensfile
         self.par = par
         self.chk_version = chk_version
+        self.write_qa = write_qa
         # Spectrograph
         header = fits.getheader(self.spec1df[0])
         self.PYP_SPEC = header['PYP_SPEC']
@@ -246,30 +252,10 @@ class SensFunc(datamodel.DataContainer):
         # Are we splicing together multiple detectors?
         self.splice_multi_det = True if self.par['multi_spec_det'] is not None else False
 
-        # Read in the Standard star data
-        self.sobjs_std = specobjs.SpecObjs.from_fitsfile(
-                                self.spec1df[0], chk_version=self.chk_version).get_std(
-                                    multi_spec_det=self.par['multi_spec_det'], split_mosaic=True)
-        if self.spec1df.size > 1:
-            for _spec1df in self.spec1df[1:]:
-                sobjs_std_tmp = specobjs.SpecObjs.from_fitsfile(
-                                        _spec1df, chk_version=self.chk_version).get_std(
-                    multi_spec_det=self.par['multi_spec_det'], split_mosaic=True)
-                self.sobjs_std.add_sobj(sobjs_std_tmp)
-            # Sort by wavelength
-            s_sort = np.argsort(np.max(self.sobjs_std[f'{self.extr}_WAVE'], axis=1), kind='stable')
-            self.sobjs_std = self.sobjs_std[s_sort]
-
-        # splice together also mosaic-reduced spectra that have been split
-        if self.sobjs_std.SPEC_DET[0] is not None and np.unique(self.sobjs_std.SPEC_DET[self.sobjs_std.SPEC_DET > 0]).size > 1:
-            self.splice_multi_det = True
-
-        if self.sobjs_std is None:
-            msgs.error(f'There is a problem with your standard star spec1d file(s): {self.spec1df}')
-
-        # Unpack standard
+        # # Unpack standard star data
+        self.sobjs_std = self.unpack_std()
         wave, counts, counts_ivar, counts_mask, log10_blaze_function, self.meta_spec, header \
-            = self.sobjs_std.unpack_object(ret_flam=False, log10blaze=True, extract_blaze=par['use_flat'],
+            = self.sobjs_std.unpack_object(ret_flam=False, log10blaze=True, extract_blaze=self.par['use_flat'],
                                            extract_type=self.extr, remove_missing=True)
 
         # Perform any instrument tweaks
@@ -292,6 +278,71 @@ class SensFunc(datamodel.DataContainer):
         self.std_dict = flux_calib.get_standard_spectrum(star_type=self.par['star_type'],
                                                          star_mag=self.par['star_mag'],
                                                          ra=star_ra, dec=star_dec)
+        # check if this is the right standard star for the observation, i.e., if there is overlap in the wavelength
+        # coverage between the archival and observed standard star spectrum
+
+        overlap = (self.wave_cnts[:,0] <= self.std_dict['wave'].value.max()) & \
+                  (self.wave_cnts[:,0] >= self.std_dict['wave'].value.min())
+        if np.sum(overlap) == 0:
+            msgs.error(f'No wavelength overlap between the archival and observed standard star spectrum. '
+                       'This is not the right standard star for your observations.')
+        elif np.sum(overlap)/self.nspec_in < 0.8:
+            msgs.warn(f'Only {np.sum(overlap)/self.nspec_in:.1%} of the observed wavelength range is covered by the '
+                      f'archival standard star. This may not be the right standard star for your observations. ')
+
+    def unpack_std(self):
+        """
+        Unpack the standard star data from a 1D spectrum file(s) with a SpecObj or OneSpec class.
+
+        Returns
+        -------
+        sobjs_std : :class:`~pypeit.specobjs.SpecObjs`
+            The SpecObjs class with the standard star spectrum.
+
+        """
+
+        # Read in the Standard star data
+        for s, spec1df in enumerate(self.spec1df):
+            with io.fits_open(spec1df) as hdul:
+                if hdul[1].header.get('DMODCLS') == 'SpecObj':
+                    _std_obj = specobjs.SpecObjs.from_fitsfile(spec1df, chk_version=self.chk_version
+                                                                ).get_std(multi_spec_det=self.par['multi_spec_det'],
+                                                                          split_mosaic=True)
+                elif hdul[1].header.get('DMODCLS') == 'OneSpec':
+                    spec = OneSpec.from_file(self.spec1df, chk_version=self.chk_version)
+                    if spec.head0['PYPELINE'] == 'Echelle':
+                        msgs.error('Standard star 1D spectrum from OneSpec class cannot be used for Echelle data.')
+                    if spec.fluxed:
+                        msgs.error('Standard star 1D spectrum from OneSpec class is already fluxed '
+                                   'and cannot be used to generate the sensitivity function.')
+                    if self.par['use_flat']:
+                        msgs.error('"use_flat" set to True, but standard star 1D spectrum from OneSpec class '
+                                   'does not contain the flat spectrum. The blaze function cannot be estimated.')
+                    if spec.ext_mode != self.par['extr']:
+                        msgs.warn(f'Standard star 1D spectrum from OneSpec class was obtained using the'
+                                  f' {spec.ext_mode} extraction, while the requested extraction is {self.par["extr"]}. '
+                                  f'The available {spec.ext_mode} extraction will be used instead.')
+                        self.extr = spec.ext_mode
+
+                        # create sobjs_std
+                        _sobj = specobj.SpecObj.from_arrays(spec.head0['PYPELINE'], spec.wave_grid_mid,
+                                                           spec.flux, spec.ivar, mode=self.extr)
+                        # add mask from OneSpec, since `from_arrays` creates a mask based on the flux ivar
+                        _sobj[f'{self.extr}_MASK'] |= spec.mask.astype(bool)
+                        _std_obj = specobjs.SpecObjs(specobjs=np.array([_sobj]), header=spec.head0)
+                # fill sobjs_std
+                sobjs_std = _std_obj if s == 0 else sobjs_std.add_sobj(_std_obj)
+        if sobjs_std is None:
+            msgs.error(f'There is a problem with your standard star spec1d file(s): {self.spec1df}')
+        # Sort by wavelength
+        s_sort = np.argsort(np.max(sobjs_std[f'{self.extr}_WAVE'], axis=1), kind='stable')
+        sobjs_std = sobjs_std[s_sort]
+
+        # splice together also mosaic-reduced spectra that have been split
+        if sobjs_std.SPEC_DET[0] is not None and np.unique(sobjs_std.SPEC_DET[sobjs_std.SPEC_DET > 0]).size > 1:
+            self.splice_multi_det = True
+
+        return sobjs_std
 
     def _bundle(self):
         """
@@ -413,7 +464,8 @@ class SensFunc(datamodel.DataContainer):
         self.throughput, self.throughput_splice = self.compute_throughput()
 
         # Write out QA and throughput plots
-        self.write_QA()
+        if self.write_qa:
+            self.write_QA()
 
     def flux_std(self):
         """
@@ -1056,9 +1108,9 @@ class UVISSensFunc(SensFunc):
     """Algorithm used for the sensitivity calculation."""
 
     def __init__(self, spec1dfile, sensfile, par, par_fluxcalib=None, debug=False,
-                 chk_version=True):
+                 write_qa=True, chk_version=True):
         super().__init__(spec1dfile, sensfile, par, par_fluxcalib=par_fluxcalib, debug=debug,
-                         chk_version=chk_version)
+                         write_qa=write_qa, chk_version=chk_version)
 
         # Add some cards to the meta spec. These should maybe just be added
         # already in unpack object

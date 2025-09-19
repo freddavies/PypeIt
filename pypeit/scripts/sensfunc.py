@@ -18,9 +18,10 @@ class SensFunc(scriptbase.ScriptBase):
     def get_parser(cls, width=None):
         parser = super().get_parser(description='Compute a sensitivity function', width=width,
                                     formatter=scriptbase.SmartFormatter)
-        parser.add_argument("spec1dfiles", type=str, nargs='+',
-                            help='spec1d file(s) for the standard star that will be used to compute '
-                                 'the sensitivity function')
+        parser.add_argument("spec1dfile", type=str, nargs='+',
+                            help='spec1d file(s) for the standard that will be used to compute '
+                                 'the sensitivity function. These can be the output file of '
+                                 '`pypeit_coadd_1dspec` for non Echelle data.')
         parser.add_argument("--extr", type=str, default=None, choices=['OPT', 'BOX'],
                             help="R|Override the default extraction method used for computing the sensitivity "
                                  "function.  Note that it is not possible to set --extr and "
