@@ -18,10 +18,13 @@ class SensFunc(scriptbase.ScriptBase):
     def get_parser(cls, width=None):
         parser = super().get_parser(description='Compute a sensitivity function', width=width,
                                     formatter=scriptbase.SmartFormatter)
-        parser.add_argument("spec1dfile", type=str, nargs='+',
-                            help='spec1d file(s) for the standard that will be used to compute '
-                                 'the sensitivity function. These can be the output file of '
-                                 '`pypeit_coadd_1dspec` for non Echelle data.')
+        parser.add_argument("spec1dfiles", type=str, nargs='+',
+                            help='file(s) of the reduced standard star spectrum.  These '
+                                 'can be either spec1d*.fits files or the output of '
+                                 '`pypeit_coadd_1dspec` (this only for non Echelle data).'
+                                 ' Multiple files can be provided, but they are helpful only'
+                                 'if they cover different wavelength ranges, since this'
+                                 'script will splice (not combine) them together.')
         parser.add_argument("--extr", type=str, default=None, choices=['OPT', 'BOX'],
                             help="R|Override the default extraction method used for computing the sensitivity "
                                  "function.  Note that it is not possible to set --extr and "

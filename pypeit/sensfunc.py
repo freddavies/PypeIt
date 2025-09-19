@@ -302,6 +302,7 @@ class SensFunc(datamodel.DataContainer):
         """
 
         # Read in the Standard star data
+        sobjs_std = None
         for s, spec1df in enumerate(self.spec1df):
             with io.fits_open(spec1df) as hdul:
                 if hdul[1].header.get('DMODCLS') == 'SpecObj':
@@ -309,7 +310,7 @@ class SensFunc(datamodel.DataContainer):
                                                                 ).get_std(multi_spec_det=self.par['multi_spec_det'],
                                                                           split_mosaic=True)
                 elif hdul[1].header.get('DMODCLS') == 'OneSpec':
-                    spec = OneSpec.from_file(self.spec1df, chk_version=self.chk_version)
+                    spec = OneSpec.from_file(spec1df, chk_version=self.chk_version)
                     if spec.head0['PYPELINE'] == 'Echelle':
                         msgs.error('Standard star 1D spectrum from OneSpec class cannot be used for Echelle data.')
                     if spec.fluxed:
@@ -324,22 +325,25 @@ class SensFunc(datamodel.DataContainer):
                                   f'The available {spec.ext_mode} extraction will be used instead.')
                         self.extr = spec.ext_mode
 
-                        # create sobjs_std
-                        _sobj = specobj.SpecObj.from_arrays(spec.head0['PYPELINE'], spec.wave_grid_mid,
-                                                           spec.flux, spec.ivar, mode=self.extr)
-                        # add mask from OneSpec, since `from_arrays` creates a mask based on the flux ivar
-                        _sobj[f'{self.extr}_MASK'] |= spec.mask.astype(bool)
-                        _std_obj = specobjs.SpecObjs(specobjs=np.array([_sobj]), header=spec.head0)
+                    # create sobjs_std
+                    _sobj = specobj.SpecObj.from_arrays(spec.head0['PYPELINE'], spec.wave_grid_mid,
+                                                       spec.flux, spec.ivar, mode=self.extr)
+                    # add mask from OneSpec, since `from_arrays` creates a mask based on the flux ivar
+                    _sobj[f'{self.extr}_MASK'] |= spec.mask.astype(bool)
+                    _std_obj = specobjs.SpecObjs(specobjs=np.array([_sobj]), header=spec.head0)
                 # fill sobjs_std
-                sobjs_std = _std_obj if s == 0 else sobjs_std.add_sobj(_std_obj)
+                if s == 0:
+                    sobjs_std = _std_obj.copy()
+                else:
+                    sobjs_std.add_sobj(_std_obj)
         if sobjs_std is None:
-            msgs.error(f'There is a problem with your standard star spec1d file(s): {self.spec1df}')
+            msgs.error(f'There is a problem with your standard star 1D spectrum file(s): {self.spec1df}')
         # Sort by wavelength
         s_sort = np.argsort(np.max(sobjs_std[f'{self.extr}_WAVE'], axis=1), kind='stable')
         sobjs_std = sobjs_std[s_sort]
 
         # splice together also mosaic-reduced spectra that have been split
-        if sobjs_std.SPEC_DET[0] is not None and np.unique(sobjs_std.SPEC_DET[sobjs_std.SPEC_DET > 0]).size > 1:
+        if np.unique(sobjs_std.DET).size > 1 or len(self.spec1df) > 1:
             self.splice_multi_det = True
 
         return sobjs_std
@@ -762,8 +766,7 @@ class SensFunc(datamodel.DataContainer):
                                             & (self.wave_splice > 1.0)
                         axis.plot(self.wave_splice[wave_slice_gpm].flatten(),
                                   self.zeropoint_splice[wave_slice_gpm].flatten(), color='black',
-                                  linestyle='-', linewidth=2.5, label='Spliced Zeropoint',
-                                  zorder=30, alpha=0.3)
+                                  linestyle=':', linewidth=2.5, label='Spliced Zeropoint', zorder=30)
 
                     axis.set_xlim((0.98 * _wave_min, 1.02 * _wave_max))
                     axis.set_ylim((0.95 * tmin, 1.05 * tmax))
@@ -802,8 +805,7 @@ class SensFunc(datamodel.DataContainer):
         if self.splice_multi_det:
             axis.plot(self.wave_splice[wave_slice_gpm].flatten(),
                       self.throughput_splice[wave_slice_gpm].flatten(), color='black',
-                      linestyle='-', linewidth=2.5, label='Spliced Throughput', zorder=30,
-                      alpha=0.3)
+                      linestyle=':', linewidth=2.5, label='Spliced Throughput', zorder=30)
 
         axis.set_xlim((0.98*_wave_min, 1.02*_wave_max))
         axis.set_ylim((0.0, 1.05*tmax))
