@@ -47,32 +47,6 @@ def mAB_to_cgs(wave, mAB):
     return 10**((-48.6-_mAB)/2.5) * 3e18 / _wave**2
 
 
-#def airtovac(wave):
-#    """
-#    Convert air-based wavelengths to vacuum.
-#
-#    .. note::
-#
-#        Wavelengths less than 2000 angstroms are *not* modified.
-#
-#    Parameters
-#    ----------
-#    wave : scalar-like, array-like
-#        Air wavelengths in Angstroms
-#
-#    Returns
-#    -------
-#    float, `numpy.ndarray`_
-#        Vacuum wavelengths in Angstroms.  Type matches input.
-#    """
-#    # Standard conversion format
-#    _wave = wave if isinstance(wave, (float, np.floating, int, np.integer)) else np.asarray(wave)
-#    sigma_sq = (1.e4/_wave)**2. #wavenumber squared
-#    factor = 1 + (5.792105e-2/(238.0185-sigma_sq)) + (1.67918e-3/(57.362-sigma_sq))
-#    factor = factor*(_wave>=2000.) + 1.*(_wave<2000.) #only modify above 2000A
-#    return _wave * factor
-
-
 def archive_entry(archive, name):
     """
     Find the row of data in the specified archive associated with the named
