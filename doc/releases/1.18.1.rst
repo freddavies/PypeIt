@@ -1,0 +1,5 @@
+Version 1.18.1
+==============
+
+- Removes C extension used to accelerate some bspline functions.
+
