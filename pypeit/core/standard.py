@@ -208,7 +208,7 @@ class ArchivedFluxStandard(spectrum.Spectrum):
         """
         sep, row = nearest_archive_entry(cls.archive, ra, dec, unit=None)
         if sep > tol * units.arcmin:
-            msgs.error(f'Closest object ({row["Name"]}) is separated by {sep.to('arcmin').value} '
+            msgs.error(f'Closest object ({row["Name"]}) is separated by {sep.to("arcmin").value} '
                        f'arcmin, which is beyond the required tolerance ({tol} arcmin).')
         return cls(row['File'], meta=cls._init_meta(row=row))
     
@@ -507,7 +507,7 @@ class BlackbodyStandard(ModelFluxStandard):
         """
         sep, row = nearest_archive_entry(cls.model_type, ra, dec, unit=unit)
         if sep > tol * units.arcmin:
-            msgs.error(f'Closest object ({row["Name"]}) is separated by {sep.to('arcmin').value} '
+            msgs.error(f'Closest object ({row["Name"]}) is separated by {sep.to("arcmin").value} '
                        f'arcmin, which is beyond the required tolerance ({tol} arcmin).')
         return cls(row['a_x10m23'], row['T_K'], wave=wave, meta=cls._init_meta(row=row))
 
@@ -822,9 +822,9 @@ def get_archive_standard(ra, dec, tol=20., unit=None, archives='default', check=
     indx = np.argmin(res[:,0])
     sep, row = res[indx]
     msgs.error(f'Unable to find a standard star within {tol:.1f} arcmin of RA={ra}, DEC={dec} in '
-               f'the following archives: {_archives}.  The nearest object is {row['Name']} in '
-               f'{_archives[indx]} at RA={row['RA_2000']}, DEC={row['DEC_2000']}, separated by '
-               f'{sep.to('arcmin').value:.1f} arcmin.')
+               f'the following archives: {_archives}.  The nearest object is {row["Name"]} in '
+               f'{_archives[indx]} at RA={row["RA_2000"]}, DEC={row["DEC_2000"]}, separated by '
+               f'{sep.to("arcmin").value:.1f} arcmin.')
 
 
 def get_model_standard(spectral_type, V_mag):
