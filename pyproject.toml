@@ -34,7 +34,6 @@ requires-python = ">=3.11,<3.14"
 dependencies = [ 
     "numpy>=2.0",
     "astropy>=7.0",
-    "extension-helpers>=1.0",
     "packaging>=22.0",
     "scipy>=1.9",
     "matplotlib>=3.7",
@@ -102,7 +101,6 @@ Documentation = "https://pypeit.readthedocs.io/"
 
 # non-GUI scripts
 pypeit_arxiv_solution = "pypeit.scripts.arxiv_solution:ArxivSolution.entry_point"
-pypeit_c_enabled = "pypeit.scripts.c_enabled:CEnabled.entry_point"
 pypeit_cache_github_data = "pypeit.scripts.cache_github_data:CacheGithubData.entry_point"
 pypeit_clean_cache = "pypeit.scripts.clean_cache:CleanCache.entry_point"
 pypeit_chk_flexure = "pypeit.scripts.chk_flexure:ChkFlexure.entry_point"
@@ -168,7 +166,6 @@ Spec1dView = "pypeit.display:setup_Spec1dView"
 requires = [
     "setuptools",
     "setuptools_scm",
-    "extension-helpers",
     "oldest-supported-numpy",
     "cython>=0.29.14"
 ]
