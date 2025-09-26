@@ -720,7 +720,7 @@ Examine the Extracted 1D Spectra
 
       Example of the PypeIt reduced and extracted 1D spectrum for the brightest
       object shown in the 2D spectrum above. The red dotted line indicates the
-      :math:`1\sigma` uncertainty in the flux values.
+      1-:math:`\sigma` uncertainty in the flux values.
 
    The accompanying ``.txt`` file contains information about the extracted
    object(s), including FWHM of the optimal extraction in arcseconds (this
@@ -843,20 +843,44 @@ Coadding 2D Spectral Images
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 PypeIt has the ability to :ref:`coadd 2D spectral images <coadd2d>` of the same
-object to increase signal-to-noise prior to object finding and extraction. This
-process is primarily done with multislit instruments taking multiple frames of
-the same set of faint objects, but can be done for DeVeny data if desired.
-There is a set of :ref:`worked examples <coadd2d_howto>` in the PypeIt
-documentation should you wish to do this.
+object to increase signal-to-noise prior to object finding and extraction.
+While it is possible to simply combine (without weighting) individual exposures
+by using the ``comb_id`` column in the PypeIt Reduction File, 2D coadding
+accounts for spectral and/or spatial shifts in the spectrum on the CCD.  The
+former is important given the spectral flexure seen in DeVeny's camera, and the
+latter can help with jitter in the position of the object along the slit due to
+manual guiding or imperfect replacement of the object on the slit between
+observations.  Coadding aligns the frames spectrally and spatially before
+running the object finding and extraction routines.
 
-If you plan to coadd multiple 2D spectral images of the same target, you will
-want to ensure that telescope guiding is on and stable before you take your
-series of exposures. This will ensure your target is in the same place on the
-slit in each frame. Coadding is done after the main PypeIt run and is executed
-with the :ref:`pypeit-coadd-2dspec` script. Because the input files to this
-script can be a bit cumbersome, there is a :ref:`setup script
+Coadding is done after the main PypeIt run (as it requires the wavelength
+calibration and slit definitions produced during the reduction) and is executed
+with the :ref:`pypeit-coadd-2dspec` script. Because the input file format for
+this script can be a bit cumbersome, there is a :ref:`setup script
 <pypeit_setup_coadd2d>` available that ingests the ``.pypeit`` file or reads
-FITS headers in a directory as a starting point.
+FITS headers in a directory as a starting point. 
+
+In a case of astronomical meta observation, LDT/DeVeny took some sepctra of the
+JWST spacecraft during its operational mission at the Earth-Sun L2 point.  Four
+300-second spectra were taken, and manual guiding was undertaken to keep the
+object on the slit as a consequence of the quality of the ephemeris.  
+
+To illustrate the difference between a straight combination and coadding, these
+spectra were subject to both procedures and the results shown below.
+
+Single-Frame Spectra of JWST
+++++++++++++++++++++++++++++
+
+
+
+
+
+**Actually do an example with the JWST spectra**
+
+- Show the single-frame 1D specs of JWST
+- Walk through the Coadd2D process
+- Show examples of the output
+
 
 .. _deveny_flux:
 
