@@ -171,12 +171,17 @@ def read_telluric_pca(filename, wave_min=None, wave_max=None, pad_frac=0.10):
             - coefs_tell_pca: Set of model coefficient values (for prior in future)
             - teltype: Type of telluric model, i.e. 'pca'
     """
-    # load_telluric_grid() takes care of path and existance check
+    # load_telluric_grid() takes care of path and existence check
     hdul = io.load_telluric_grid(filename)
     wave_grid_full = hdul[1].data
     pca_comp_full = hdul[0].data
     nspec_full = wave_grid_full.size
-    ncomp = hdul[0].header['NCOMP']
+    ncomp = hdul[0].header.get('NCOMP')
+    # check that the telgrid file is the correct one for this method
+    if ncomp is None:
+        msgs.error("Could NOT read the number of PCA components of the telluric model. "
+                   "Are you using a grid-based model instead? If so, you should "
+                   " set teltype=grid")
     bounds = hdul[2].data
     model_coefs = hdul[3].data
 
@@ -240,6 +245,12 @@ def read_telluric_grid(filename, wave_min=None, wave_max=None, pad_frac=0.10):
                     if wave_max is not None else nspec_full
     wave_grid = wave_grid_full[ind_lower:ind_upper]
     model_grid = model_grid_full[...,ind_lower:ind_upper]
+
+    # check that the telgrid file is the correct one for this method
+    if hdul[0].header.get('PRES0') is None:
+        msgs.error("Could NOT read the atmospheric information from the telluric model. "
+                   "Are you using a PCA-based model instead? If so, you should "
+                   " set teltype=pca")
 
     pg = hdul[0].header['PRES0']+hdul[0].header['DPRES']*np.arange(0,hdul[0].header['NPRES'])
     tg = hdul[0].header['TEMP0']+hdul[0].header['DTEMP']*np.arange(0,hdul[0].header['NTEMP'])
@@ -2428,10 +2439,12 @@ class Telluric(datamodel.DataContainer):
         # 3) Read the telluric grid and initalize associated parameters
         wv_gpm = self.wave_in_arr > 1.0
         if self.teltype == 'pca':
+            msgs.info(f'Reading in the pca-based telluric model: {self.telgrid}')
             self.tell_dict = read_telluric_pca(self.telgrid, wave_min=self.wave_in_arr[wv_gpm].min(),
                                                wave_max=self.wave_in_arr[wv_gpm].max())
         elif self.teltype == 'grid':
             self.tell_npca = 4
+            msgs.info(f'Reading in the grid-based telluric model: {self.telgrid}')
             self.tell_dict = read_telluric_grid(self.telgrid, wave_min=self.wave_in_arr[wv_gpm].min(),
                                                 wave_max=self.wave_in_arr[wv_gpm].max())
 
@@ -2481,7 +2494,9 @@ class Telluric(datamodel.DataContainer):
         self.arg_dict_list = [None]*self.norders
         self.max_ntheta_obj = 0
         for counter, iord in enumerate(self.srt_order_tell):
-            msgs.info(f'Initializing object model for order: {iord}, {counter}/{self.norders}'
+            _ord = self.ech_orders[iord] if self.ech_orders is not None and \
+                                            len(self.ech_orders) == self.norders else iord
+            msgs.info(f'Initializing object model for order: {_ord}, {counter+1}/{self.norders}'
                       + f' with user supplied function: {self.init_obj_model.__name__}')
             tellmodel = eval_telluric(self.tell_guess, self.tell_dict,
                                         ind_lower=self.ind_lower[iord],
@@ -2533,7 +2548,22 @@ class Telluric(datamodel.DataContainer):
         only_orders = [only_orders] if (only_orders is not None and
                                         isinstance(only_orders, (int, np.integer))) \
                                     else only_orders
-        good_orders = self.srt_order_tell if only_orders is None else only_orders
+        # by default, we use all orders
+        good_orders = self.srt_order_tell
+        # only if self.ech_orders is defined and its length matches self.norders, we find the only_orders (if exist)
+        if self.ech_orders is not None and len(self.ech_orders) == self.norders:
+            indx_only = np.where(np.isin(self.ech_orders, only_orders))[0]
+            if (indx_only.size == 0) and (only_orders is not None):
+                msgs.warn(f'All the orders provided in `only_orders` are not among the expected orders. '
+                          f'Using all orders available in the data.')
+            elif indx_only.size > 0:
+                good_orders = indx_only
+                msgs.info(f'Working only on the following orders: {self.ech_orders[indx_only]}')
+                if len(indx_only) != len(only_orders):
+                    missing_orders = list(set(only_orders) - set(self.ech_orders[indx_only]))
+                    msgs.warn(f'Some orders provided in `only_orders` are not among the expected orders. '
+                              f'Ignoring orders: {missing_orders}')
+
         # Run the fits
         self.result_list = [None]*self.norders
         self.outmask_list = [None]*self.norders
@@ -2544,7 +2574,9 @@ class Telluric(datamodel.DataContainer):
         for counter, iord in enumerate(self.srt_order_tell):
             if iord not in good_orders:
                 continue
-            msgs.info(f'Fitting object + telluric model for order: {iord}, {counter}/{self.norders}'
+            _ord = self.ech_orders[iord] if self.ech_orders is not None and \
+                                            len(self.ech_orders) == self.norders else iord
+            msgs.info(f'Fitting object + telluric model for order: {_ord}, {counter+1}/{self.norders}'
                       + f' with user supplied function: {self.init_obj_model.__name__}')
             self.result_list[iord], ymodel, ivartot, self.outmask_list[iord] \
                     = fitting.robust_optimize(self.flux_arr[self.ind_lower[iord]:self.ind_upper[iord]+1,iord],
@@ -2663,36 +2695,36 @@ class Telluric(datamodel.DataContainer):
         self.model['NITER'][iord] = self.result_list[iord].nit
 
     # TODO Purge? This does not appear to be used at the moment.
-    def interpolate_inmask(self, mask, wave_inmask, inmask):
-        """
-        Utitlity routine to interpolate the input mask.
-        """
-
-        if inmask is not None:
-            if wave_inmask is None:
-                msgs.error('If you are specifying a mask you need to pass in the corresponding '
-                           'wavelength grid')
-
-            # TODO we shoudld consider refactoring the interpolator to take a
-            # list of images and masks to remove the the fake zero images in the
-            # call below
-            _, _, inmask_int = coadd.interp_spec(self.wave_grid, wave_inmask,
-                                                 np.ones_like(wave_inmask),
-                                                 np.ones_like(wave_inmask), inmask)
-
-            # If the data mask is 2d, and inmask is 1d, tile to create the
-            # inmask aligned with the data
-            if mask.ndim == 2 & inmask.ndim == 1:
-                inmask_out = np.tile(inmask_int, (self.norders, 1)).T
-            # If the data mask and inmask have the same dimensionlaity,
-            # interpolated mask has correct dimensions
-            elif mask.ndim == inmask.ndim:
-                inmask_out = inmask_int
-            else:
-                msgs.error('Unrecognized shape for data mask')
-            return (mask & inmask_out)
-        else:
-            return mask
+#    def interpolate_inmask(self, mask, wave_inmask, inmask):
+#        """
+#        Utitlity routine to interpolate the input mask.
+#        """
+#
+#        if inmask is not None:
+#            if wave_inmask is None:
+#                msgs.error('If you are specifying a mask you need to pass in the corresponding '
+#                           'wavelength grid')
+#
+#            # TODO we shoudld consider refactoring the interpolator to take a
+#            # list of images and masks to remove the the fake zero images in the
+#            # call below
+#            _, _, inmask_int = coadd.interp_spec(self.wave_grid, wave_inmask,
+#                                                 np.ones_like(wave_inmask),
+#                                                 np.ones_like(wave_inmask), inmask)
+#
+#            # If the data mask is 2d, and inmask is 1d, tile to create the
+#            # inmask aligned with the data
+#            if mask.ndim == 2 & inmask.ndim == 1:
+#                inmask_out = np.tile(inmask_int, (self.norders, 1)).T
+#            # If the data mask and inmask have the same dimensionlaity,
+#            # interpolated mask has correct dimensions
+#            elif mask.ndim == inmask.ndim:
+#                inmask_out = inmask_int
+#            else:
+#                msgs.error('Unrecognized shape for data mask')
+#            return (mask & inmask_out)
+#        else:
+#            return mask
 
     def get_ind_lower_upper(self):
         """

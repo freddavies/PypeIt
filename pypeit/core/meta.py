@@ -183,7 +183,9 @@ def define_additional_meta(nlamps=20):
                        'ndit': dict(dtype=int,
                                     comment='Number of integrations'),
                        'camera': dict(dtype=str,
-                                      comment='Camera (e.g. N1.8/N3.75/N30 for LUCI)')
+                                      comment='Camera (e.g. N1.8/N3.75/N30 for LUCI)'),
+                       'camera_pos':dict(dtype=str, comment='Camera position (e.g. LongRed, ShortBlue, '
+                                                            'etc for Gemini GNIRS)'),
                        }
 
     for kk in range(nlamps):
