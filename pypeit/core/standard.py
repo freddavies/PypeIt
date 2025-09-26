@@ -268,10 +268,10 @@ class ESOFilFluxStandard(ArchivedFluxStandard):
 
     def __init__(self, file, meta=None):
         self.file = self.path.get_file_path(file)
-        if not self.file.name.startswith('f'):
-            msgs.error(f'{self.file} {self.file.name} The ESO reference standard filename must start with the string '
-                        '`f`;  make sure it is the case. Also make sure that the flux '
-                        'units in the file are in 10**(-16) erg/s/cm2/AA.')
+#        if not self.file.name.startswith('f'):
+#            msgs.error(f'{self.file} {self.file.name} The ESO reference standard filename must start with the string '
+#                        '`f`;  make sure it is the case. Also make sure that the flux '
+#                        'units in the file are in 10**(-16) erg/s/cm2/AA.')
 
         std_spec = table.Table.read(self.file, format='ascii')
         wave = std_spec['col1']
