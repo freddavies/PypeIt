@@ -545,7 +545,7 @@ produced (in the order in which they are created):
    This command will launch a :ref:`GUI viewer <pypeit_chk_edges>` to display
    the combined trace image along with a sobel-filtered version used to
    identify illumination discontinuities in the spatial direction (see figure
-   below). For DeVeny data, it should identify a single, wide longslit with a
+   below). For DeVeny data, it should identify a single, long slit with a
    (spatial ID) approximately half the spatial extent of the CCD image
    (mid-200s for spatially unbinned data). The exact number will vary from
    grating to grating due to differing small roll angles about the dispersion
@@ -860,7 +860,7 @@ this script can be a bit cumbersome, there is a :ref:`setup script
 <pypeit_setup_coadd2d>` available that ingests the ``.pypeit`` file or reads
 FITS headers in a directory as a starting point. 
 
-In a case of astronomical meta observation, LDT/DeVeny took some sepctra of the
+In a case of astronomical meta observation, LDT/DeVeny took some spectra of the
 JWST spacecraft during its operational mission at the Earth-Sun L2 point.  Four
 300-second spectra were taken, and manual guiding was undertaken to keep the
 object on the slit as a consequence of the quality of the ephemeris.  
@@ -871,15 +871,165 @@ spectra were subject to both procedures and the results shown below.
 Single-Frame Spectra of JWST
 ++++++++++++++++++++++++++++
 
+The extracted 1D spectra from the individual frames are shown below.
+
+.. figure:: ../figures/deveny_1d_jwst_spec.png
+   :alt: Spectra of JWST spacecraft
+   :width: 100%
+   :class: with-shadow
+
+   Four 300-second 1D spectra of the JWST spacecraft.  Note the variation in
+   object position along the slit moves by ~5 pixels from the first (top-left)
+   to last (bottom-right) frames.  These spectra were displayed in Ginga using
+   the ``--ginga`` option to ``pypeit_show_1dspec``.
+
+The contents of the associated ``.txt`` files are (listed together for
+clarity):
+
+::
+
+   | slit |                    name | obj_id | spat_pixpos | spat_fracpos | box_width | opt_fwhm |  s2n | wv_rms |
+   |  241 | SPAT0250-SLIT0241-DET01 |    250 |       250.1 |        0.519 |      3.80 |    2.144 | 6.33 |  0.088 |
+   |  241 | SPAT0249-SLIT0241-DET01 |    249 |       248.7 |        0.516 |      3.80 |    1.887 | 7.92 |  0.088 |
+   |  241 | SPAT0247-SLIT0241-DET01 |    247 |       246.6 |        0.511 |      3.80 |    1.960 | 4.65 |  0.088 |
+   |  241 | SPAT0245-SLIT0241-DET01 |    245 |       245.2 |        0.508 |      3.80 |    2.055 | 6.77 |  0.088 |
+
+We see that the individual spectra range from an integrated S/N of 4.7 to 6.8,
+and all have OPT FWHM between 1.9" and 2.1"
 
 
+Combining the Frames Directly in the Main PypeIt Run
+++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+The simplest way to combine these frames to increase signal-to-noise is to
+perform a straight combination during the main PypeIt run.  To do this, you
+would need to call ``pypeit_setup`` with the ``-b`` flag to include the
+"background pair" columns at the far right of the PypeIt Reduction File.
+By default, all calibration frames are given the value ``-1``, and science
+frames are numbered sequentially.  To combine frames directly, assign the same
+``comb_id`` value to all frames.  In the example here, (portions of) the Data
+block our PypeIt Reduction File would look like:
+
+.. code-block::
+
+             filename |       frametype |       ra |    dec | target | airmass | exptime | slitwid | lampstat01 | calib | comb_id | bkg_id
+   20250909.0066.fits |         science | 330.8203 | 0.0115 |   JWST |    1.24 |   300.0 |     1.0 |        off |     0 |       7 |     -1
+   20250909.0067.fits |         science | 330.8220 | 0.0171 |   JWST |    1.23 |   300.0 |     1.0 |        off |     0 |       7 |     -1
+   20250909.0068.fits |         science | 330.8239 | 0.0214 |   JWST |    1.23 |   300.0 |     1.0 |        off |     0 |       7 |     -1
+   20250909.0069.fits |         science | 330.8255 | 0.0254 |   JWST |    1.22 |   300.0 |     1.0 |        off |     0 |       7 |     -1
+
+The resulting spectrum is named for the first file in the group, and includes
+in the header information about the frames that went into the combination.
+
+The resulting spec1d ``.txt`` file for this combination is:
+
+::
+
+   | slit |                    name | obj_id | spat_pixpos | spat_fracpos | box_width | opt_fwhm |  s2n | wv_rms |
+   |  241 | SPAT0248-SLIT0241-DET01 |    248 |       247.6 |        0.514 |      3.80 |    2.330 | 8.90 |  0.088 |
+
+The total S/N has improved to 8.9, but note that the OPT FWHM of the extracted
+has increased to 2.3" as a result of JWST moving along the slit.
 
 
-**Actually do an example with the JWST spectra**
+Coadding the 2D Spectra
++++++++++++++++++++++++
 
-- Show the single-frame 1D specs of JWST
-- Walk through the Coadd2D process
-- Show examples of the output
+To prepare for coadding the processed 2D spectra of the individual frames, we
+can use the :ref:`pypeit_setup_coadd2d` script.  Since we are interested in
+coadding just the frames of JWST spacecraft spectra, we can use the ``--obj``
+option, in addition to specifying the location of the science spectra.  If
+we run the script in the ``ldt_deveny_A`` directory (which contains the
+PypeIt Reduction File), this looks like:
+
+::
+
+   $ pypeit_setup_coadd2d -d Science/ --obj JWST
+
+The processing input file ``ldt_deveny_JWST.coadd2d`` is created in the working
+directory, and has the contents:
+
+.. code-block:: ini
+
+   # Auto-generated Coadd2D input file using PypeIt version: 1.18.0
+   # UTC 2025-09-26T21:27:12.718+00:00
+
+   # User-defined execution parameters
+   [rdx]
+      spectrograph = ldt_deveny
+      redux_path = .
+      scidir = Science
+      qadir = QA
+   [calibrations]
+      calib_dir = Calibrations
+      [[wavelengths]]
+         refframe = observed
+   [coadd2d]
+      offsets = auto
+      weights = auto
+      spat_toler = 5
+      spec_samp_fact = 1.0
+      spat_samp_fact = 1.0
+   [flexure]
+      spec_method = skip
+   [reduce]
+      [[findobj]]
+         skip_skysub = True
+
+   # Data block 
+   spec2d read
+   path ./Science
+                                                    filename
+   spec2d_20250909.0066-JWST_DeVeny_20250909T052930.310.fits
+   spec2d_20250909.0067-JWST_DeVeny_20250909T053627.110.fits
+   spec2d_20250909.0068-JWST_DeVeny_20250909T054151.040.fits
+   spec2d_20250909.0069-JWST_DeVeny_20250909T054703.360.fits
+   spec2d end
+
+The setup script adds many of the parameter knobs you might need to turn to
+make your 2D coadd successful.  See the :ref:`Coadd2D parameters <coadd2dpar>`
+for a detailed listing of what these and others can do for your data.
+
+Once you have created the input file, run the coadd:
+
+::
+
+   $ pypeit_coadd_2dspec ldt_deveny_JWST.coadd2d
+
+The resulting spec1d ``.txt`` file for the coadd is:
+
+::
+
+   | slit |                    name | obj_id | spat_pixpos | spat_fracpos | box_width | opt_fwhm |   s2n |
+   |  248 | SPAT0254-SLIT0248-DET01 |    254 |       253.6 |        0.512 |      3.80 |    1.988 | 11.82 |
+
+The total S/N is now 11.8, and the OPT FWHM is 2.0" -- right in line with the
+individual frame extractions.
+
+A visual comparison of the straight-combined spectrum (left) and 2D coadded
+spectrum (right) is shown below.
+
+.. figure:: ../figures/deveny_1d_jwst_comb_coadd.png
+   :alt: Comparison of 2D combination methods
+   :width: 100%
+   :class: with-shadow
+
+   The straight combined (using ``comb_id`` -- left) and coadded (using
+   ``pypeit_coadd_2dspec`` -- right) versions of the 4 spectra of the JWST
+   spacecraft.  The ``comb_id`` version has an integrated S/N of 8.9 and an
+   optimally extracted profile FWHM of 2.3", whereas the ``pypeit_coadd_2spec``
+   version has an integrated S/N of 11.8 and an optimally extracted profile
+   FWHM of 2.0".
+
+
+Which to Use for DeVeny Data?
++++++++++++++++++++++++++++++
+
+It depends.  If you have autoguiding set up for a series of spectra and expect
+the object to remain at the same location on the slit for all exposures, then
+the straight combination is fine.  If you have a wandering object (like this
+example), or have variable S/N on the individual frames (*e.g.*, from clouds),
+then coadding might be the better path forward.
 
 
 .. _deveny_flux:
