@@ -652,7 +652,7 @@ def get_sensfunc_factor(wave, wave_zp, zeropoint, exptime, tellmodel=None, delta
             To telluric correct the data, use the telluric correct method.
         delta_wave (float, `numpy.ndarray`_, optional):
             The wavelength sampling of the spectrum to be flux calibrated.
-        atmext (:class:`~pypeit.core.atmextinction.AtmosphericExtinction`):
+        atmext (:class:`~pypeit.core.atmextinction.AtmosphericExtinction`, optional):
             Class that provides the interface to the atmospheric extinction data.
         airmass (float, optional):
             Airmass used if extinct_correct=True. This is required if extinct_correct=True
