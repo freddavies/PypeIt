@@ -668,6 +668,7 @@ class SpecObjs:
             # i.e. X-shooter with the K-band blocking filter.
             ech_orders = np.array(sens.sens['ECH_ORDERS']).flatten()
             for sci_obj in self.specobjs:
+                # PYP_SPEC is needed for each specobj
                 if sci_obj.PYP_SPEC is None:
                     sci_obj.PYP_SPEC = spectrograph.name
                 # JFH Is there a more elegant pythonic way to do this without looping over both orders and sci_obj?

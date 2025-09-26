@@ -736,6 +736,9 @@ class Spectrograph:
             Class that provides the interface to the atmospheric extinction data.
         """
         if extinct_file == 'closest':
+            # TODO: We shouldn't have to find the closest extinction data every
+            # time.  The lon/lat of the telescopes are hard-coded, so we just
+            # have a default extinct_file.
             return AtmosphericExtinction.from_coordinates(
                 self.telescope['longitude'], self.telescope['latitude']
             )
