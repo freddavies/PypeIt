@@ -200,8 +200,7 @@ class ReducebyStep(scriptbase.ScriptBase):
             #
             specobjs_objfind = specobjs.SpecObjs.from_fitsfile(spec1d_filename)
 
-        # TODO -- Add objs in here!!
-        # TODO -- Allow for exposure level slurp here (on all dets that exist)
+        # TODO -- Add objs in here!! -- what did I mean by this?
             
         # Extract?
         if args.step == 'extract':
