@@ -20,7 +20,7 @@ class ReducebyStep(scriptbase.ScriptBase):
         parser.add_argument('pypeit_file', type=str,
                             help='PypeIt reduction file (must have .pypeit extension)')
         parser.add_argument('frame', type=str, help='Raw science/standard frame to reduce as listed in your PypeIt file, e.g. b28.fits.gz.')
-        parser.add_argument('step', type=str, help="Reduction step to perform")
+        parser.add_argument('step', type=str, help="Reduction step to perform (process, findobj, extract)")
 
         parser.add_argument('--det', default=None, type=int,
                             help='Detector number. Required, but the list of options is provided if None is give')
@@ -36,7 +36,6 @@ class ReducebyStep(scriptbase.ScriptBase):
     def main(args):
 
         import numpy as np
-        from IPython import embed
         from pathlib import Path
 
         from pypeit import pypeit
@@ -47,6 +46,8 @@ class ReducebyStep(scriptbase.ScriptBase):
         from pypeit import specobjs
         from pypeit import spec2dobj
         from pypeit import exposure
+
+        from IPython import embed
 
         # Load options from command line
         pypeit_file = Path(args.pypeit_file).absolute()
