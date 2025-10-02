@@ -9,28 +9,39 @@ from pypeit.scripts import scriptbase
 
 class ReducebyStep(scriptbase.ScriptBase):
 
-
-
     @classmethod
     def get_parser(cls, width=None):
         import argparse
 
-        parser = super().get_parser(description='Run PypeIt one reduction step on a single frame (and detector)',
-                                    width=width, formatter=scriptbase.SmartFormatter)
-        parser.add_argument('pypeit_file', type=str,
-                            help='PypeIt reduction file (must have .pypeit extension)')
-        parser.add_argument('frame', type=str, help='Raw science/standard frame to reduce as listed in your PypeIt file, e.g. b28.fits.gz.')
-        parser.add_argument('step', type=str, help="Reduction step to perform (process, findobj, extract)")
-
-        parser.add_argument('--det', default=None, type=str,
-                            help='Detector number or Mosaic tuple. Required, but the list of options is provided if None is give')
-        parser.add_argument('--show', default=False, action='store_true',
-                            help='Show reduction steps via plots (which will block further '
-                                 'execution until clicked on) and outputs to ginga. Requires '
-                                 'remote control ginga session via '
-                                 '"ginga --modules=RC,SlitWavelength &"')
+        parser = super().get_parser(
+            description='Run one of the PypeIt reduction steps on a single frame (and detector)',
+            width=width, formatter=scriptbase.SmartFormatter
+        )
+        parser.add_argument(
+            'pypeit_file', type=str, help='PypeIt reduction file (must have .pypeit extension)'
+        )
+        parser.add_argument(
+            'frame', type=str,
+            help='Raw science/standard frame to reduce as listed in your PypeIt file, e.g. '
+                 'b28.fits.gz.')
+        parser.add_argument(
+            'step', type=str,
+            help='Reduction step to perform.  Must be "process" to perform basic image processing '
+                 '(bias subtraction, field flattening, etc), "findobj" to perform object '
+                 'detection and initial sky subtraction, or "extract" to extract 1D spectra.'
+        )
+        parser.add_argument(
+            '--det', default=None, type=str,
+            help='Detector number or Mosaic tuple. Required, but the list of options is provided '
+                 'if nothing is provided.'
+        )
+        parser.add_argument(
+            '--show', default=False, action='store_true',
+            help='Show reduction steps via plots (which will block further execution until '
+                 'clicked on) and outputs to ginga. Requires remote control ginga session via '
+                 '"ginga --modules=RC,SlitWavelength &"'
+        )
         return parser
-
 
     @staticmethod
     def main(args):

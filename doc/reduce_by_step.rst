@@ -49,9 +49,10 @@ the ``pypeit_run_to_calibstep`` script.
 Script Usage
 ------------
 
-.. code-block:: console
+The script usage can be displayed by calling the script with the
+``-h`` option:
 
-    pypeit_reduce_by_step pypeit_file frame step --det [options]
+.. include:: help/pypeit_reduce_by_step.rst
 
 Required Arguments
 ~~~~~~~~~~~~~~~~~~
