@@ -32,9 +32,6 @@ from pypeit.core import scattlight as core_scattlight
 from pypeit.par import pypeitpar
 from pypeit.spectrographs.spectrograph import Spectrograph
 from pypeit import utils
-from pypeit import cache
-from pypeit import dataPaths
-#from pypeit import state
 
 from IPython import embed
 
@@ -145,8 +142,8 @@ class Calibrations:
 
     def __init__(self, fitstbl, par, spectrograph, caldir, calib_ID:str, 
                  frame:int, det:int, qadir=None,
-                 reuse_calibs=False, show=False, user_slits=None, chk_version=True,
-                 state=None):
+                 reuse_calibs=False, show=False, user_slits=None, chk_version=True):
+                 #, state=None):
 
         # Check the types
         # TODO -- Remove this None option once we have data models for all the Calibrations
@@ -186,7 +183,8 @@ class Calibrations:
         self.show = show
 
         # State
-        self.state = state
+#        self.state = state
+        self.state = None 
 
         # Restrict on slits?
         self.user_slits = user_slits

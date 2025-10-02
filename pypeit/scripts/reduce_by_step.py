@@ -11,7 +11,6 @@ class ReducebyStep(scriptbase.ScriptBase):
 
     @classmethod
     def get_parser(cls, width=None):
-        import argparse
 
         parser = super().get_parser(
             description='Run one of the PypeIt reduction steps on a single frame (and detector)',

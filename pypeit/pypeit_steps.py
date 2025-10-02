@@ -32,7 +32,7 @@ def get_sci_metadata(spectrograph, fitstbl, frame:int, det):
     Grab the meta data for a given science frame and specific detector
 
     Args:
-        spectrograph (:class:`pypeit.spectrographs.spectrograph.Spectrograph`):
+        spectrograph (:class:`~pypeit.spectrographs.spectrograph.Spectrograph`):
             The spectrograph instance
         fitstbl (:class:`~pypeit.metadata.PypeItMetaData`):
             The class holding the metadata for all the frames in this PypeIt run.
@@ -122,7 +122,7 @@ def calib_one(spectrograph, fitstbl, par, det, calib_ID, calibrations_path:str,
     Run Calibration for a single detector, calib_ID pair
 
     Args:
-        spectrograph (:class:`pypeit.spectrographs.spectrograph.Spectrograph`):
+        spectrograph (:class:`~pypeit.spectrographs.spectrograph.Spectrograph`):
             The spectrograph instance
         fitstbl (:class:`~pypeit.metadata.PypeItMetaData`):
             The class holding the metadata for all the frames in this PypeIt run.
@@ -149,7 +149,7 @@ def calib_one(spectrograph, fitstbl, par, det, calib_ID, calibrations_path:str,
             Run only up to this calibration step.
 
     Returns:
-        caliBrate (:class:`pypeit.calibrations.Calibrations`)
+        caliBrate (:class:`~pypeit.calibrations.Calibrations`)
 
     """
     if qa_path is None:
@@ -193,7 +193,7 @@ def process_one_det(spectrograph, fitstbl, par, frames:list,
     a background image.
 
     Args:
-        spectrograph (:class:`pypeit.spectrographs.spectrograph.Spectrograph`):
+        spectrograph (:class:`~pypeit.spectrographs.spectrograph.Spectrograph`):
             The spectrograph instance
         fitstbl (:class:`~pypeit.metadata.PypeItMetaData`):
             The class holding the metadata for all the frames in this PypeIt run.
@@ -315,7 +315,7 @@ def findobj_on_det(sciImg, spectrograph, fitstbl, par, frames:list, calib_ID:str
         sciImg (:class:`~pypeit.images.pypeitimage.PypeItImage`):
             Data container that holds a single image from a
             single detector and its related images (e.g. ivar, mask)
-        spectrograph (:class:`pypeit.spectrographs.spectrograph.Spectrograph`):
+        spectrograph (:class:`~pypeit.spectrographs.spectrograph.Spectrograph`):
             The spectrograph instance
         fitstbl (:class:`~pypeit.metadata.PypeItMetaData`):
             The class holding the metadata for all the frames in this PypeIt run.
@@ -393,7 +393,7 @@ def load_calibrations_for_frame(spectrograph, fitstbl, par, frame, det,
     and detector.
 
     Args:
-        spectrograph (:class:`pypeit.spectrographs.spectrograph.Spectrograph`):
+        spectrograph (:class:`~pypeit.spectrographs.spectrograph.Spectrograph`):
             The spectrograph instance
         fitstbl (:class:`~pypeit.metadata.PypeItMetaData`):
             The class holding the metadata for all the frames in this PypeIt run.
@@ -410,7 +410,7 @@ def load_calibrations_for_frame(spectrograph, fitstbl, par, frame, det,
             Path to the calibration files
 
     Returns:
-        :class:`pypeit.calibrations.Calibrations`:
+        :class:`~pypeit.calibrations.Calibrations`:
             The loaded calibrations for the specified frame and detector.
 
     Raises:
@@ -564,7 +564,7 @@ def extract_det(spectrograph, fitstbl, par,
     sci_ID and det need to have been set internally prior to calling this method
 
     Args:
-        spectrograph (:class:`pypeit.spectrographs.spectrograph.Spectrograph`):
+        spectrograph (:class:`~pypeit.spectrographs.spectrograph.Spectrograph`):
             The spectrograph instance
         fitstbl (:class:`~pypeit.metadata.PypeItMetaData`):
             The class holding the metadata for all the frames in this PypeIt run.
@@ -591,7 +591,7 @@ def extract_det(spectrograph, fitstbl, par,
             model without bkg subtraction.
         initial_sky (`numpy.ndarray`_):
             Initial global sky model
-        sobjs_obj (:class:`pypeit.specobjs.SpecObjs`):
+        sobjs_obj (:class:`~pypeit.specobjs.SpecObjs`):
             List of objects found during `run_objfind`
         bkg_redux (:obj:`bool`, optional):
             Indicates whether the reduction involves background subtraction.
@@ -599,7 +599,7 @@ def extract_det(spectrograph, fitstbl, par,
         find_negative (:obj:`bool`, optional):
             Indicates whether to find negative objects during the reduction.
             Default is False.
-        calib_slits (:class:`pypeit.slittrace.SlitTraceSet`, optional):
+        calib_slits (:class:`~pypeit.slittrace.SlitTraceSet`, optional):
             If provided, use these slits instead of those from the
             calibrations. Default is None.
         show (:obj:`bool`, optional):
@@ -607,9 +607,9 @@ def extract_det(spectrograph, fitstbl, par,
 
     Returns:
         tuple: A tuple containing:
-            - spec2DObj (:class:`pypeit.spec2dobj.Spec2DObj`):
+            - spec2DObj (:class:`~pypeit.spec2dobj.Spec2DObj`):
               The 2D spectrum object containing the 2D spectral images
-            - sobj (:class:`pypeit.specobjs.SpecObjs`):
+            - sobj (:class:`~pypeit.specobjs.SpecObjs`):
                 The extracted 1D spectra
             
     """
@@ -783,7 +783,7 @@ def instantiate_objfind(sciImg, spectrograph, fitstbl, par, frames, det,
         sciImg (:class:`~pypeit.images.pypeitimage.PypeItImage`):
             Data container that holds a single image from a
             single detector and its related images (e.g. ivar, mask)
-        spectrograph (:class:`pypeit.spectrographs.spectrograph.Spectrograph`):
+        spectrograph (:class:`~pypeit.spectrographs.spectrograph.Spectrograph`):
             The spectrograph instance
         fitstbl (:class:`~pypeit.metadata.PypeItMetaData`):
             The class holding the metadata for all the frames in this PypeIt run.
@@ -795,7 +795,7 @@ def instantiate_objfind(sciImg, spectrograph, fitstbl, par, frames, det,
             `fitstbl` to be processed together.
         det (:obj:`int`):
             Detector number (1-indexed)
-        caliBrate (:class:`pypeit.calibrations.Calibrations`):
+        caliBrate (:class:`~pypeit.calibrations.Calibrations`):
             The calibration data for the current frame and detector.
         bkg_redux (:obj:`bool`):
             Indicates whether the reduction involves background subtraction.
