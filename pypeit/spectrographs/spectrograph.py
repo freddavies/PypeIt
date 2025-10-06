@@ -28,6 +28,7 @@ provide instrument-specific:
 
 from abc import ABCMeta
 from pathlib import Path
+import ast
 
 from IPython import embed
 
@@ -1100,12 +1101,32 @@ class Spectrograph:
         Raises:
             PypeItError: Raised if any of the detectors or detector mosaics
             specified by ``subset`` are invalid.
+
+        Examples:
+            >>> from pypeit.spectrographs.keck_deimos import KeckDEIMOSSpectrograph
+            >>> spectrograph = KeckDEIMOSSpectrograph()
+            >>> spectrograph.select_detectors()
+            [1, 2, 3, 4, 5, 6, 7, 8]
+            >>> spectrograph.select_detectors(subset=3)
+            [3]
+            >>> spectrograph.select_detectors(subset=(3,4))
+            [3, 4]
+            >>> spectrograph.select_detectors(subset=[(1,2,3,4),(5,6,7,8)])
+            [(1, 2, 3, 4), (5, 6, 7, 8)]
+            >>> spectrograph.select_detectors(subset='DET01:10')
+            [1]
+            >>> spectrograph.select_detectors(subset=['DET01:10','DET05:10'])
+            [1, 5]
+            >>> spectrograph.select_detectors(subset=['MSC01','MSC02'])
+            [(1, 2, 3, 4), (5, 6, 7, 8)]
+            >>> spectrograph.select_detectors(subset=['DET01:10','MSC02'])
+            [1, (5, 6, 7, 8)]
         """
         if subset is None:
             return np.arange(1, self.ndet+1).tolist()
 
         # Parse subset if it's a string (single slitspatnum) or a list of slitspatnums
-        if isinstance(subset, str) or \
+        if (isinstance(subset, str) and ':' in subset) or \
                 (isinstance(subset, list) and np.all([isinstance(ss, str) for ss in subset])
                  and np.all([':' in ss for ss in subset])):
             subset_list = [subset] if isinstance(subset, str) else subset
@@ -1120,6 +1141,12 @@ class Spectrograph:
                     idx = np.where(self.list_detectors(mosaic=True) == parsed_det)[0][0]
                     new_dets.append(self.allowed_mosaics[idx])
             _subset = new_dets
+        elif isinstance(subset, str):
+            # Is it in square brackets (i.e. a list)`?  If not, do so
+            if subset[0] != '[':
+                subset = '[' + subset + ']'
+            # Convert to a list of int and tuple
+            _subset = ast.literal_eval(subset)  
         elif isinstance(subset, (int, tuple)):
             _subset = [subset]
         else:

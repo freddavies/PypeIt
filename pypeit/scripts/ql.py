@@ -300,9 +300,6 @@ def generate_sci_pypeitfile(redux_path:str,
     is_std = ps_sci.fitstbl.find_frames('standard', index=True)
     if len(is_std) > 0 and not clear:
         for i in is_std:
-            #std_spec1d = pypeit.PypeIt.get_spec_file_name(
-            #                sci_dir / ps_sci.par['rdx']['scidir'],
-            #                ps_sci.fitstbl.construct_basename(i))
             std_spec1d = outputfiles.spec_output_file(
                     ps_sci.fitstbl, None, i,
                     sci_path=sci_dir / ps_sci.par['rdx']['scidir'])

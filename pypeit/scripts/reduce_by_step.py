@@ -69,7 +69,6 @@ class ReducebyStep(scriptbase.ScriptBase):
         pypeIt.reuse_calibs = True
 
         # Detector
-        # TODO -- worry about mosaics
         detectors = pypeIt.spectrograph.select_detectors()
         mosaics = pypeIt.spectrograph.allowed_mosaics
         if args.det is None:
@@ -80,7 +79,7 @@ class ReducebyStep(scriptbase.ScriptBase):
             print(f"No detector provided (--det). Choose from one of these: {detectors}.") 
             if len(mosaics) > 0:
                 print("")
-                print(f"This instrument also supports mosaics: {mosaics}")
+                print(f"This instrument also supports the following mosaics: {mosaics}")
                 print("To reduce a mosaic, provide the mosaic as the detector, e.g. --det '1,2'")
                 print("")
             print("---------------------------------------------------------------------")

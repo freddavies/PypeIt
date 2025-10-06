@@ -551,8 +551,6 @@ class PypeItImage(datamodel.DataContainer):
             # Save the existing BPM and CR masks
             bpm = self.fullmask.flagged('BPM')
             cr = self.fullmask.flagged('CR')
-            #bpm = self.fullmask.bpm
-            #cr = self.fullmask.cr
             # Re-initialize the fullmask (erases all existing masks)
             self.reinit_mask()
             # Recover the BPM and CR masks

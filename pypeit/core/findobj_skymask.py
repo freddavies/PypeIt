@@ -6,6 +6,8 @@
 from IPython import embed
 
 import os 
+from pathlib import Path
+
 import numpy as np
 import scipy.interpolate
 import scipy.ndimage
@@ -1414,11 +1416,11 @@ def objfind_QA(spat_peaks, snr_peaks, spat_vector, snr_vector, snr_thresh, qa_ti
     fig = plt.gcf()
     if show:
         plt.show()
+    # Write to disk?
     if objfindQA_filename is not None:
-        # Genreate the output folders
-        if not os.path.isdir(os.path.dirname(objfindQA_filename)):
-            os.makedirs(os.path.dirname(objfindQA_filename))
-        fig.savefig(objfindQA_filename, dpi=400)
+        qafile = Path(objfindQA_filename).absolute()
+        qafile.parent.mkdir(parents=True, exists_ok=True)
+        fig.savefig(qafile, dpi=400)
     plt.close('all')
 
 def get_fwhm(fwhm_in, nsamp, smash_peakflux, spat_fracpos, flux_smash_smth):

@@ -129,9 +129,7 @@ Extract Step
 The ``extract`` step performs 1D spectral extraction:
 
 - Loads objects and sky models from the findobj step
-- Performs optimal extraction of 1D spectra
-- Applies wavelength calibration
-- Handles flux calibration (if standard stars available)
+- Performs boxcar and/or optimal extraction of 1D spectra
 - Creates final 1D and 2D spectrum files
 
 **Example:**
