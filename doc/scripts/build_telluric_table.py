@@ -12,11 +12,18 @@ from pypeit.utils import string_table
 def tellgrid_table(root, ofile):
 
     os.environ['TZ'] = 'UTC'
-    result = subprocess.run(
-        [
-            'aws', '--endpoint', 'https://s3-west.nrp-nautilus.io', 's3', 'ls',
-            f's3://pypeit/telluric/atm_grids/{root}', '--human-readable'
-        ], capture_output=True, text=True)
+    try:
+        result = subprocess.run(
+            [
+                'aws', '--endpoint', 'https://s3-west.nrp-nautilus.io', 's3', 'ls',
+                f's3://pypeit/telluric/atm_grids/{root}', '--human-readable'
+            ], capture_output=True, text=True)
+    except Exception as e:
+        print(
+            f'Exception raised by subprocess call using aws to list the available files.  {root} '
+            'telluric file table will not be udpated!'
+        )
+        raise 
     data = [l.split() for l in result.stdout.split('\n')[:-1]]
     data = [['File', 'Size', 'Last Modified (UTC)']] + [
         [d[4], ' '.join(d[2:4]), ' '.join(d[:2])] for d in data
