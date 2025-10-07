@@ -18,7 +18,7 @@ import scipy
 
 import pypeit
 from pypeit.core.qa import close_qa
-from pypeit import pypeit_user
+#from pypeit import pypeit_user
 
 #pypeit_logger = None
 
