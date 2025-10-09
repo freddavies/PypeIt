@@ -246,7 +246,7 @@ class LBTLUCISpectrograph(spectrograph.Spectrograph):
             return (good_exp & ((fitstbl['idname'] == 'object') |
                     (fitstbl['idname'] == 'arc')))
 
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
 # Detector information from official LBT LUCI website

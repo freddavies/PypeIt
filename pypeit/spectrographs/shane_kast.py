@@ -154,7 +154,7 @@ class ShaneKastSpectrograph(spectrograph.Spectrograph):
         if ftype in ['arc', 'tilt']:
             return good_exp & self.lamps(fitstbl, 'arcs')#  & (fitstbl['target'] == 'Arcs')
 
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
   
     def lamps(self, fitstbl, status):

@@ -284,7 +284,7 @@ class GeminiGMOSSpectrograph(spectrograph.Spectrograph):
         if ftype == 'bias':
             return good_exp & (fitstbl['target'] == 'Bias')#& (fitstbl['idname'] == 'BIAS')
 
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     @classmethod

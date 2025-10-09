@@ -717,7 +717,7 @@ class KeckMOSFIRESpectrograph(spectrograph.Spectrograph):
             is_arc = fitstbl['idname'] == 'arclamp'
             is_obj = (fitstbl['lampstat01'] == 'off') & (fitstbl['idname'] == 'object') & ('long2pos_specphot' not in fitstbl['decker'])
             return good_exp & (is_arc | is_obj)
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     # TODO: Is this supposed to be deprecated in favor of get_comb_group?

@@ -329,7 +329,7 @@ class APFLevySpectrograph(spectrograph.Spectrograph):
         if ftype in ['pinhole']:
             return good_exp & (fitstbl['idname'] == 'NarrowFlat') & (fitstbl['decker'] == 'Pinhole')
 
-        msgs.warning(f'Cannot determine if frames are of type {ftype}.')
+        msgs.debug(f'Cannot determine if frames are of type {ftype}.')
         return np.zeros(len(fitstbl), dtype=bool)
 
     def is_science(self, fitstbl):

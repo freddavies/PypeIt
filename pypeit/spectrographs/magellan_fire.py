@@ -241,7 +241,7 @@ class MagellanFIREEchelleSpectrograph(MagellanFIRESpectrograph):
             return good_exp & (fitstbl['idname'] == 'Science')
         if ftype in ['arc', 'tilt']:
             return good_exp & (fitstbl['idname'] == 'Science')
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     @property
@@ -460,6 +460,6 @@ class MagellanFIRELONGSpectrograph(MagellanFIRESpectrograph):
             return good_exp & (fitstbl['idname'] == 'Science')
         if ftype in ['arc', 'tilt']:
             return good_exp & (fitstbl['idname'] == 'Arc')
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 

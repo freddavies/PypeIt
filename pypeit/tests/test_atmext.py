@@ -13,7 +13,7 @@ from pypeit import telescopes
 from pypeit.par.pypeitpar import Coadd1DPar
 
 
-from pypeit.pypmsgs import PypeItError
+from pypeit import PypeItError
 from pypeit.core.atmextinction import AtmosphericExtinction
 
 

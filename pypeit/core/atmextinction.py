@@ -16,7 +16,7 @@ from astropy import table
 
 from pypeit import msgs
 from pypeit import dataPaths
-from pypeit.pypmsgs import PypeItError
+from pypeit import PypeItError
 from pypeit import utils
 
 

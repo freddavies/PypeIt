@@ -314,7 +314,7 @@ class VLTSINFONISpectrograph(spectrograph.Spectrograph):
         if ftype in ['sky']:
             return good_exp & (fitstbl['idname'] == 'SINFONI_IFS_SKY')
 
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
 

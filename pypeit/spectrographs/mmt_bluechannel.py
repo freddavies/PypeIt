@@ -460,7 +460,7 @@ class MMTBlueChannelSpectrograph(spectrograph.Spectrograph):
             # i think the bright lamp, BC, is the only one ever used for this. imagetyp should always be set to flat.
             return good_exp & (fitstbl['lampstat01'] == 'off') & (fitstbl['target'] == 'skyflat')
 
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def get_rawimage(self, raw_file, det):

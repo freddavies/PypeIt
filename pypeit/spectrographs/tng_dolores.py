@@ -249,7 +249,7 @@ class TNGDoloresSpectrograph(spectrograph.Spectrograph):
         if ftype in ['arc', 'tilt']:
             return good_exp & (fitstbl['idname'] == 'CALIB') & ( (fitstbl['lampstat01'] == 'Ne+Hg') | (fitstbl['lampstat01'] == 'Helium') ) \
                         & (fitstbl['dispname'] != 'OPEN')
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
 

@@ -427,7 +427,7 @@ class KECKHIRESSpectrograph(spectrograph.Spectrograph):
             # Arc and tilt frames are typed together
             return good_exp & (fitstbl['idname'] == 'Line')
 
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def vet_assigned_ftypes(self, type_bits, fitstbl):

@@ -147,7 +147,7 @@ class P200NGPSSpectrograph(spectrograph.Spectrograph):
             return good_exp & (fitstbl['idname'] == 'THAR') # Temporary fix, do not use FEAR arcs
 
         
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
 

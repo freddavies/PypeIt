@@ -164,7 +164,7 @@ class P200DBSPSpectrograph(spectrograph.Spectrograph):
             return np.zeros(len(fitstbl), dtype=bool)
         if ftype in ['arc', 'tilt']:
             return good_exp & (fitstbl['lampstat01'] != '0000000') & (fitstbl['idname'] == 'cal')
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def get_rawimage(self, raw_file, det):

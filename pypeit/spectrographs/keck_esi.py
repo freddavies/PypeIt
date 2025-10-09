@@ -282,7 +282,7 @@ class KeckESISpectrograph(spectrograph.Spectrograph):
             return good_exp & (fitstbl['idname'] == 'Object') 
         if ftype == 'standard':
             return good_exp & (fitstbl['idname'] == 'Object') 
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def bpm(self, filename, det, shape=None, msbias=None):

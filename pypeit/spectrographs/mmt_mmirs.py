@@ -272,7 +272,7 @@ class MMTMMIRSSpectrograph(spectrograph.Spectrograph):
             return good_exp & (fitstbl['idname'] == 'object')
         if ftype == 'dark':
             return good_exp & (fitstbl['idname'] == 'dark')
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def bpm(self, filename, det, shape=None, msbias=None):

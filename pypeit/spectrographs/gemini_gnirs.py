@@ -261,7 +261,7 @@ class GeminiGNIRSSpectrograph(spectrograph.Spectrograph):
             elif '10/mmLBSX' in fitstbl['dispname'][0]:
                 return good_exp & (fitstbl['idname'] == 'ARC')
 
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     @classmethod

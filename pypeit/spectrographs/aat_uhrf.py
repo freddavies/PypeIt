@@ -228,7 +228,7 @@ class AATUHRFSpectrograph(spectrograph.Spectrograph):
         if ftype in ['arc', 'tilt']:
             return good_exp
 
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def config_specific_par(self, scifile, inp_par=None):

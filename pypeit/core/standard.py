@@ -16,7 +16,7 @@ import numpy as np
 
 from pypeit import msgs
 from pypeit import dataPaths
-from pypeit.pypmsgs import PypeItError
+from pypeit import PypeItError
 from pypeit.core import spectrum
 from pypeit.core.meta import convert_radec
 from pypeit.core.wave import airtovac

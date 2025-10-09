@@ -414,7 +414,7 @@ class LDTDeVenySpectrograph(spectrograph.Spectrograph):
         if ftype in ['pinhole', 'align', 'sky', 'lampoffflats', 'scattlight']:
             # DeVeny doesn't have any of these types of frames
             return np.zeros(len(fitstbl), dtype=bool)
-        msgs.warning(f"Cannot determine if frames are of type {ftype}")
+        msgs.debug(f"Cannot determine if frames are of type {ftype}")
         return np.zeros(len(fitstbl), dtype=bool)
 
     def pypeit_file_keys(self):

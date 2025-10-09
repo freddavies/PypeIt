@@ -291,7 +291,7 @@ class GTCOSIRISPlusSpectrograph(spectrograph.Spectrograph):
         if ftype == 'bias':
             return good_exp & (np.char.lower(fitstbl['target']) == 'bias')
 
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def config_independent_frames(self):
@@ -1001,7 +1001,7 @@ class GTCOSIRISSpectrograph(spectrograph.Spectrograph):
         if ftype == 'bias':
             return good_exp & (fitstbl['target'] == 'BIAS')
 
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def config_independent_frames(self):

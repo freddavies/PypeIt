@@ -423,7 +423,7 @@ class KeckKCWIKCRMSpectrograph(spectrograph.Spectrograph):
             # Don't type pinhole frames
             return np.zeros(len(fitstbl), dtype=bool)
 
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def lamps(self, fitstbl, status):

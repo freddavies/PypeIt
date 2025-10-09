@@ -347,7 +347,7 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
         if ftype in ['pixelflat', 'trace', 'illumflat']:
             return good_exp & (fitstbl['lampstat01'] == 'off') & (fitstbl['lampstat02'] == 'deployed')
 
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def get_rawimage(self, raw_file, det):

@@ -267,7 +267,7 @@ class NOTALFOSCSpectrograph(spectrograph.Spectrograph):
             return np.zeros(len(fitstbl), dtype=bool)
         if ftype in ['arc','tilt']:
             return good_exp & (fitstbl['idname'] == 'WAVE,LAMP')
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def config_specific_par(self, scifile, inp_par=None):

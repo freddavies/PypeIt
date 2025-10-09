@@ -499,7 +499,7 @@ class KeckNIRSPECHighSpectrograph(KeckNIRSPECSpectrograph):
             is_obj = self.lamps(fitstbl, 'off') & (hatch == 'Out') 
             good_exp[is_obj] = fitstbl['exptime'].data[is_obj] > 60.0
             return good_exp & (is_arc | is_obj)
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def lamps(self, fitstbl, status):
@@ -937,7 +937,7 @@ class KeckNIRSPECHighSpectrographOld(KeckNIRSPECSpectrographOld):
             is_obj = self.lamps(fitstbl, 'off') & (hatch == '0') 
             good_exp[is_obj] = fitstbl['exptime'].data[is_obj] > 60.0
             return good_exp & (is_arc | is_obj)
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def lamps(self, fitstbl, status):
@@ -1367,7 +1367,7 @@ class KeckNIRSPECLowSpectrograph(KeckNIRSPECSpectrograph):
             is_obj = self.lamps(fitstbl, 'off') & (hatch == 0) \
                         & (fitstbl['idname'] == 'object')
             return good_exp & (is_arc | is_obj)
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def lamps(self, fitstbl, status):

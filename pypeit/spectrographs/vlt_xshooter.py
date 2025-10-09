@@ -194,7 +194,7 @@ class VLTXShooterSpectrograph(spectrograph.Spectrograph):
         if ftype in ['arc', 'tilt']:
             return good_exp & (fitstbl['target'] == 'LAMP,WAVE')
 
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
 
@@ -427,7 +427,7 @@ class VLTXShooterNIRSpectrograph(VLTXShooterSpectrograph):
         if ftype in ['arc', 'tilt']:
             return good_exp & ((fitstbl['target'] == 'LAMP,WAVE') | (fitstbl['target'] == 'SCIENCE'))
 
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def bpm(self, filename, det, shape=None, msbias=None):

@@ -183,7 +183,7 @@ class LBTMODSSpectrograph(spectrograph.Spectrograph):
         if ftype in ['arc', 'tilt']:
             return good_exp & (fitstbl['idname'] == 'COMP') & (fitstbl['dispname'] != 'Flat')
 
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def get_rawimage(self, raw_file, det):

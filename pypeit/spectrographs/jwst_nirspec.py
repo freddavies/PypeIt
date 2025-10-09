@@ -237,7 +237,7 @@ class JWSTNIRSpecSpectrograph(spectrograph.Spectrograph):
 
         if ftype == 'science':
             return np.ones(len(fitstbl), dtype=bool)
-        msgs.warning('Cannot determine if frames are of type {0}.'.format(ftype))
+        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
 
