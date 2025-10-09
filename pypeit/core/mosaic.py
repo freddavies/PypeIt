@@ -10,7 +10,7 @@ from IPython import embed
 import numpy as np
 from scipy import ndimage
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit.core import transform
 from pypeit.utils import inverse
@@ -267,7 +267,7 @@ def build_image_mosaic(imgs, tforms, ivar=None, bpm=None, mosaic_shape=None, cva
         raise PypeItError(f'Unknown value for overlap ({overlap}), must be "combine" or "error".')
 
     if any([not np.issubdtype(img.dtype, np.floating) for img in imgs]):
-        msgs.warning('Images must be floating type, and will be recast before transforming.')
+        log.warning('Images must be floating type, and will be recast before transforming.')
 
     # Get the output shape, if necessary
     if mosaic_shape is None:
@@ -279,7 +279,7 @@ def build_image_mosaic(imgs, tforms, ivar=None, bpm=None, mosaic_shape=None, cva
     else:
         _tforms = tforms
 
-    msgs.info(f'Constructing image mosaic with {nimg} images and output shape {mosaic_shape}.')
+    log.info(f'Constructing image mosaic with {nimg} images and output shape {mosaic_shape}.')
 
     if ivar is not None:
         var = [inverse(_ivar) for _ivar in ivar]

@@ -5,7 +5,7 @@ Module for WHT/ISIS specific methods.
 """
 import numpy as np
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit.core import framematch
@@ -263,7 +263,7 @@ class WHTISISBlueSpectrograph(WHTISISSpectrograph):
             return np.zeros(len(fitstbl), dtype=bool)
         if ftype in ['arc', 'tilt']:
             return good_exp & (fitstbl['lampstat01'] == 'CuNe+CuAr') & (fitstbl['idname'] == 'arc')
-        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
 
@@ -409,7 +409,7 @@ class WHTISISRedSpectrograph(WHTISISSpectrograph):
             return np.zeros(len(fitstbl), dtype=bool)
         if ftype in ['arc', 'tilt']:
             return good_exp & (fitstbl['lampstat01'] == 'CuNe+CuAr') & (fitstbl['idname'] == 'arc')
-        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
 

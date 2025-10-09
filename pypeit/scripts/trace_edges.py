@@ -65,7 +65,7 @@ class TraceEdges(scriptbase.ScriptBase):
         import time
         from pathlib import Path
         import numpy as np
-        from pypeit import msgs
+        from pypeit import log
         from pypeit import PypeItError
         from pypeit.spectrographs.util import load_spectrograph
         from pypeit import edgetrace
@@ -75,10 +75,10 @@ class TraceEdges(scriptbase.ScriptBase):
         from IPython import embed
 
         # Set the verbosity, and create a logfile if verbosity == 2
-#        msgs.set_logfile_and_verbosity('trace_edges', args.verbosity)
+#        log.set_logfile_and_verbosity('trace_edges', args.verbosity)
 
         if args.show:
-            msgs.warning('"show" option is deprecated.  Setting debug = 1.')
+            log.warning('"show" option is deprecated.  Setting debug = 1.')
             args.debug = 1
 
         if args.pypeit_file is not None:
@@ -209,10 +209,10 @@ class TraceEdges(scriptbase.ScriptBase):
             edges = edgetrace.EdgeTraceSet(traceImage, spec, trace_par, auto=True,
                                            debug=args.debug, qa_path=qa_path)
             if not edges.success:
-                msgs.warning(f'Edge tracing for detector {det} failed.  Continuing...')
+                log.warning(f'Edge tracing for detector {det} failed.  Continuing...')
                 continue
 
-            msgs.info(f'Tracing for detector {det} finished in { time.perf_counter()-t:.1f} s.')
+            log.info(f'Tracing for detector {det} finished in { time.perf_counter()-t:.1f} s.')
             # Write the two calibration frames
             edges.to_file()
             edges.get_slits().to_file()

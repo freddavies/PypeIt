@@ -8,7 +8,7 @@ from IPython import embed
 
 import numpy as np
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 
 
@@ -103,11 +103,11 @@ def ximg_and_edgemask(lord_in, rord_in, slitpix, trim_edg=(3,3), xshift=0.):
         badp = xsize <= 0.
         if np.any(badp):
             meds = np.median(xsize)
-            msgs.warning('Something goofy in slit # {:d}'.format(islit))
-            msgs.warning('Probably a bad slit (e.g. a star box)')
-            msgs.warning('It is best to expunge this slit')
-            msgs.warning('Proceed at your own risk, with a slit width of {}'.format(meds))
-            msgs.warning('Or set meds to your liking')
+            log.warning('Something goofy in slit # {:d}'.format(islit))
+            log.warning('Probably a bad slit (e.g. a star box)')
+            log.warning('It is best to expunge this slit')
+            log.warning('Proceed at your own risk, with a slit width of {}'.format(meds))
+            log.warning('Or set meds to your liking')
             #rord[:, islit] = lord[:, islit] + meds
 
         # Loop down the slit

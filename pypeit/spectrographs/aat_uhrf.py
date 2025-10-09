@@ -11,7 +11,7 @@ import numpy as np
 
 from astropy.time import Time
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit.core import framematch
@@ -228,7 +228,7 @@ class AATUHRFSpectrograph(spectrograph.Spectrograph):
         if ftype in ['arc', 'tilt']:
             return good_exp
 
-        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def config_specific_par(self, scifile, inp_par=None):
@@ -251,7 +251,7 @@ class AATUHRFSpectrograph(spectrograph.Spectrograph):
         par = super().config_specific_par(scifile, inp_par=inp_par)
 
         if par['calibrations']['wavelengths']['reid_arxiv'] is None:
-            msgs.warning(
+            log.warning(
                 "Wavelength setup not supported!\n\n"
                 "Please perform your own wavelength calibration, and provide the path+filename "
                 "using the reid_arxiv parameter."

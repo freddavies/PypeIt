@@ -82,7 +82,7 @@ class RunPypeIt(scriptbase.ScriptBase):
         from IPython import embed
 
         from pypeit import pypeit
-        from pypeit import msgs
+        from pypeit import log
         from pypeit import PypeItError
 
         # Load options from command line
@@ -101,10 +101,10 @@ class RunPypeIt(scriptbase.ScriptBase):
             pypeIt.calib_all()
         else:
             pypeIt.reduce_all()
-        msgs.info('Data reduction complete')
+        log.info('Data reduction complete')
 
         # QA HTML
-        msgs.info('Generating QA HTML')
+        log.info('Generating QA HTML')
         pypeIt.build_qa()
 
         return 0

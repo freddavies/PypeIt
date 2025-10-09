@@ -5,7 +5,7 @@ Module for GTC OSIRIS specific methods.
 """
 import numpy as np
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit.core import parse
@@ -188,26 +188,26 @@ class GTCOSIRISPlusSpectrograph(spectrograph.Spectrograph):
             try:
                 return headarr[0]['PRESSURE']  # Must be in astropy.units.mbar
             except KeyError:
-                msgs.warning("Pressure is not in header")
-                msgs.info("The default pressure will be assumed: 611 mbar")
+                log.warning("Pressure is not in header")
+                log.info("The default pressure will be assumed: 611 mbar")
                 return 611.0
         elif meta_key == 'temperature':
             try:
                 return headarr[0]['TAMBIENT']  # Must be in astropy.units.deg_C
             except KeyError:
-                msgs.warning("Temperature is not in header")
-                msgs.info("The default temperature will be assumed: 1.5 deg C")
+                log.warning("Temperature is not in header")
+                log.info("The default temperature will be assumed: 1.5 deg C")
                 return 1.5
         elif meta_key == 'humidity':
             try:
                 return headarr[0]['HUMIDITY']
             except KeyError:
-                msgs.warning("Humidity is not in header")
-                msgs.info("The default relative humidity will be assumed: 20 %")
+                log.warning("Humidity is not in header")
+                log.info("The default relative humidity will be assumed: 20 %")
                 return 20.0
         elif meta_key == 'parangle':
             try:
-                msgs.debug("Parallactic angle is not available for MAAT - DAR correction may be incorrect")
+                log.debug("Parallactic angle is not available for MAAT - DAR correction may be incorrect")
                 return headarr[0]['PARANG']  # Must be expressed in radians
             except KeyError:
                 raise PypeItError("Parallactic angle is not in header")
@@ -217,7 +217,7 @@ class GTCOSIRISPlusSpectrograph(spectrograph.Spectrograph):
             return headarr[0]['GAIN']
         elif meta_key == 'slitwid':
             if self.name == "gtc_maat":
-                msgs.warning("HACK FOR MAAT SIMS --- NEED TO GET SLICER SCALE FROM HEADER, IDEALLY")
+                log.warning("HACK FOR MAAT SIMS --- NEED TO GET SLICER SCALE FROM HEADER, IDEALLY")
                 return 0.305 / 3600.0
             elif self.name == "gtc_osiris_plus":
                 return headarr[0]['SLITW']/3600.0   # Convert slit width from arcseconds to degrees
@@ -291,7 +291,7 @@ class GTCOSIRISPlusSpectrograph(spectrograph.Spectrograph):
         if ftype == 'bias':
             return good_exp & (np.char.lower(fitstbl['target']) == 'bias')
 
-        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def config_independent_frames(self):
@@ -399,7 +399,7 @@ class GTCOSIRISPlusSpectrograph(spectrograph.Spectrograph):
             par['sensfunc']['algorithm'] = 'IR'
             par['sensfunc']['IR']['telgridfile'] = "TellPCA_3000_26000_R10000.fits"
         else:
-            msgs.warning('gtc_osiris.py: template arc missing for this grism! Trying holy-grail...')
+            log.warning('gtc_osiris.py: template arc missing for this grism! Trying holy-grail...')
             par['calibrations']['wavelengths']['method'] = 'holy-grail'
 
         # Return
@@ -440,7 +440,7 @@ class GTCOSIRISPlusSpectrograph(spectrograph.Spectrograph):
         head0 = fits.getheader(filename, ext=0)
         binning = self.get_meta_value([head0], 'binning')
 
-        msgs.warning("Bad pixel mask is not available for det={0:d} binning={1:s}".format(det, binning))
+        log.warning("Bad pixel mask is not available for det={0:d} binning={1:s}".format(det, binning))
         # Construct a list of the bad columns
         bc = []
         # TODO :: Add BPM
@@ -637,7 +637,7 @@ class GTCMAATSpectrograph(GTCOSIRISPlusSpectrograph):
         Returns:
             `astropy.wcs.WCS`_: The world-coordinate system.
         """
-        msgs.info("Calculating the WCS")
+        log.info("Calculating the WCS")
         # Get the x and y binning factors, and the typical slit length
         binspec, binspat = parse.parse_binning(self.get_meta_value([hdr], 'binning'))
 
@@ -646,7 +646,7 @@ class GTCMAATSpectrograph(GTCOSIRISPlusSpectrograph):
         slscl = self.get_meta_value([hdr], 'slitwid')
         if spatial_scale is not None:
             if pxscl > spatial_scale / 3600.0:
-                msgs.warning("Spatial scale requested ({0:f}'') is less than the pixel scale ({1:f}'')".format(spatial_scale, pxscl*3600.0))
+                log.warning("Spatial scale requested ({0:f}'') is less than the pixel scale ({1:f}'')".format(spatial_scale, pxscl*3600.0))
             # Update the pixel scale
             pxscl = spatial_scale / 3600.0  # 3600 is to convert arcsec to degrees
 
@@ -661,7 +661,7 @@ class GTCMAATSpectrograph(GTCOSIRISPlusSpectrograph):
         coord = SkyCoord(raval, decval, unit=(units.deg, units.deg))
 
         # Get rotator position
-        msgs.warning("HACK FOR MAAT SIMS --- NEED TO FIGURE OUT RPOS and RREF FOR MAAT FROM HEADER INFO")
+        log.warning("HACK FOR MAAT SIMS --- NEED TO FIGURE OUT RPOS and RREF FOR MAAT FROM HEADER INFO")
         if 'ROTPOSN' in hdr:
             rpos = hdr['ROTPOSN']
         else:
@@ -695,7 +695,7 @@ class GTCMAATSpectrograph(GTCOSIRISPlusSpectrograph):
         crpix2 = slitlength / 2.
         crpix3 = 1.
         # Get the offset
-        msgs.warning("HACK FOR MAAT SIMS --- Need to obtain offset from header?")
+        log.warning("HACK FOR MAAT SIMS --- Need to obtain offset from header?")
         off1 = 0.
         off2 = 0.
         off1 /= binspec
@@ -704,7 +704,7 @@ class GTCMAATSpectrograph(GTCOSIRISPlusSpectrograph):
         crpix2 += off2
 
         # Create a new WCS object.
-        msgs.info("Generating MAAT WCS")
+        log.info("Generating MAAT WCS")
         w = wcs.WCS(naxis=3)
         w.wcs.equinox = hdr['EQUINOX']
         w.wcs.name = 'MAAT'
@@ -1001,7 +1001,7 @@ class GTCOSIRISSpectrograph(spectrograph.Spectrograph):
         if ftype == 'bias':
             return good_exp & (fitstbl['target'] == 'BIAS')
 
-        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def config_independent_frames(self):
@@ -1092,7 +1092,7 @@ class GTCOSIRISSpectrograph(spectrograph.Spectrograph):
             par['sensfunc']['algorithm'] = 'IR'
             par['sensfunc']['IR']['telgridfile'] = "TellPCA_3000_26000_R10000.fits"
         else:
-            msgs.warning('gtc_osiris.py: template arc missing for this grism! Trying holy-grail...')
+            log.warning('gtc_osiris.py: template arc missing for this grism! Trying holy-grail...')
             par['calibrations']['wavelengths']['method'] = 'holy-grail'
 
         # Return
@@ -1141,14 +1141,14 @@ class GTCOSIRISSpectrograph(spectrograph.Spectrograph):
         elif det == 2:
             if binning == '1 1':
                 # The BPM is based on 2x2 binning data, so the 2x2 numbers are just multiplied by two
-                msgs.warning("BPM is likely over-estimated for 1x1 binning")
+                log.warning("BPM is likely over-estimated for 1x1 binning")
                 bc = [[220, 222, 3892, 4100],
                       [952, 954, 2304, 4100]]
             elif binning == '2 2':
                 bc = [[110, 111, 1946, 2050],
                       [476, 477, 1154, 2050]]
         else:
-            msgs.warning("Bad pixel mask is not available for det={0:d} binning={1:s}".format(det, binning))
+            log.warning("Bad pixel mask is not available for det={0:d} binning={1:s}".format(det, binning))
             bc = []
 
         # Apply these bad columns to the mask

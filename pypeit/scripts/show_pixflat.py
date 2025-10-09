@@ -24,7 +24,7 @@ class ShowPixFlat(scriptbase.ScriptBase):
     @staticmethod
     def main(args):
         import numpy as np
-        from pypeit import msgs
+        from pypeit import log
         from pypeit import PypeItError
         from pypeit import io
         from pypeit.display import display
@@ -49,7 +49,7 @@ class ShowPixFlat(scriptbase.ScriptBase):
                 # if some of the provided detectors are not in the file, warn the user
                 elif np.any(np.logical_not(in_file)):
                     det_not_in_file = np.array(args.det)[np.logical_not(in_file)]
-                    msgs.warning(f"Detector(s) {det_not_in_file} not found in the file. Available detectors are {file_dets}")
+                    log.warning(f"Detector(s) {det_not_in_file} not found in the file. Available detectors are {file_dets}")
 
             # show the image
             display.connect_to_ginga(raise_err=True, allow_new=True)

@@ -58,7 +58,7 @@ import shutil
 
 from IPython import embed
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError, PypeItPathError
 from pypeit import cache
 
@@ -297,7 +297,7 @@ class PypeItDataPath:
         # If it does not, inform the user and download it into the cache.
         # NOTE: This should not be required for from-source (dev) installations.
         if not quiet:
-            msgs.info(f'{data_file} does not exist in the expected package directory '
+            log.info(f'{data_file} does not exist in the expected package directory '
                       f'({self.path}).  Checking cache or downloading the file now.')
 
         # Get the path to the cached file
@@ -307,7 +307,7 @@ class PypeItDataPath:
         _cached_file = cache.fetch_remote_file(data_file, subdir, remote_host=self.host,
                                                force_update=force_update, return_none=return_none)
         if _cached_file is None:
-            msgs.warning(f'File {data_file} not found in the cache.')
+            log.warning(f'File {data_file} not found in the cache.')
             return None
 
         # If we've made it this far, the file is being pulled from the cache.

@@ -33,7 +33,7 @@ except ModuleNotFoundError:
 
 from pypeit import __version__
 from pypeit import PypeItError
-from pypeit import msgs
+from pypeit import log
 from pypeit import specobjs
 from pypeit import onespec
 from pypeit import utils
@@ -84,7 +84,7 @@ def _enforce_monotonic_wavelengths(wave, flux, ivar, strict=True):
                    'error in the data reduction!')
 
     # Wavelengths are not monotonic, but the user wants to keep going.
-    msgs.warning('Wavelengths are not monotonically increasing!  Strict was set to False, so '
+    log.warning('Wavelengths are not monotonically increasing!  Strict was set to False, so '
               'measurements after a negative step in wavelength are removed from the constructed '
               'spectrum.  BEWARE that this is likely the result of an error in the data '
               'reduction!')
@@ -204,9 +204,9 @@ def pypeit_spec1d_loader(filename, extract=None, fluxed=True, strict=True, chk_v
         _wave, _flux, _ivar, _gpm = sobj.get_box_ext(fluxed=_cal) if _ext == 'BOX' \
                                         else sobj.get_opt_ext(fluxed=_cal)
         if not np.all(_gpm):
-            msgs.warning(f'Ignoring {np.sum(np.logical_not(_gpm))} masked pixels.')
+            log.warning(f'Ignoring {np.sum(np.logical_not(_gpm))} masked pixels.')
         if not np.any(_gpm):
-            msgs.warning(f'Spectrum {sobj.NAME} is fully masked and will be ignored!')
+            log.warning(f'Spectrum {sobj.NAME} is fully masked and will be ignored!')
             continue
         _wave, _flux, _ivar = _enforce_monotonic_wavelengths(_wave[_gpm], _flux[_gpm], _ivar[_gpm],
                                                              strict=strict)

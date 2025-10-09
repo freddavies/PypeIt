@@ -12,7 +12,7 @@ import numpy as np
 
 from astropy.table import Table
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import io
 from pypeit.scripts import scriptbase
 from pypeit import inputfiles
@@ -97,12 +97,12 @@ class FluxSetup(scriptbase.ScriptBase):
                 sensfiles.append(ifile)
                 unique_paths.add(str(ifile.parent))
             else:
-                msgs.info('{:} is not a standard PypeIt output, skipping.'.format(ifile))
+                log.info('{:} is not a standard PypeIt output, skipping.'.format(ifile))
         if len(spec2dfiles) > len(spec1dfiles):
-            msgs.warning('The following exposures do not have 1D extractions:')
+            log.warning('The following exposures do not have 1D extractions:')
             for ii in range(len(spec2dfiles)):
                 if (spec2dfiles[ii].parent / spec2dfiles[ii].name.replace("spec2d", "spec1d")).exists():
-                    msgs.info('\t {:}'.format(spec2dfiles[ii]))
+                    log.info('\t {:}'.format(spec2dfiles[ii]))
 
         if len(spec1dfiles) > 0:
             with io.fits_open(spec1dfiles[0]) as hdul:

@@ -10,7 +10,7 @@ import os
 
 from IPython import embed
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit.metadata import PypeItMetaData
 from pypeit import inputfiles
@@ -194,7 +194,7 @@ class PypeItSetup:
         if nfiles == 0:
             raise PypeItError(f'Unable to find any raw files for {spec.name} in {root}!')
         else:
-            msgs.info(f'Found {nfiles} {spec.name} raw files.')
+            log.info(f'Found {nfiles} {spec.name} raw files.')
         return cls.from_rawfiles(files, spectrograph)
 
     @classmethod
@@ -253,7 +253,7 @@ class PypeItSetup:
     def nfiles(self):
         """The number of files to reduce."""
         if self.fitstbl is None:
-            msgs.warning('No fits files have been read!')
+            log.warning('No fits files have been read!')
         return 0 if self.fitstbl is None else len(self.fitstbl)
 
     def __repr__(self):

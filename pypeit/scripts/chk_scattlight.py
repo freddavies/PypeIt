@@ -35,7 +35,7 @@ class ChkScattLight(scriptbase.ScriptBase):
     def main(args):
 
         from pypeit import scattlight, spec2dobj, slittrace
-        from pypeit import msgs
+        from pypeit import log
         from pypeit import PypeItError, PypeItDataModelError
         from pypeit.images.detector_container import DetectorContainer
         from pypeit import io
@@ -65,7 +65,7 @@ class ChkScattLight(scriptbase.ScriptBase):
                 spec2D = spec2dobj.Spec2DObj.from_file(args.spec2d, detname,
                                                        chk_version=chk_version)
             except PypeItDataModelError:
-                msgs.warning(f"Error loading spec2d file {args.spec2d} - attempting to load science image from fits")
+                log.warning(f"Error loading spec2d file {args.spec2d} - attempting to load science image from fits")
                 spec2D = None
 
             # Now set the frame to be displayed

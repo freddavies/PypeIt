@@ -7,7 +7,7 @@ import numpy as np
 
 from astropy.time import Time
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit.core import standard
@@ -205,7 +205,7 @@ class SOARGoodmanSpectrograph(spectrograph.Spectrograph):
             return np.zeros(len(fitstbl), dtype=bool)
         if ftype in ['arc', 'tilt']:
             return good_exp & self.lamps(fitstbl, 'arc')
-        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
 
@@ -413,7 +413,7 @@ class SOARGoodmanRedSpectrograph(SOARGoodmanSpectrograph):
         # Call the base-class method to generate the empty bpm
         bpm_img = super().bpm(filename, det, shape=shape, msbias=msbias)
 
-        msgs.info("Using hard-coded BPM for SOAR/Goodman")
+        log.info("Using hard-coded BPM for SOAR/Goodman")
         bpm_img[:, 0] = 1
 
         return bpm_img
@@ -602,7 +602,7 @@ class SOARGoodmanBlueSpectrograph(SOARGoodmanSpectrograph):
         # Call the base-class method to generate the empty bpm
         bpm_img = super().bpm(filename, det, shape=shape, msbias=msbias)
 
-        msgs.info("Using hard-coded BPM for SOAR/Goodman")
+        log.info("Using hard-coded BPM for SOAR/Goodman")
         bpm_img[:, 0] = 1
 
         return bpm_img

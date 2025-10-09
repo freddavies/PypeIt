@@ -6,7 +6,7 @@ Module for Keck/NIRSPEC specific methods.
 """
 import numpy as np
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import io
 from pypeit.images import detector_container
@@ -302,7 +302,7 @@ class KeckNIRSPECHighSpectrograph(KeckNIRSPECSpectrograph):
         # wavelength calibration
         supported_filters = ['NIRSPEC-1', 'NIRSPEC-3', 'NIRSPEC-5', 'NIRSPEC-7', 'Kband-new', 'KL']
         if (self.filter1 not in supported_filters) and (self.filter2 not in supported_filters):
-            msgs.warning(f'Filter {self.filter1} or {self.filter2} may not be supported!!')
+            log.warning(f'Filter {self.filter1} or {self.filter2} may not be supported!!')
         
         if self.filter1 == 'Kband-new' or self.filter2 == 'NIRSPEC-7':
             par['calibrations']['wavelengths']['n_final'] = 3
@@ -424,8 +424,8 @@ class KeckNIRSPECHighSpectrograph(KeckNIRSPECSpectrograph):
             band = self.filter2
         lamps_list = np.copy(self.lamps_list)
 
-        #msgs.info(lamps_list, 'Xe' in lamps_list[0])
-        #msgs.info('filter1 = ', filter1)
+        #log.info(lamps_list, 'Xe' in lamps_list[0])
+        #log.info('filter1 = ', filter1)
         if 'Xe' in lamps_list[0]:
             if band == 'NIRSPEC-1':
                 angle_fits_file = 'keck_nirspec_y_angle_fits.fits'
@@ -446,7 +446,7 @@ class KeckNIRSPECHighSpectrograph(KeckNIRSPECSpectrograph):
                 angle_fits_file = 'keck_nirspec_l_angle_fits.fits'
                 composite_arc_file = 'keck_nirspec_l_composite_arc.fits'
         elif 'OH' in lamps_list[0]:
-            msgs.info('Using OH Lines')
+            log.info('Using OH Lines')
             if band == 'NIRSPEC-1':
                 angle_fits_file = 'keck_nirspec_y_OH_angle_fits.fits'
                 composite_arc_file = 'keck_nirspec_y_composite_OH.fits'
@@ -499,7 +499,7 @@ class KeckNIRSPECHighSpectrograph(KeckNIRSPECSpectrograph):
             is_obj = self.lamps(fitstbl, 'off') & (hatch == 'Out') 
             good_exp[is_obj] = fitstbl['exptime'].data[is_obj] > 60.0
             return good_exp & (is_arc | is_obj)
-        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def lamps(self, fitstbl, status):
@@ -718,7 +718,7 @@ class KeckNIRSPECHighSpectrographOld(KeckNIRSPECSpectrographOld):
         # wavelength calibration
         supported_filters = ['NIRSPEC-1', 'NIRSPEC-3', 'NIRSPEC-5', 'NIRSPEC-7', 'KL']
         if (self.filter1 not in supported_filters) and (self.filter2 not in supported_filters):
-            msgs.warning(f'Filter {self.filter1} or {self.filter2} may not be supported!!')
+            log.warning(f'Filter {self.filter1} or {self.filter2} may not be supported!!')
         
         if self.filter2 == 'NIRSPEC-7':
             par['calibrations']['wavelengths']['n_final'] = 3
@@ -937,7 +937,7 @@ class KeckNIRSPECHighSpectrographOld(KeckNIRSPECSpectrographOld):
             is_obj = self.lamps(fitstbl, 'off') & (hatch == '0') 
             good_exp[is_obj] = fitstbl['exptime'].data[is_obj] > 60.0
             return good_exp & (is_arc | is_obj)
-        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def lamps(self, fitstbl, status):
@@ -1367,7 +1367,7 @@ class KeckNIRSPECLowSpectrograph(KeckNIRSPECSpectrograph):
             is_obj = self.lamps(fitstbl, 'off') & (hatch == 0) \
                         & (fitstbl['idname'] == 'object')
             return good_exp & (is_arc | is_obj)
-        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def lamps(self, fitstbl, status):
@@ -1439,7 +1439,7 @@ class KeckNIRSPECLowSpectrograph(KeckNIRSPECSpectrograph):
         bpm_img = super().bpm(filename, det, shape=shape, msbias=msbias)
 
         # Edges of the detector are junk
-        msgs.info("Custom bad pixel mask for NIRSPEC")
+        log.info("Custom bad pixel mask for NIRSPEC")
         bpm_img[:, :20] = 1.
         bpm_img[:, 1000:] = 1.
 

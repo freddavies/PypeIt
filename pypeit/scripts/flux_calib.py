@@ -8,7 +8,7 @@ from IPython import embed
 
 from astropy.io import fits
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import inputfiles
 from pypeit.spectrographs.util import load_spectrograph
@@ -79,7 +79,7 @@ class FluxCalib(scriptbase.ScriptBase):
         chk_version = not args.try_old
 
         # Set the verbosity, and create a logfile if verbosity == 2
-#        msgs.set_logfile_and_verbosity('flux_calib', args.verbosity)
+#        log.set_logfile_and_verbosity('flux_calib', args.verbosity)
 
         # Load the file
         fluxFile = inputfiles.FluxFile.from_file(args.flux_file)
@@ -118,6 +118,6 @@ class FluxCalib(scriptbase.ScriptBase):
         # Instantiate
         fluxcalibrate.flux_calibrate(fluxFile.filenames, sensfiles, par=par['fluxcalib'],
                                      chk_version=chk_version)
-        msgs.info('Flux calibration complete')
+        log.info('Flux calibration complete')
         return 0
 

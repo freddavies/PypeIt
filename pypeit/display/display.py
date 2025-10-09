@@ -22,7 +22,7 @@ from astropy.io import fits
 
 from ginga.util import grc
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import io
 from pypeit import utils
@@ -83,7 +83,7 @@ def connect_to_ginga(host='localhost', port=grc.default_rc_port,
         if raise_err:
             raise ValueError
         else:
-            msgs.warning('Problem connecting to Ginga.  Launch an RC Ginga viewer and '
+            log.warning('Problem connecting to Ginga.  Launch an RC Ginga viewer and '
                       f'then continue: \n    ginga --rcport={port} --modules=RC,SlitWavelength')
 
     # Return
@@ -372,7 +372,7 @@ def show_slits(viewer, ch, left, right, slit_ids=None, left_ids=None, right_ids=
             raise PypeItError('Input left and right traces must have the same shape if they have been '
                        'synchronized into slits.')
         if left_ids is not None or right_ids is not None:
-            msgs.warning('For showing synced edges, left and right ID numbers are ignored.')
+            log.warning('For showing synced edges, left and right ID numbers are ignored.')
         nslits = _left.shape[1]
         _left_ids = None
         _right_ids = None

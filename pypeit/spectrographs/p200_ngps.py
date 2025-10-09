@@ -10,7 +10,7 @@ import numpy as np
 from astropy.io import fits
 from astropy.time import Time
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit.core import framematch
@@ -147,7 +147,7 @@ class P200NGPSSpectrograph(spectrograph.Spectrograph):
             return good_exp & (fitstbl['idname'] == 'THAR') # Temporary fix, do not use FEAR arcs
 
         
-        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
 

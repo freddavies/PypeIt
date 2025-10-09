@@ -10,7 +10,7 @@ from IPython import embed
 from astropy.io import fits
 
 from pypeit import __version__
-from pypeit import msgs, spec2dobj
+from pypeit import log, spec2dobj
 from pypeit.images.detector_container import DetectorContainer
 from pypeit.images.imagebitmask import ImageBitMask
 from pypeit import PypeItDataModelError
@@ -50,13 +50,13 @@ class PrintBPM(scriptbase.ScriptBase):
         binvals = [int(x) for x in bin(args.bit)[2:]][::-1]
 
         if args.file is None:
-            msgs.info("Using the default PypeIt bad pixel mask.")
+            log.info("Using the default PypeIt bad pixel mask.")
             # Generate an Image BitMask object
             bpm = ImageBitMask()
             descr = bpm.descr
         else:
             # Read the spec2d file
-            msgs.info(f"Using the bad pixel mask from the following spec2d file:\n{args.file}.")
+            log.info(f"Using the bad pixel mask from the following spec2d file:\n{args.file}.")
             spec2d_file = args.file
 
             # Parse the detector name
@@ -77,14 +77,14 @@ class PrintBPM(scriptbase.ScriptBase):
                     file_pypeit_version = fits.getval(args.file, 'VERSPYP', 0)
                 except KeyError:
                     file_pypeit_version = '*unknown*'
-                msgs.warning(f'Your installed version of PypeIt ({__version__}) cannot be used to parse '
+                log.warning(f'Your installed version of PypeIt ({__version__}) cannot be used to parse '
                           f'{args.file}, which was reduced using version {file_pypeit_version}.  You '
                           'are strongly encouraged to re-reduce your data using this (or, better yet, '
                           'the most recent) version of PypeIt.  Script will try to parse only the '
                           'relevant bits from the spec2d file and continue (possibly with more '
                           'limited functionality).')
                 # Generate an Image BitMask object
-                msgs.info("Using the default PypeIt bad pixel mask.")
+                log.info("Using the default PypeIt bad pixel mask.")
                 bpm = ImageBitMask()
                 descr = bpm.descr
             else:
@@ -101,8 +101,8 @@ class PrintBPM(scriptbase.ScriptBase):
                 outstr += f"* {bitkeys[i].ljust(bitlen)} : {descr[i]}\n"
 
         # Print the message to the user
-        msgs.info(outstr)
+        log.info(outstr)
 
         # Finally, print out a message to point users to the online documentation
-        msgs.info("Please see the following website for more information:\n"
+        log.info("Please see the following website for more information:\n"
                   "https://pypeit.readthedocs.io/en/release/out_masks.html")

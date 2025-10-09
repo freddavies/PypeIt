@@ -73,7 +73,7 @@ from pypeit.par.parset import ParSet
 from pypeit.par import util
 from pypeit.core.framematch import FrameTypeBitMask
 from pypeit.core import parse
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import dataPaths
 
@@ -4021,7 +4021,7 @@ class EdgeTracePar(ParSet):
             raise PypeItError('If defined, max_overlap must be in the range [0,1].')
 
         if self['order_outlier'] is not None and self['order_outlier'] < self['order_fitrej']:
-            msgs.warning('Order outlier threshold should not be less than the rejection threshold.')
+            log.warning('Order outlier threshold should not be less than the rejection threshold.')
 
 
 class WaveTiltsPar(ParSet):

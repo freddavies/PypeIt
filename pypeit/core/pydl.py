@@ -5,7 +5,7 @@ from IPython import embed
 
 import numpy as np
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import utils
 from pypeit.core import basis
@@ -686,7 +686,7 @@ def djs_reject(data, model, outmask=None, inmask=None,
     # ToDO It would be nice to come up with a way to use MAD but also use the errors in the rejection, i.e. compute the rejection threhsold using the mad.
 
     if upper is None and lower is None and maxdev is None:
-        msgs.warning('upper, lower, and maxdev are all set to None. No rejection performed since no rejection criteria were specified.')
+        log.warning('upper, lower, and maxdev are all set to None. No rejection performed since no rejection criteria were specified.')
 
     if (use_mad and (invvar is not None)):
         raise ValueError('use_mad can only be set to True innvar = None. This code only computes a mad'
@@ -697,7 +697,7 @@ def djs_reject(data, model, outmask=None, inmask=None,
     # ToDo JFH: I think it would actually make more sense for outmask be a required input parameter (named lastmask or something like that).
     if outmask is None:
         outmask = np.ones(data.shape, dtype='bool')
-        msgs.warning('outmask was not specified as an input parameter. Cannot asess convergence of rejection -- qdone is automatically True')
+        log.warning('outmask was not specified as an input parameter. Cannot asess convergence of rejection -- qdone is automatically True')
     else:
         if data.shape != outmask.shape:
             raise ValueError('Dimensions of data and outmask do not agree.')
@@ -1543,7 +1543,7 @@ def spheregroup(ra, dec, linklength, chunksize=None):
     if chunksize is not None:
         if chunksize < 4.0*linklength:
             chunksize = 4.0*linklength
-            msgs.warning("chunksize changed to {0:.2f}.".format(chunksize))
+            log.warning("chunksize changed to {0:.2f}.".format(chunksize))
     else:
         chunksize = max(4.0*linklength, 0.1)
     #

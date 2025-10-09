@@ -27,7 +27,7 @@ class ChkWaveCalib(scriptbase.ScriptBase):
 
         from IPython import embed
         from astropy.io import fits
-        from pypeit import wavecalib, spec2dobj, msgs
+        from pypeit import wavecalib, spec2dobj, log
         from pypeit import PypeItError
 
         chk_version = not args.try_old

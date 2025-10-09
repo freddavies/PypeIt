@@ -79,7 +79,7 @@ class Setup(scriptbase.ScriptBase):
         import time
         from pathlib import Path
 
-        from pypeit import msgs
+        from pypeit import log
         from pypeit.pypeitsetup import PypeItSetup
         from pypeit.calibrations import Calibrations
 
@@ -100,7 +100,7 @@ class Setup(scriptbase.ScriptBase):
             from pypeit.setup_gui.controller import start_gui
             start_gui(args)
 #        else:
-#            msgs.set_logfile_and_verbosity("setup", args.verbosity)       
+#            log.set_logfile_and_verbosity("setup", args.verbosity)       
 
         # Initialize PypeItSetup based on the arguments
         ps = PypeItSetup.from_file_root(args.root, args.spectrograph, extension=args.extension)
@@ -111,7 +111,7 @@ class Setup(scriptbase.ScriptBase):
                     user_cfgs = [l.rstrip() for l in user_par_fobj.readlines()]
                 ps.append_user_cfg(user_cfgs)
             else:
-                msgs.warning(f"Could not open param_block file {args.param_block_file}. "
+                log.warning(f"Could not open param_block file {args.param_block_file}. "
                           "Not adding any additional user parameters to the .pypeit file.")
         # Run the setup
         ps.run(setup_only=True, clean_config=not args.keep_bad_frames)

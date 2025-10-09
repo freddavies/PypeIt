@@ -50,7 +50,7 @@ class RunToCalibStep(scriptbase.ScriptBase):
         from pathlib import Path
 
         from pypeit import pypeit
-        from pypeit import msgs
+        from pypeit import log
         from pypeit import PypeItError
 
         # Load options from command line
@@ -63,7 +63,7 @@ class RunToCalibStep(scriptbase.ScriptBase):
         if args.science_frame is None and args.calib_group is None:
             raise PypeItError('Must provide either a science frame or a calibration group ID')
         elif args.science_frame is not None and args.calib_group is not None:
-            msgs.warning("Both science_frame and calib_group ID provided.  Will use the science_frame")
+            log.warning("Both science_frame and calib_group ID provided.  Will use the science_frame")
 
         # Instantiate the main pipeline reduction object
         pypeIt = pypeit.PypeIt(args.pypeit_file, verbosity=args.verbosity,
@@ -94,7 +94,7 @@ class RunToCalibStep(scriptbase.ScriptBase):
             pypeIt.calib_one([row], det, stop_at_step=args.step)
         
         # QA HTML
-        msgs.info('Generating QA HTML')
+        log.info('Generating QA HTML')
         pypeIt.build_qa()
 
         return 0

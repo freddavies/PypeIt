@@ -48,7 +48,7 @@ class ViewFits(scriptbase.ScriptBase):
     @staticmethod
     def main(args):
 
-        from pypeit import msgs
+        from pypeit import log
         from pypeit import PypeItError
         from pypeit.display import display
         from pypeit.spectrographs import util
@@ -62,7 +62,7 @@ class ViewFits(scriptbase.ScriptBase):
             return
 
         # TODO: Update verbosity
-        msgs.init(level=msgs.level)
+        log.init(level=log.level)
 
         if args.proc and args.exten is not None:
             raise PypeItError('You cannot specify --proc and --exten, since --exten shows the raw image')
@@ -131,7 +131,7 @@ class ViewFits(scriptbase.ScriptBase):
 
         if args.showmask:
             if not args.proc:
-                msgs.info("You need to use --proc with --showmask to show the mask.  Ignoring your argument")
+                log.info("You need to use --proc with --showmask to show the mask.  Ignoring your argument")
             else:
                 viewer, ch_mask = display.show_image(Img.bpm, chname="BPM")
 

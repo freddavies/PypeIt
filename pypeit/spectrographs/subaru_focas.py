@@ -4,7 +4,7 @@ Module for Subaru FOCAS
 .. include:: ../include/links.rst
 """
 import numpy as np
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit.core import parse
@@ -177,7 +177,7 @@ class SubaruFOCASSpectrograph(spectrograph.Spectrograph):
         if ftype in ['arc', 'tilt']:
             return good_exp & (fitstbl['idname'] == 'COMPARISON')
 
-        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
 
@@ -537,7 +537,7 @@ class SubaruFOCASSpectrograph(spectrograph.Spectrograph):
             ])
 
         # Read image
-        msgs.info(f'Attempting to read FOCAS file: {raw_file}, det={det}')
+        log.info(f'Attempting to read FOCAS file: {raw_file}, det={det}')
 
         # NOTE: io.fits_open checks that the file exists
         hdu_l = io.fits_open(raw_file)

@@ -15,7 +15,7 @@ from astropy import units
 
 from linetools.spectra import xspectrum1d
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit.core import flexure
 from pypeit.core import flux_calib
@@ -325,7 +325,7 @@ class SpecObj(datamodel.DataContainer):
         set to True.
         """
         if 'force_to_bintbl' in kwargs and not kwargs['force_to_bintbl']:
-            msgs.warning(f'Writing a {self.__class__.__name__} always requires force_to_bintbl=True')
+            log.warning(f'Writing a {self.__class__.__name__} always requires force_to_bintbl=True')
             del kwargs['force_to_bintbl']
         return super().to_hdu(force_to_bintbl=True, **kwargs)
 
@@ -525,7 +525,7 @@ class SpecObj(datamodel.DataContainer):
         # Apply
         for attr in ['BOX', 'OPT']:
             if self[attr+'_WAVE'] is not None:
-                msgs.info(
+                log.info(
                     f"Applying flexure correction to {attr:s} extraction for object:\n{self.NAME}"
                 )
                 self[attr+'_WAVE'] = flexure.flexure_interp(shift, self[attr+'_WAVE']).copy()
@@ -589,7 +589,7 @@ class SpecObj(datamodel.DataContainer):
         for attr in ['BOX', 'OPT']:
             if self[attr+'_WAVE'] is None:
                 continue
-            msgs.info(f"Fluxing {attr} extraction for:\n{self}")
+            log.info(f"Fluxing {attr} extraction for:\n{self}")
 
             wave = self[attr+'_WAVE']
             # Interpolate the sensitivity function onto the wavelength grid of the data
@@ -607,7 +607,7 @@ class SpecObj(datamodel.DataContainer):
             flam_ivar = self[attr+'_COUNTS_IVAR']/sens_factor**2
 
             # Mask bad pixels
-            msgs.info(" Masking bad pixels")
+            log.info(" Masking bad pixels")
             msk = np.zeros_like(sens_factor).astype(bool)
             msk[sens_factor <= 0.] = True
             msk[self[attr+'_COUNTS_IVAR'] <= 0.] = True
@@ -637,7 +637,7 @@ class SpecObj(datamodel.DataContainer):
         # Apply
         for attr in ['BOX', 'OPT']:
             if self[attr+'_WAVE'] is not None:
-                msgs.info(
+                log.info(
                     f'Applying {refframe} correction to {attr} extraction for object:\n{self.NAME}'
                 )
                 self[attr+'_WAVE'] *= vel_corr
@@ -717,8 +717,8 @@ class SpecObj(datamodel.DataContainer):
         passed = True
         for key in required:
             if self[key] is None:
-                msgs.warning("Item {} is missing from SpecObj. Failing vette".format(key))
-                msgs.warning('{}'.format(self))
+                log.warning("Item {} is missing from SpecObj. Failing vette".format(key))
+                log.warning('{}'.format(self))
                 passed = False
         #
         return passed

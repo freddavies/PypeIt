@@ -13,7 +13,7 @@ from IPython import embed
 import numpy as np
 
 from astropy import stats
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit.core import arc
 from pypeit.core import parse
@@ -256,7 +256,7 @@ class RawImage:
         step = inspect.stack()[0][3]
         if self.steps[step] and not force:
             # Already applied
-            msgs.warning('Gain was already applied.')
+            log.warning('Gain was already applied.')
             return
 
         # Have the images been trimmed?
@@ -317,7 +317,7 @@ class RawImage:
         step = inspect.stack()[0][3]
         if self.steps[step]:
             # Already applied
-            msgs.warning('Non-linear correction was already applied.')
+            log.warning('Non-linear correction was already applied.')
             return
 
         inim = self.image.copy()
@@ -356,7 +356,7 @@ class RawImage:
                 gain = 1. if self.steps['apply_gain'] else self.detector[i]['gain'][amp]
                 biaspix = self.image[i,self.oscansec_img[i]==amp+1] * gain
                 self.ronoise[i,amp] = stats.sigma_clipped_stats(biaspix, sigma=5)[-1]
-                msgs.info(f'Estimated readnoise of amplifier {amp+1} = '
+                log.info(f'Estimated readnoise of amplifier {amp+1} = '
                           f'{self.ronoise[i,amp]:.3f} e-')
 
     def build_rn2img(self, units='e-', digitization=False):
@@ -559,9 +559,9 @@ class RawImage:
             raise PypeItError('Mosaicing must be performed if multiple detectors are processed and '
                        'either flat-fielding or spatial flexure corrections are applied.')
         if self.nimg == 1 and mosaic:
-            msgs.warning('Only processing a single detector; mosaicing is ignored.')
+            log.warning('Only processing a single detector; mosaicing is ignored.')
 
-        msgs.info(f'Performing basic image processing on {os.path.basename(self.filename)}.')
+        log.info(f'Performing basic image processing on {os.path.basename(self.filename)}.')
         # TODO: Checking for bit saturation should be done here.
 
         #   - Convert from ADU to electron counts.
@@ -624,7 +624,7 @@ class RawImage:
                 raise PypeItError(f'CODING ERROR: From-scratch BPM has incorrect shape!')
             # If the above was successful, the code can continue, but first warn
             # the user that the code ignored the provided bpm.
-            msgs.warning(f'Bad-pixel mask has incorrect shape: found {bpm_shape}, expected '
+            log.warning(f'Bad-pixel mask has incorrect shape: found {bpm_shape}, expected '
                       f'{self.image.shape}.  Assuming this is because different binning used for '
                       'various frames.  Recreating BPM specifically for this frame '
                       f'({os.path.basename(self.filename)}) and assuming the difference in the '
@@ -787,7 +787,7 @@ class RawImage:
         step = inspect.stack()[0][3]
         if self.steps[step] and not force:
             # Already field flattened
-            msgs.warning('Spatial flexure shift already calculated.')
+            log.warning('Spatial flexure shift already calculated.')
             return
         if self.nimg > 1:
             raise PypeItError('CODING ERROR: Must use a single image (single detector or detector '
@@ -846,7 +846,7 @@ class RawImage:
         step = inspect.stack()[0][3]
         if self.steps[step] and not force:
             # Already field flattened
-            msgs.warning('Image was already flat fielded.')
+            log.warning('Image was already flat fielded.')
             return
 
         # Check input
@@ -904,7 +904,7 @@ class RawImage:
         step = inspect.stack()[0][3]
         # Check if already oriented
         if self.steps[step] and not force:
-            msgs.warning('Image was already oriented.')
+            log.warning('Image was already oriented.')
             return
         # Orient the image to have blue/red run bottom to top
         self.image = np.array([self.spectrograph.orient_image(d, i) 
@@ -937,7 +937,7 @@ class RawImage:
         step = inspect.stack()[0][3]
         if self.steps[step] and not force:
             # Already bias subtracted
-            msgs.warning('Image was already bias subtracted.')
+            log.warning('Image was already bias subtracted.')
             return
         _bias = bias_image.image if self.nimg > 1 else np.expand_dims(bias_image.image, 0)
         if self.image.shape != _bias.shape:
@@ -1026,7 +1026,7 @@ class RawImage:
                                       separator=',')
             drk_str = np.array2string(0.5*self.dark, formatter={'float_kind':lambda x: "%.2f" % x},
                                       separator=',')
-            msgs.warning(f'Dark-subtracted dark frame has significant signal remaining.  Median '
+            log.warning(f'Dark-subtracted dark frame has significant signal remaining.  Median '
                         f'counts are {med_str}; warning threshold = +/- {drk_str}.')
 
         # Combine the tabulated and observed dark values
@@ -1053,7 +1053,7 @@ class RawImage:
         step = inspect.stack()[0][3]
         if self.steps[step] and not force:
             # Already bias subtracted
-            msgs.warning('Image was already dark subtracted.')
+            log.warning('Image was already dark subtracted.')
             return
 
         if self.dark is None:
@@ -1079,7 +1079,7 @@ class RawImage:
         step = inspect.stack()[0][3]
         if self.steps[step] and not force:
             # Already overscan subtracted
-            msgs.warning("Image was already overscan subtracted!")
+            log.warning("Image was already overscan subtracted!")
             return
 
         # NOTE: procimg.subtract_overscan checks that the provided images all
@@ -1114,7 +1114,7 @@ class RawImage:
         step = inspect.stack()[0][3]
         if self.steps[step]:
             # Already pattern subtracted
-            msgs.warning("Image was already pattern subtracted!")
+            log.warning("Image was already pattern subtracted!")
             return
 
         # The image cannot have already been trimmed
@@ -1151,7 +1151,7 @@ class RawImage:
         step = inspect.stack()[0][3]
         if self.steps[step] and not force:
             # Already bias subtracted
-            msgs.warning('Image was already continuum subtracted.')
+            log.warning('Image was already continuum subtracted.')
             return
 
         # Generate the continuum image
@@ -1183,11 +1183,11 @@ class RawImage:
         step = inspect.stack()[0][3]
         if self.steps[step]:
             # Already pattern subtracted
-            msgs.warning("The scattered light has already been subtracted from the image!")
+            log.warning("The scattered light has already been subtracted from the image!")
             return
 
         if self.par["scattlight"]["method"] == "model" and msscattlight.scattlight_param is None:
-            msgs.warning("Scattered light parameters are not set. Cannot perform scattered light subtraction.")
+            log.warning("Scattered light parameters are not set. Cannot perform scattered light subtraction.")
             return
 
         # Obtain some information that is needed for the scattered light
@@ -1266,16 +1266,16 @@ class RawImage:
                 # If failure, revert back to the Scattered Light calibration frame model parameters
                 if not success:
                     if msscattlight is not None:
-                        msgs.warning("Scattered light model failed - using predefined model parameters")
+                        log.warning("Scattered light model failed - using predefined model parameters")
                         scatt_img = scattlight.scattered_light_model(this_modpar, _img)
                     else:
-                        msgs.warning("Scattered light model failed - using archival model parameters")
+                        log.warning("Scattered light model failed - using archival model parameters")
                         # Use archival model parameters
                         arx_modpar, _ = self.spectrograph.scattered_light_archive(binning, dispname)
                         arx_modpar[8] = 0.0
                         scatt_img = scattlight.scattered_light_model(arx_modpar, _img)
             else:
-                msgs.warning("Scattered light not performed")
+                log.warning("Scattered light not performed")
                 scatt_img = np.zeros(self.image[ii, ...].shape)
                 do_finecorr = False
             # Check if a fine correction to the scattered light should be applied
@@ -1315,11 +1315,11 @@ class RawImage:
             # Image *must* have been trimmed already because shape does not
             # match raw image
             self.steps[step] = True
-            msgs.warning('Image shape does not match raw image.  Assuming it was already trimmed.')
+            log.warning('Image shape does not match raw image.  Assuming it was already trimmed.')
             return
         if self.steps[step] and not force:
             # Already trimmed
-            msgs.warning('Image was already trimmed.')
+            log.warning('Image was already trimmed.')
             return
         self.image = np.array([procimg.trim_frame(i, d < 1)
                                for i, d in zip(self.image, self.datasec_img)])
@@ -1354,7 +1354,7 @@ class RawImage:
         if self.nimg == 1:
             # NOTE: This also catches cases where the mosaicing has already been
             # performed.
-            msgs.warning('There is only one image, so there is nothing to mosaic!')
+            log.warning('There is only one image, so there is nothing to mosaic!')
             return
 
         # Check that the mosaicing is allowed

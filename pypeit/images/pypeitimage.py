@@ -11,7 +11,7 @@ import numpy as np
 
 from astropy.io import fits
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit.images.imagebitmask import ImageBitMaskArray
 from pypeit.images.detector_container import DetectorContainer
@@ -784,7 +784,7 @@ class PypeItImage(datamodel.DataContainer):
         spat_flexure = self.spat_flexure
         if other.spat_flexure is not None and spat_flexure is not None \
                 and other.spat_flexure != spat_flexure:
-            msgs.warning(f'Spatial flexure different for images being subtracted ({spat_flexure} '
+            log.warning(f'Spatial flexure different for images being subtracted ({spat_flexure} '
                       f'vs. {other.spat_flexure}).  Adopting {np.max(np.abs([spat_flexure, other.spat_flexure]))}.')
 
         # Create a copy of the detector, if it is defined, to be used when

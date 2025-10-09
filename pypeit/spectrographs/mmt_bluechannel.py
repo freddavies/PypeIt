@@ -7,7 +7,7 @@ import numpy as np
 from astropy.io import fits
 from astropy.time import Time
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit import utils
@@ -349,7 +349,7 @@ class MMTBlueChannelSpectrograph(spectrograph.Spectrograph):
         bpm_img = super().bpm(filename, det, shape=shape, msbias=msbias)
 
         if det == 1:
-            msgs.info("Using hard-coded BPM for  Blue Channel")
+            log.info("Using hard-coded BPM for  Blue Channel")
 
             bpm_img[-1, :] = 1
 
@@ -460,7 +460,7 @@ class MMTBlueChannelSpectrograph(spectrograph.Spectrograph):
             # i think the bright lamp, BC, is the only one ever used for this. imagetyp should always be set to flat.
             return good_exp & (fitstbl['lampstat01'] == 'off') & (fitstbl['target'] == 'skyflat')
 
-        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def get_rawimage(self, raw_file, det):
@@ -497,7 +497,7 @@ class MMTBlueChannelSpectrograph(spectrograph.Spectrograph):
         fil = utils.find_single_file(f'{raw_file}*', required=True)
 
         # Read FITS image
-        msgs.info(f'Reading MMT Blue Channel file: {fil}')
+        log.info(f'Reading MMT Blue Channel file: {fil}')
         hdu = fits.open(fil)
         hdr = hdu[0].header
 

@@ -27,7 +27,7 @@ class CoAddDataCube(scriptbase.ScriptBase):
     def main(args):
         import time
 
-        from pypeit import msgs
+        from pypeit import log
         from pypeit import PypeItError
         from pypeit import par
         from pypeit import inputfiles
@@ -36,7 +36,7 @@ class CoAddDataCube(scriptbase.ScriptBase):
         from pypeit.spectrographs.util import load_spectrograph
 
         # Set the verbosity, and create a logfile if verbosity == 2
-#        msgs.set_logfile_and_verbosity('coadd_datacube', args.verbosity)
+#        log.set_logfile_and_verbosity('coadd_datacube', args.verbosity)
 
         # Check that a file has been provided
         if args.file is None:
@@ -53,7 +53,7 @@ class CoAddDataCube(scriptbase.ScriptBase):
 
         # If detector was passed as an argument override whatever was in the coadd3d file
         if args.det is not None:
-            msgs.info("Restricting to detector={}".format(args.det))
+            log.info("Restricting to detector={}".format(args.det))
             parset['rdx']['detnum'] = int(args.det)
 
         # Extract the options
@@ -73,4 +73,4 @@ class CoAddDataCube(scriptbase.ScriptBase):
 
         # Coadd the files
         coadd.run()
-        msgs.info(utils.get_time_string(time.time()-tstart))
+        log.info(utils.get_time_string(time.time()-tstart))

@@ -46,7 +46,7 @@ class Show1DSpec(scriptbase.ScriptBase):
         from linetools.guis.xspecgui import XSpecGui
 
         from pypeit import specobjs
-        from pypeit import msgs
+        from pypeit import log
         from pypeit import PypeItError
 
         sobjs = specobjs.SpecObjs.from_fitsfile(args.file, chk_version=False)

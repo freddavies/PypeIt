@@ -71,7 +71,7 @@ class TellFit(scriptbase.ScriptBase):
 
         from astropy.io import fits
 
-        from pypeit import msgs
+        from pypeit import log
         from pypeit import PypeItError
         from pypeit import dataPaths
         from pypeit.par import pypeitpar
@@ -80,7 +80,7 @@ class TellFit(scriptbase.ScriptBase):
         from pypeit import inputfiles
 
         # Set the verbosity, and create a logfile if verbosity == 2
-#        msgs.set_logfile_and_verbosity('tellfit', args.verbosity)
+#        log.set_logfile_and_verbosity('tellfit', args.verbosity)
 
         # Determine the spectrograph
         header = fits.getheader(args.spec1dfile)
@@ -115,7 +115,7 @@ class TellFit(scriptbase.ScriptBase):
                 par['telluric']['telgridfile'] = par['sensfunc']['IR']['telgridfile']
             else:
                 par['telluric']['telgridfile'] = 'TellPCA_3000_26000_R10000.fits'
-                msgs.warning(f"No telluric file given. Using PCA method with {par['telluric']['telgridfile']}.")
+                log.warning(f"No telluric file given. Using PCA method with {par['telluric']['telgridfile']}.")
 
         # Checks
         if par['telluric']['telgridfile'] is None:
@@ -127,14 +127,14 @@ class TellFit(scriptbase.ScriptBase):
         # Write the par to disk
         # TODO: Make it optional to write this file?  Is the relevant metadata
         # saved to the main output file?
-        msgs.info(f'Writing the telluric fitting parameters to {args.par_outfile}')
+        log.info(f'Writing the telluric fitting parameters to {args.par_outfile}')
         par['telluric'].to_config(args.par_outfile, section_name='telluric', include_descr=False)
 
         # Parse the output filename
         outfile = (os.path.basename(args.spec1dfile)).replace('.fits','_tellcorr.fits')
         modelfile = (os.path.basename(args.spec1dfile)).replace('.fits','_tellmodel.fits')
-        msgs.info(f'Telluric-corrected spectrum will be saved to: {outfile}.')
-        msgs.info(f'Best-fit telluric model will be saved to: {modelfile}.')
+        log.info(f'Telluric-corrected spectrum will be saved to: {outfile}.')
+        log.info(f'Best-fit telluric model will be saved to: {modelfile}.')
 
         # Run the telluric fitting procedure.
         if par['telluric']['objmodel']=='qso':

@@ -92,7 +92,7 @@ class SetupCoAdd2D(scriptbase.ScriptBase):
 
         from astropy.table import Table
 
-        from pypeit import msgs
+        from pypeit import log
         from pypeit import PypeItError
         from pypeit import io
         from pypeit import utils
@@ -125,10 +125,10 @@ class SetupCoAdd2D(scriptbase.ScriptBase):
 
         sci_dirs_exist = [sc.exists() for sc in sci_dirs]
         if not np.all(sci_dirs_exist):
-            msgs_string = 'The following science directories do not exist:\n'
+            log_string = 'The following science directories do not exist:\n'
             for s in np.array(sci_dirs)[np.logical_not(sci_dirs_exist)]:
-                msgs_string += f'{s}\n'
-            raise PypeItError(msgs_string)
+                log_string += f'{s}\n'
+            raise PypeItError(log_string)
 
         # Find all the spec2d files:
         spec2d_files = np.concatenate([sorted(sci_dir.glob('spec2d*')) for sci_dir in sci_dirs]).tolist()
@@ -160,7 +160,7 @@ class SetupCoAdd2D(scriptbase.ScriptBase):
         for obj in objects:
             object_spec2d_files[obj] = [f for f in spec2d_files if obj.strip() in f.name]
             if len(object_spec2d_files[obj]) == 0:
-                msgs.warning(f'No spec2d files found for target={obj}.')
+                log.warning(f'No spec2d files found for target={obj}.')
                 del object_spec2d_files[obj]
 
         # Check spec2d files exist for the selected objects

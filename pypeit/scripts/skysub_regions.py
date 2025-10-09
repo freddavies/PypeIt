@@ -41,7 +41,7 @@ class SkySubRegions(scriptbase.ScriptBase):
         from pypeit import spec2dobj
         import os
         import astropy.io.fits as fits
-        from pypeit import msgs
+        from pypeit import log
         from pypeit import PypeItError
         from pypeit import io
         from pypeit.core.gui.skysub_regions import SkySubGUI
@@ -79,7 +79,7 @@ class SkySubRegions(scriptbase.ScriptBase):
         det = spec2DObj.detector.parse_name(detname)
 
         # Setup for PypeIt imports
-        msgs.init(level=msgs.level)
+        log.init(level=log.level)
 
         # Grab the slit edges
         slits = spec2DObj.slits

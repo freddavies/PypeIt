@@ -6,7 +6,7 @@ into a PypeIt arxiv solution that can be used with the full_template method.
 .. include:: ../include/links.rst
 """
 import time
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import par
 from pypeit import inputfiles
@@ -39,7 +39,7 @@ class ArxivSolution(scriptbase.ScriptBase):
         chk_version = not args.try_old
 
         # Set the verbosity, and create a logfile if verbosity == 2
-#        msgs.set_logfile_and_verbosity('arxiv_solution', args.verbosity)
+#        log.set_logfile_and_verbosity('arxiv_solution', args.verbosity)
 
         # Check that a file has been provided
         if args.file is None:

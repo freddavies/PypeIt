@@ -13,7 +13,7 @@ import numpy as np
 from astropy.io import fits
 from astropy.time import Time
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import inputfiles
 from pypeit import coadd1d
@@ -152,7 +152,7 @@ class CoAdd1DSpec(scriptbase.ScriptBase):
         """ Runs the 1d coadding steps
         """
         # Set the verbosity, and create a logfile if verbosity == 2
-#        msgs.set_logfile_and_verbosity('coadd_1dspec', args.verbosity)
+#        log.set_logfile_and_verbosity('coadd_1dspec', args.verbosity)
 
         # Load the file
         #config_lines, spec1dfiles, objids = read_coaddfile(args.coadd1d_file)
@@ -202,7 +202,7 @@ class CoAdd1DSpec(scriptbase.ScriptBase):
         coAdd1d.run()
         # Save to file
         coAdd1d.save(coaddfile)
-        msgs.info('Coadding complete')
+        log.info('Coadding complete')
 
 
 

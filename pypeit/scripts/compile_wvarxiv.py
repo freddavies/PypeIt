@@ -6,7 +6,7 @@ into a PypeIt arxiv solution that can be used with the full_template method.
 .. include:: ../include/links.rst
 """
 import time
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import par
 from pypeit import inputfiles
@@ -82,9 +82,9 @@ class CompileWVarxiv(scriptbase.ScriptBase):
             else:
                 reid_table = join(old_table, reid_table)
                 reid_table.write(out_path, format='fits', overwrite=args.append)
-                msgs.info(f'Wrote the compiled wvarxiv file to {out_path}.')
+                log.info(f'Wrote the compiled wvarxiv file to {out_path}.')
         
         # If the file does not exist, just write it out
         else:
             reid_table.write(out_path, format='fits')
-            msgs.info(f'Wrote the compiled wvarxiv file to {out_path}.')
+            log.info(f'Wrote the compiled wvarxiv file to {out_path}.')

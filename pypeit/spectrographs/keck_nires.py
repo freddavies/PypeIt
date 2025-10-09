@@ -5,7 +5,7 @@ Module for Keck/NIRES specific methods.
 """
 import numpy as np
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit.core import framematch
@@ -502,7 +502,7 @@ class KeckNIRESSpectrograph(spectrograph.Spectrograph):
             to 1 and an unmasked value set to 0.  All values are set to
             0.
         """
-        msgs.info("Custom bad pixel mask for NIRES")
+        log.info("Custom bad pixel mask for NIRES")
         # Call the base-class method to generate the empty bpm
         bpm_img = super().bpm(filename, det, shape=shape, msbias=msbias)
 

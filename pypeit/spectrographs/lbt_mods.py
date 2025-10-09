@@ -6,7 +6,7 @@ Module for LBT/MODS specific methods.
 import numpy as np
 from astropy.io import fits
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit import utils
@@ -183,7 +183,7 @@ class LBTMODSSpectrograph(spectrograph.Spectrograph):
         if ftype in ['arc', 'tilt']:
             return good_exp & (fitstbl['idname'] == 'COMP') & (fitstbl['dispname'] != 'Flat')
 
-        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def get_rawimage(self, raw_file, det):
@@ -220,7 +220,7 @@ class LBTMODSSpectrograph(spectrograph.Spectrograph):
         fil = utils.find_single_file(f'{raw_file}*', required=True)
 
         # Read
-        msgs.info(f'Reading LBT/MODS file: {fil}')
+        log.info(f'Reading LBT/MODS file: {fil}')
         hdu = io.fits_open(fil)
         head = hdu[0].header
 
@@ -460,7 +460,7 @@ class LBTMODS1RSpectrograph(LBTMODSSpectrograph):
         # Call the base-class method to generate the empty bpm
         bpm_img = super().bpm(filename, det, shape=shape, msbias=msbias)
 
-        msgs.info("Using hard-coded BPM for  MODS1R")
+        log.info("Using hard-coded BPM for  MODS1R")
 
         # TODO: Fix this
         # Get the binning
@@ -624,7 +624,7 @@ class LBTMODS1BSpectrograph(LBTMODSSpectrograph):
         """
         # Call the base-class method to generate the empty bpm
         bpm_img = super().bpm(filename, det, shape=shape, msbias=msbias)
-        msgs.info("Using hard-coded BPM for  MODS1B")
+        log.info("Using hard-coded BPM for  MODS1B")
 
         # Get the binning
         hdu = io.fits_open(filename)
@@ -784,7 +784,7 @@ class LBTMODS2RSpectrograph(LBTMODSSpectrograph):
         """
         # Call the base-class method to generate the empty bpm
         bpm_img = super().bpm(filename, det, shape=shape, msbias=msbias)
-        msgs.info("Using hard-coded BPM for  MODS2R")
+        log.info("Using hard-coded BPM for  MODS2R")
 
         # Get the binning
         hdu = io.fits_open(filename)
@@ -949,7 +949,7 @@ class LBTMODS2BSpectrograph(LBTMODSSpectrograph):
         """
         # Call the base-class method to generate the empty bpm
         bpm_img = super().bpm(filename, det, shape=shape, msbias=msbias)
-        msgs.info("Using hard-coded BPM for  MODS2B")
+        log.info("Using hard-coded BPM for  MODS2B")
 
         # Get the binning
         hdu = io.fits_open(filename)

@@ -12,7 +12,7 @@ from astropy.io import fits
 from pypeit.core.wavecal import autoid
 from pypeit.core.wavecal import defs
 from pypeit.core import fitting
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import datamodel
 
@@ -149,7 +149,7 @@ class WaveFit(datamodel.DataContainer):
         """
         if 'force_to_bintbl' in kwargs:
             if not kwargs['force_to_bintbl']:
-                msgs.warning(f'{self.__class__.__name__} objects must always use '
+                log.warning(f'{self.__class__.__name__} objects must always use '
                           'force_to_bintbl = True!')
             kwargs.pop('force_to_bintbl')
         return super().to_hdu(force_to_bintbl=True, **kwargs)
@@ -391,7 +391,7 @@ def iterative_fitting(spec, tcent, ifit, IDs, llist, dispersion,
         maxiter = xfit.size - n_order - 2
         #
         if xfit.size == 0:
-            msgs.warning("All points rejected !!")
+            log.warning("All points rejected !!")
             return None
         # Fit
         pypeitFit = fitting.robust_fit(xfit/xnspecmin1, yfit, n_order, function=func, maxiter=maxiter,
@@ -399,14 +399,14 @@ def iterative_fitting(spec, tcent, ifit, IDs, llist, dispersion,
                                        minx=fmin, maxx=fmax, weights=wfit)
         # Junk fit?
         if pypeitFit is None:
-            msgs.warning("Bad fit!!")
+            log.warning("Bad fit!!")
             return None
 
         # RMS is computed from `yfit`, which is the wavelengths of the lines.  Convert to pixels.
         rms_angstrom = pypeitFit.calc_fit_rms(apply_mask=True)
         rms_pixels = rms_angstrom/dispersion
         if verbose:
-            msgs.info(f"n_order = {n_order}: RMS = {rms_pixels:g} pixels")
+            log.info(f"n_order = {n_order}: RMS = {rms_pixels:g} pixels")
 
         # Reject but keep originals (until final fit)
         ifit = list(ifit[pypeitFit.gpm == 1]) + sv_ifit
@@ -434,7 +434,7 @@ def iterative_fitting(spec, tcent, ifit, IDs, llist, dispersion,
     # Final fit (originals can now be rejected)
     if len(ifit) <= n_final:
         n_order = len(ifit)-1
-        msgs.warning(f'Not enough lines for n_final! Fit order = {n_order}')
+        log.warning(f'Not enough lines for n_final! Fit order = {n_order}')
             
     xfit, yfit, wfit = tcent[ifit], all_ids[ifit], weights[ifit]
     pypeitFit = fitting.robust_fit(xfit/xnspecmin1, yfit, n_order, function=func,
@@ -450,7 +450,7 @@ def iterative_fitting(spec, tcent, ifit, IDs, llist, dispersion,
         if verbose:
             for kk, imask in enumerate(irej):
                 wave = pypeitFit.eval(xrej[kk]/xnspecmin1)#, func, minx=fmin, maxx=fmax)
-                msgs.info('Rejecting arc line {:g}; {:g}'.format(yfit[imask], wave))
+                log.info('Rejecting arc line {:g}; {:g}'.format(yfit[imask], wave))
     else:
         xrej = []
         yrej = []
@@ -459,7 +459,7 @@ def iterative_fitting(spec, tcent, ifit, IDs, llist, dispersion,
     # Final RMS computed from `yfit`, which is the wavelengths of the lines.  Convert to pixels.
     rms_angstrom = pypeitFit.calc_fit_rms(apply_mask=True)
     rms_pixels = rms_angstrom/dispersion
-    msgs.info(f"RMS of the final wavelength fit: {rms_pixels:g} pixels")
+    log.info(f"RMS of the final wavelength fit: {rms_pixels:g} pixels")
 
     # Pack up fit
     spec_vec = np.arange(nspec)

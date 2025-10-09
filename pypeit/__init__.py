@@ -21,23 +21,23 @@ __coverage__ = 0.55
 
 import logging
 from pypeit import logger
-msgs = logger.get_logger(level=logging.DEBUG)
+log = logger.get_logger(level=logging.DEBUG)
 # Import all the exceptions
 from pypeit.exceptions import *
 
 # Import and instantiate the data path parser
-# NOTE: This *MUST* come after msgs and __version__ are defined above
+# NOTE: This *MUST* come after log and __version__ are defined above
 from pypeit import pypeitdata
 dataPaths = pypeitdata.PypeItDataPaths()
 
-# Send all signals to messages to be dealt with (i.e. someone hits ctrl+c)
-def signal_handler(signalnum, handler):
-    """
-    Handle signals sent by the keyboard during code execution
-    """
-    if signalnum == 2:
-        msgs.info('Ctrl+C was pressed. Ending processes...')
-        sys.exit()
-
-signal.signal(signal.SIGINT, signal_handler)
+## Send all signals to messages to be dealt with (i.e. someone hits ctrl+c)
+#def signal_handler(signalnum, handler):
+#    """
+#    Handle signals sent by the keyboard during code execution
+#    """
+#    if signalnum == 2:
+#        log.info('Ctrl+C was pressed. Ending processes...')
+#        sys.exit()
+#
+#signal.signal(signal.SIGINT, signal_handler)
 

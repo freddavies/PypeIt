@@ -13,7 +13,7 @@ from astropy import time
 from astropy.wcs import wcs
 from astropy.io import fits
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit.spectrographs import spectrograph
 from pypeit import telescopes
@@ -183,7 +183,7 @@ class GeminiGMOSSpectrograph(spectrograph.Spectrograph):
             if obsepoch is not None:
                 return time.Time(obsepoch, format='jyear').mjd
             else:
-                msgs.warning('OBSEPOCH header keyword not found. Using today as the date.')
+                log.warning('OBSEPOCH header keyword not found. Using today as the date.')
                 return time.Time.now().mjd
 
     def config_independent_frames(self):
@@ -284,7 +284,7 @@ class GeminiGMOSSpectrograph(spectrograph.Spectrograph):
         if ftype == 'bias':
             return good_exp & (fitstbl['target'] == 'Bias')#& (fitstbl['idname'] == 'BIAS')
 
-        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     @classmethod
@@ -412,7 +412,7 @@ class GeminiGMOSSpectrograph(spectrograph.Spectrograph):
             pixel. Pixels unassociated with any amplifier are set to 0.
         """
         # Read
-        msgs.info(f'Attempting to read GMOS file: {raw_file}')
+        log.info(f'Attempting to read GMOS file: {raw_file}')
         # NOTE: io.fits_open checks that the file exists
         hdu = io.fits_open(raw_file)
         head0 = hdu[0].header
@@ -925,7 +925,7 @@ class GeminiGMOSSHamSpectrograph(GeminiGMOSSpectrograph):
 
             if obs_date >= t_upgrade:
                 self.detid = 'BI11-41-4k-2,BI13-19-4k-3,BI12-34-4k-1'
-                msgs.info(f'Using the detector parameters for GMOS-S Hamamatsu after the upgrade on '
+                log.info(f'Using the detector parameters for GMOS-S Hamamatsu after the upgrade on '
                           f'{t_upgrade.iso.split(" ")[0]}')
             else:
                 self.detid = 'BI5-36-4k-2,BI11-33-4k-1,BI12-34-4k-1'
@@ -996,13 +996,13 @@ class GeminiGMOSSHamSpectrograph(GeminiGMOSSpectrograph):
 
         # Add the detector-specific, hard-coded bad columns
         if 1 in _det:
-            msgs.info("Using hard-coded BPM for det=1 on GMOSs")
+            log.info("Using hard-coded BPM for det=1 on GMOSs")
             i = _det.index(1)
             # Apply the mask
             badc = 616//bin_spec
             _bpm_img[i,badc,:] = 1
         if 2 in _det:
-            msgs.info("Using hard-coded BPM for det=2 on GMOSs")
+            log.info("Using hard-coded BPM for det=2 on GMOSs")
             i = _det.index(2)
             # Apply the mask
             # Up high
@@ -1017,7 +1017,7 @@ class GeminiGMOSSHamSpectrograph(GeminiGMOSSpectrograph):
                 badr = (768*2)//bin_spec
                 _bpm_img[i,badr:,:] = 1
         if 3 in _det:
-            msgs.info("Using hard-coded BPM for det=3 on GMOSs")
+            log.info("Using hard-coded BPM for det=3 on GMOSs")
             i = _det.index(3)
             # Apply the mask
             badr = (281*2)//bin_spec # Transposed

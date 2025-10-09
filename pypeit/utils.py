@@ -29,7 +29,7 @@ from astropy import units
 from astropy import stats
 from astropy.io import ascii
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit.move_median import move_median
 from pypeit import dataPaths
@@ -764,7 +764,7 @@ def boxcar_smooth_rows(img, nave, wgt=None, mode='nearest', replace='original'):
     if wgt is not None and img.shape != wgt.shape:
         raise ValueError('Input image to smooth and weights must have the same shape.')
     if nave > img.shape[0]:
-        msgs.warning('Smoothing box is larger than the image size!')
+        log.warning('Smoothing box is larger than the image size!')
 
     # Construct the kernel for mean calculation
     _nave = np.fmin(nave, img.shape[0])
@@ -951,7 +951,7 @@ def rebinND(img, shape):
     rem0, rem1 = img.shape[0] % shape[0], img.shape[1] % shape[1]
     if rem0 != 0 or rem1 != 0:
         # In this case, the shapes are not an integer multiple... need to slice
-        msgs.warning("Input image shape is not an integer multiple of the requested shape. Flux is not conserved.")
+        log.warning("Input image shape is not an integer multiple of the requested shape. Flux is not conserved.")
         return rebin_slice(img, shape)
     # Convert input 2D image into a 4D array to make the rebinning easier
     sh = shape[0], img.shape[0] // shape[0], shape[1], img.shape[1] // shape[1]
@@ -1113,9 +1113,9 @@ def fast_running_median(seq, window_size):
     # upon return (very bad). Added by JFH. Should we print out an error here?
 
     if (window_size > (len(seq) - 1)):
-        msgs.warning('window_size > len(seq)-1. Truncating window_size to len(seq)-1, but something is probably wrong....')
+        log.warning('window_size > len(seq)-1. Truncating window_size to len(seq)-1, but something is probably wrong....')
     if (window_size < 0):
-        msgs.warning(
+        log.warning(
             'window_size is negative. This does not make sense something is probably wrong. Setting window size to 1')
 
     window_size = int(np.fmax(np.fmin(int(window_size), len(seq) - 1), 1))
@@ -1212,7 +1212,7 @@ def clip_ivar(flux, ivar, sn_clip, gpm=None, verbose=False):
         return ivar
 
     if verbose:
-        msgs.info('Inflating errors to keep S/N ratio below S/N_clip = {:5.3f}'.format(sn_clip))
+        log.info('Inflating errors to keep S/N ratio below S/N_clip = {:5.3f}'.format(sn_clip))
 
     _gpm = ivar > 0.
     if gpm is not None:
@@ -1435,7 +1435,7 @@ def replace_bad(frame, bpm):
     if frame.shape != bpm.shape:
         raise PypeItError("Input frame and BPM have different shapes")
     # Replace bad pixels with the nearest (good) neighbour
-    msgs.info("Replacing bad pixels")
+    log.info("Replacing bad pixels")
     ind = scipy.ndimage.distance_transform_edt(bpm, return_distances=False, return_indices=True)
     return frame[tuple(ind)]
 
@@ -1644,7 +1644,7 @@ def save_pickle(fname, obj):
         fname += '.pkl'
     with open(fname, 'wb') as f:
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
-        msgs.info('File saved: {0:s}'.format(fname))
+        log.info('File saved: {0:s}'.format(fname))
 
 
 def load_pickle(fname):
@@ -1660,7 +1660,7 @@ def load_pickle(fname):
     :class:`object`
         An object suitable for pickle serialization.
     """
-    msgs.info('Loading file: {0:s}'.format(fname))
+    log.info('Loading file: {0:s}'.format(fname))
     with open(fname, 'rb') as f:
         return pickle.load(f)
 
@@ -1945,7 +1945,7 @@ def find_single_file(file_pattern, required: bool=False) -> pathlib.Path:
     """
     files = sorted(glob.glob(file_pattern))
     if len(files) > 1:
-        msgs.warning(f'Found multiple files matching {file_pattern}; using {files[0]}')
+        log.warning(f'Found multiple files matching {file_pattern}; using {files[0]}')
     if len(files) == 0 and required:
         raise PypeItError(f'No files matching pattern: {file_pattern}')
     return None if len(files) == 0 else pathlib.Path(files[0])

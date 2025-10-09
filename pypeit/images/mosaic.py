@@ -15,7 +15,7 @@ from astropy.io import fits
 from pypeit import datamodel
 from pypeit import io
 from pypeit.images.detector_container import DetectorContainer
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 
 
@@ -168,7 +168,7 @@ class Mosaic(datamodel.DataContainer):
             # version and type checking.
             _d, vp, tp, ph = DetectorContainer._parse(_hdu)
             if not vp:
-                msgs.warning('Detector datamodel version is incorrect.  May cause a fault.')
+                log.warning('Detector datamodel version is incorrect.  May cause a fault.')
             version_passed &= vp
             d['detectors'] += [DetectorContainer.from_dict(d=_d) if tp else None]
             type_passed &= tp

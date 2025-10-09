@@ -12,7 +12,7 @@ import numpy as np
 from astropy.time import Time
 import datetime
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit import io
@@ -217,7 +217,7 @@ class KeckESISpectrograph(spectrograph.Spectrograph):
                         return mjd_time.mjd
                 except Exception as e:
                     # A problem parsing the MJD, we'll try DATE-OBS and UT
-                    msgs.warning("Problem parsing MJD-OBS, trying DATE-OBS and UT instead.")
+                    log.warning("Problem parsing MJD-OBS, trying DATE-OBS and UT instead.")
                     pass             
             return Time('{}T{}'.format(headarr[0]['DATE-OBS'], headarr[0]['UT'])).mjd
         elif meta_key == 'dispname':
@@ -282,7 +282,7 @@ class KeckESISpectrograph(spectrograph.Spectrograph):
             return good_exp & (fitstbl['idname'] == 'Object') 
         if ftype == 'standard':
             return good_exp & (fitstbl['idname'] == 'Object') 
-        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def bpm(self, filename, det, shape=None, msbias=None):
@@ -317,7 +317,7 @@ class KeckESISpectrograph(spectrograph.Spectrograph):
 
 
         # Get the binning 
-        msgs.info("Custom bad pixel mask for ESI")
+        log.info("Custom bad pixel mask for ESI")
         hdu = io.fits_open(filename)
         binspatial, binspec = parse.parse_binning(hdu[0].header['BINNING'])
         hdu.close()

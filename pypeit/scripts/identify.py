@@ -60,7 +60,7 @@ class Identify(scriptbase.ScriptBase):
 
         import numpy as np
                 
-        from pypeit import msgs
+        from pypeit import log
         from pypeit import PypeItError
         from pypeit.spectrographs.util import load_spectrograph
         from pypeit.core.gui.identify import Identify
@@ -74,7 +74,7 @@ class Identify(scriptbase.ScriptBase):
         chk_version = not args.try_old
 
         # Set the verbosity, and create a logfile if verbosity == 2
-#        msgs.set_logfile_and_verbosity('identify', args.verbosity)
+#        log.set_logfile_and_verbosity('identify', args.verbosity)
 
         # Load the Arc file
         msarc = ArcImage.from_file(args.arc_file, chk_version=chk_version)
@@ -97,7 +97,7 @@ class Identify(scriptbase.ScriptBase):
         # Reset the mask
         slits.mask = slits.mask_init
 
-        msgs.info('Loading in Solution if desired and exists')
+        log.info('Loading in Solution if desired and exists')
         # Check if a solution exists
         solnname = WaveCalib.construct_file_name(msarc.calib_key, calib_dir=msarc.calib_dir)
         wv_calib = WaveCalib.from_file(solnname, chk_version=chk_version) \
@@ -116,7 +116,7 @@ class Identify(scriptbase.ScriptBase):
 
             # print to screen the slit widths if maskdef_designtab is available
             if slits.maskdef_designtab is not None:
-                msgs.info("Slit widths (arcsec): {}".format(np.round(slits.maskdef_designtab['SLITWID'].data, 2)))
+                log.info("Slit widths (arcsec): {}".format(np.round(slits.maskdef_designtab['SLITWID'].data, 2)))
 
             # Generate a map of the instrumental spectral FWHM
             # TODO nsample should be a parameter

@@ -9,7 +9,7 @@ import numpy as np
 
 from astropy.time import Time
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit.core import framematch
@@ -267,7 +267,7 @@ class NOTALFOSCSpectrograph(spectrograph.Spectrograph):
             return np.zeros(len(fitstbl), dtype=bool)
         if ftype in ['arc','tilt']:
             return good_exp & (fitstbl['idname'] == 'WAVE,LAMP')
-        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def config_specific_par(self, scifile, inp_par=None):
@@ -317,7 +317,7 @@ class NOTALFOSCSpectrograph(spectrograph.Spectrograph):
         elif self.get_meta_value(scifile, 'dispname') == 'Grism_#20':
             par['calibrations']['wavelengths']['reid_arxiv'] = 'not_alfosc_grism20.fits'
         else:
-            msgs.warning('not_alfosc.py: YOU NEED TO ADD IN THE WAVELENGTH SOLUTION FOR THIS GRISM')
+            log.warning('not_alfosc.py: YOU NEED TO ADD IN THE WAVELENGTH SOLUTION FOR THIS GRISM')
 
         # Return
         return par

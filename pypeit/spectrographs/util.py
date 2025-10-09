@@ -10,7 +10,7 @@ import numpy as np
 from astropy.io import fits
 
 from pypeit import spectrographs
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 
 

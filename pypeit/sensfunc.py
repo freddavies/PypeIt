@@ -15,7 +15,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from astropy.io import fits
 from astropy import table
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import specobjs
 from pypeit import specobj
@@ -289,7 +289,7 @@ class SensFunc(datamodel.DataContainer):
             raise PypeItError(f'No wavelength overlap between the archival and observed standard star spectrum. '
                        'This is not the right standard star for your observations.')
         elif np.sum(overlap)/self.nspec_in < 0.8:
-            msgs.warning(f'Only {np.sum(overlap)/self.nspec_in:.1%} of the observed wavelength range is covered by the '
+            log.warning(f'Only {np.sum(overlap)/self.nspec_in:.1%} of the observed wavelength range is covered by the '
                       f'archival standard star. This may not be the right standard star for your observations. ')
 
     def unpack_std(self):
@@ -341,7 +341,7 @@ class SensFunc(datamodel.DataContainer):
                     raise PypeItError('"use_flat" set to True, but standard star 1D spectrum from OneSpec class '
                               'does not contain the flat spectrum. The blaze function cannot be estimated.')
                 if spec.ext_mode != self.par['extr']:
-                    msgs.warning(f'Standard star 1D spectrum from OneSpec class was obtained using the {spec.ext_mode} '
+                    log.warning(f'Standard star 1D spectrum from OneSpec class was obtained using the {spec.ext_mode} '
                                f'extraction, while the requested extraction is {self.par["extr"]}. '
                                f'The available {spec.ext_mode} extraction will be used instead.')
                     self.extr = spec.ext_mode
@@ -595,7 +595,7 @@ class SensFunc(datamodel.DataContainer):
             zero-point array
         """
 
-        msgs.info(f"Merging sensfunc for {self.norderdet} detectors {self.par['multi_spec_det']}")
+        log.info(f"Merging sensfunc for {self.norderdet} detectors {self.par['multi_spec_det']}")
         wave_splice_min = self.wave[self.wave > 1.0].min()
         wave_splice_max = self.wave[self.wave > 1.0].max()
         wave_splice_1d, _, _ = wvutils.get_wave_grid(waves=self.wave, wave_method='linear',
@@ -624,7 +624,7 @@ class SensFunc(datamodel.DataContainer):
         # Interpolate over gaps
         zeros = zeropoint_splice_1d == 0.
         if np.any(zeros):
-            msgs.info("Interpolating over gaps (and extrapolating with fill_value=1, if need be)")
+            log.info("Interpolating over gaps (and extrapolating with fill_value=1, if need be)")
             interp_func = scipy.interpolate.interp1d(wave_splice_1d[np.invert(zeros)],
                                                      zeropoint_splice_1d[np.invert(zeros)],
                                                      kind='nearest', fill_value=0.,
@@ -893,7 +893,7 @@ class SensFunc(datamodel.DataContainer):
         if waves.ndim == 2:
             nspec, norder = waves.shape
             if ech_order_vec is not None and ech_order_vec.size != norder:
-                msgs.warning('The number of orders in the wave grid does not match the '
+                log.warning('The number of orders in the wave grid does not match the '
                           'number of orders in the unpacked sobjs. Echelle order vector not used.')
                 ech_order_vec = None
             nexp = 1
@@ -913,7 +913,7 @@ class SensFunc(datamodel.DataContainer):
         if norder != sens.zeropoint.shape[1] and ech_order_vec is None:
             raise PypeItError('The number of orders in {:} does not agree with your data. Wrong sensfile?'.format(sensfile))
         elif norder != sens.zeropoint.shape[1] and ech_order_vec is not None:
-            msgs.warning('The number of orders in {:} does not match the number of orders in the data. '
+            log.warning('The number of orders in {:} does not match the number of orders in the data. '
                       'Using only the matching orders.'.format(sensfile))
 
         # array of order to loop through

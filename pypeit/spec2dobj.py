@@ -18,7 +18,7 @@ from astropy.io import fits
 from astropy.stats import mad_std
 from astropy import table
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import io
 from pypeit import datamodel
@@ -525,7 +525,7 @@ class AllSpec2DObj:
             if not isinstance(value, Spec2DObj):
                 raise KeyError('Any item not assigned to the meta dictionary must be a Spec2DObj.')
             if value.detname is not None and value.detname != item:
-                msgs.warning(f'Mismatch between keyword used to define the Spec2DObj item ({item}) '
+                log.warning(f'Mismatch between keyword used to define the Spec2DObj item ({item}) '
                           f'and the name of the detector/mosaic ({value.detname}).')
         self.__dict__[item] = value
 
@@ -638,7 +638,7 @@ class AllSpec2DObj:
         if _outfile.exists():
             # Clobber?
             if not overwrite:
-                msgs.warning(f'File {_outfile} exits.  Use -o to overwrite.')
+                log.warning(f'File {_outfile} exits.  Use -o to overwrite.')
                 return
             # Load up the original
             _allspecobj = AllSpec2DObj.from_fits(_outfile)
@@ -691,10 +691,10 @@ class AllSpec2DObj:
             try:
                 prihdu.header[self.hdr_prefix+key.upper()] = self['meta'][key]
             except:
-                msgs.warning(f'Cannot add meta entry {key} to primary header!')
+                log.warning(f'Cannot add meta entry {key} to primary header!')
                 continue
             if key.lower() != key:
-                msgs.warning('Keywords in the meta dictionary are always read back in as lower case. '
+                log.warning('Keywords in the meta dictionary are always read back in as lower case. '
                           f'Subsequent reads of {_outfile} will have converted {key} to '
                           f'{key.lower()}!')
 
@@ -718,7 +718,7 @@ class AllSpec2DObj:
         # Finish
         hdulist = fits.HDUList(hdus)
         hdulist.writeto(_outfile, overwrite=overwrite)
-        msgs.info(f'Wrote: {_outfile}')
+        log.info(f'Wrote: {_outfile}')
 
     def __repr__(self):
         # Generate sets string

@@ -34,7 +34,7 @@ from IPython import embed
 import numpy as np
 from astropy.io import fits
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import io
 from pypeit.core import parse
@@ -447,7 +447,7 @@ class Spectrograph:
                     subheader[key] = row_fitstbl[key]
                 except KeyError:
                     # If configuration_key is not in row_fitstbl, warn but move on
-                    msgs.warning(f"Configuration Key: {key} not present in your fitstbl/Header")
+                    log.warning(f"Configuration Key: {key} not present in your fitstbl/Header")
         # Add a few more
         for key in ['filename']:  # For fluxing
             subheader[key] = row_fitstbl[key]
@@ -639,7 +639,7 @@ class Spectrograph:
             # Not using bias to identify bad pixels, so we're done
             return bpm_img
 
-        msgs.info(f'Generating a BPM using bias for det={_det} for {self.name}')
+        log.info(f'Generating a BPM using bias for det={_det} for {self.name}')
         return self.bpm_frombias(msbias, bpm_img)
 
     def list_detectors(self, mosaic=False):
@@ -1436,7 +1436,7 @@ class Spectrograph:
             if required:
                 raise PypeItError("Need to allow for meta_key={} in your meta data".format(meta_key))
             else:
-                msgs.warning("Requested meta data for meta_key={} does not exist...".format(meta_key))
+                log.warning("Requested meta data for meta_key={} does not exist...".format(meta_key))
                 return None
 
         # Is this meta required for this frame type (Spectrograph specific)
@@ -1468,7 +1468,7 @@ class Spectrograph:
                 value = headarr[self.meta[meta_key]['ext']][self.meta[meta_key]['card']]
         except (KeyError, TypeError) as e:
             if ignore_bad_header or not required:
-                msgs.warning(f"Bad Header key ({meta_key}), but we'll try to continue on..")
+                log.warning(f"Bad Header key ({meta_key}), but we'll try to continue on..")
             else:
                 raise e
 
@@ -1483,7 +1483,7 @@ class Spectrograph:
                 ra, dec = meta.convert_radec(self.get_meta_value(headarr, 'ra', no_fussing=True),
                                     self.get_meta_value(headarr, 'dec', no_fussing=True))
             except:
-                msgs.warning('Encounter invalid value of your coordinates. Give zeros for both RA and DEC')
+                log.warning('Encounter invalid value of your coordinates. Give zeros for both RA and DEC')
                 ra, dec = 0.0, 0.0
             value = ra if meta_key == 'ra' else dec
 
@@ -1528,7 +1528,7 @@ class Spectrograph:
                         raise PypeItError('Required meta "{0}" did not load!'.format(meta_key)
                                    + 'You may have a corrupt header.')
                 else:
-                    msgs.warning('Required card {0} missing '.format(self.meta[meta_key]['card'])
+                    log.warning('Required card {0} missing '.format(self.meta[meta_key]['card'])
                               + 'from your header.  Proceeding with risk...')
             return None
 
@@ -1564,7 +1564,7 @@ class Spectrograph:
         Returns:
             `astropy.wcs.WCS`_: The world-coordinate system.
         """
-        msgs.warning("No WCS setup for spectrograph: {0:s}".format(self.name))
+        log.warning("No WCS setup for spectrograph: {0:s}".format(self.name))
         return None
 
     def get_datacube_bins(self, slitlength, minmax, num_wave):
@@ -1589,7 +1589,7 @@ class Spectrograph:
             when constructing a histogram of the spec2d files. The elements
             are :math:`(x,y,\lambda)`.
         """
-        msgs.warning("No datacube setup for spectrograph: {0:s}".format(self.name))
+        log.warning("No datacube setup for spectrograph: {0:s}".format(self.name))
         return None
 
     def fit_2d_det_response(self, det_resp, gpmask):
@@ -1605,7 +1605,7 @@ class Spectrograph:
         Returns:
             `numpy.ndarray`_: A model fit to the detector response.
         """
-        msgs.warning("2D detector response is not implemented for spectrograph: {0:s}".format(self.name))
+        log.warning("2D detector response is not implemented for spectrograph: {0:s}".format(self.name))
         return np.ones_like(det_resp)
 
     def validate_metadata(self):
@@ -1672,7 +1672,7 @@ class Spectrograph:
                 if strict:
                     raise PypeItError(f'Cannot open {inp}.')
                 else:
-                    msgs.warning(f'Cannot open {inp}.  Proceeding, but consider removing this file!')
+                    log.warning(f'Cannot open {inp}.  Proceeding, but consider removing this file!')
                     return None
         elif isinstance(inp, (list, fits.HDUList)):
             # TODO: If a list, check that the list elements are HDUs?
@@ -1735,9 +1735,9 @@ class Spectrograph:
         indx = fitstbl.type_bitmask.flagged(type_bits, flag='standard') & \
                fitstbl.type_bitmask.flagged(type_bits, flag='science')
         if np.any(indx):
-            msgs.warning('Some frames are assigned both science and standard types. Choosing the most likely type.')
+            log.warning('Some frames are assigned both science and standard types. Choosing the most likely type.')
             if 'ra' not in fitstbl.keys() or 'dec' not in fitstbl.keys():
-                msgs.warning('Sky coordinates are not available. Standard stars cannot be identified.')
+                log.warning('Sky coordinates are not available. Standard stars cannot be identified.')
                 # turn off the standard flag for all frames
                 type_bits[indx] = fitstbl.type_bitmask.turn_off(type_bits[indx], flag='standard')
                 return type_bits
@@ -1745,9 +1745,9 @@ class Spectrograph:
             none_coords = indx & ((fitstbl['ra'] == 'None') | (fitstbl['dec'] == 'None') |
                                   np.isnan(fitstbl['ra']) | np.isnan(fitstbl['dec']))
             if np.any(none_coords):
-                msgs.warning('The following frames have None coordinates. '
+                log.warning('The following frames have None coordinates. '
                           'They could be a twilight flat frame that was missed by the automatic identification')
-                [msgs.warning(f'        {f}') for f in fitstbl['filename'][none_coords]]
+                [log.warning(f'        {f}') for f in fitstbl['filename'][none_coords]]
                 # turn off the standard star flag for these frames
                 type_bits[none_coords] = fitstbl.type_bitmask.turn_off(type_bits[none_coords], flag='standard')
 
@@ -2009,7 +2009,7 @@ class Spectrograph:
             trim_gpm[s:-e] = True
 
             # Set the wave, counts, gpm, inverse variance and log10 blaze to zero in the masked pixels
-            msgs.info('Trimming standard star spectrum by {:d} pixels at the start and {:d} pixels at the end.'.format(s, e))
+            log.info('Trimming standard star spectrum by {:d} pixels at the start and {:d} pixels at the end.'.format(s, e))
             wave_out = wave_out* trim_gpm
             counts_out = counts_out * trim_gpm
             counts_ivar_out = counts_ivar_out * trim_gpm
@@ -2045,7 +2045,7 @@ class Spectrograph:
         patt_freqs : :obj:`list`
             List of pattern frequencies.
         """
-        msgs.warning(f"Pattern noise removal is not implemented for spectrograph {self.name}")
+        log.warning(f"Pattern noise removal is not implemented for spectrograph {self.name}")
         return []
 
     def scattered_light_archive(self, binning, dispname):
@@ -2070,7 +2070,7 @@ class Spectrograph:
         # Grab the binning for convenience
         specbin, spatbin = parse.parse_binning(binning)
 
-        msgs.warning(f"Initial scattered light model parameters have not been setup for grating {dispname} of {self.name}")
+        log.warning(f"Initial scattered light model parameters have not been setup for grating {dispname} of {self.name}")
         x0 = np.array([200/specbin, 100/spatbin,  # Gaussian kernel widths
                        200/specbin, 100/spatbin,  # Lorentzian kernel widths
                        0.0/specbin, 0.0/spatbin,  # pixel offsets

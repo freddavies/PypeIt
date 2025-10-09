@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 
 from astropy.io import fits
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import dataPaths
 
@@ -89,6 +89,6 @@ class DEIMOSSensFileArchive(SensFileArchive):
         to_pkg = 'symlink' if symlink_in_pkgdir else None
         archived_file = dataPaths.sensfunc.get_file_path(f"keck_deimos_{grating}_sensfunc.fits",
                                                          to_pkg=to_pkg)
-        msgs.info(f"Found archived sensfile '{archived_file}'")
+        log.info(f"Found archived sensfile '{archived_file}'")
         return archived_file
 

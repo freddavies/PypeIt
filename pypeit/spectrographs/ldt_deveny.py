@@ -23,7 +23,7 @@ import numpy as np
 from astropy.table import Table
 from astropy.time import Time
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit.core import framematch
@@ -182,7 +182,7 @@ class LDTDeVenySpectrograph(spectrograph.Spectrograph):
             if (grating_kwd := headarr[0]['GRATING']) not in gratings:
                 raise PypeItError(f"Grating value {grating_kwd} not recognized.")
             if grating_kwd == "UNKNOWN":
-                msgs.warning(f"Grating not selected in the LOUI; \n"
+                log.warning(f"Grating not selected in the LOUI; \n"
                           "Fix the header keyword GRATING before proceeding.")
             return f"{gratings[grating_kwd]} ({grating_kwd})"
 
@@ -202,7 +202,7 @@ class LDTDeVenySpectrograph(spectrograph.Spectrograph):
             # Extract lines/mm, catch 'UNKNOWN' grating
             if (grating_kwd := headarr[0]["GRATING"]) == "UNKNOWN":
                 lpmm = np.inf
-                msgs.warning(f"Grating angle not selected in the LOUI; \n"
+                log.warning(f"Grating angle not selected in the LOUI; \n"
                           "Fix the header keyword GRANGLE before proceeding.")
             else:
                 lpmm = float(grating_kwd.split("/")[0])
@@ -414,7 +414,7 @@ class LDTDeVenySpectrograph(spectrograph.Spectrograph):
         if ftype in ['pinhole', 'align', 'sky', 'lampoffflats', 'scattlight']:
             # DeVeny doesn't have any of these types of frames
             return np.zeros(len(fitstbl), dtype=bool)
-        msgs.debug(f"Cannot determine if frames are of type {ftype}")
+        log.debug(f"Cannot determine if frames are of type {ftype}")
         return np.zeros(len(fitstbl), dtype=bool)
 
     def pypeit_file_keys(self):

@@ -14,7 +14,7 @@ from IPython import embed
 from astropy.io import fits
 from astropy.stats import sigma_clipped_stats
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import slittrace
 from pypeit import specobjs
@@ -74,7 +74,7 @@ def show_trace(sobjs, det, viewer, ch):
         display.show_trace(viewer, ch, np.swapaxes(trace_list, 1,0), np.array(trc_name_list),
                            maskdef_extr=np.array(maskdef_extr_list), manual_extr=np.array(manual_extr_list))
     else:
-        msgs.warning('spec1d file found, but no objects were extracted for this detector.')
+        log.warning('spec1d file found, but no objects were extracted for this detector.')
 
 
 class Show2DSpec(scriptbase.ScriptBase):
@@ -141,7 +141,7 @@ class Show2DSpec(scriptbase.ScriptBase):
             return
 
         # Set the verbosity, and create a logfile if verbosity == 2
-#        msgs.set_logfile_and_verbosity('show_2dspec', args.verbosity)
+#        log.set_logfile_and_verbosity('show_2dspec', args.verbosity)
 
         # Parse the detector name
         if args.det is None: 
@@ -194,7 +194,7 @@ class Show2DSpec(scriptbase.ScriptBase):
             if check_version:
                 raise PypeItError(message)
             else:
-                msgs.warning(message)
+                log.warning(message)
             spec2DObj = None
 
         if spec2DObj is None:
@@ -223,7 +223,7 @@ class Show2DSpec(scriptbase.ScriptBase):
 
                 _ext = f'{detname}-SLITS'
                 if _ext not in names:
-                    msgs.warning(f'{args.file} missing extension {_ext}; cannot show slit edges.')
+                    log.warning(f'{args.file} missing extension {_ext}; cannot show slit edges.')
                 else:
                     slit_columns = hdu[_ext].columns.names
                     slit_spat_id = hdu[_ext].data['spat_id'] if 'spat_id' in slit_columns else None
@@ -242,7 +242,7 @@ class Show2DSpec(scriptbase.ScriptBase):
                                 = float(hdu[f'{detname}-SCIIMG'].header['SCI_SPAT_FLEXURE'])
                         slit_left += sci_spat_flexure
                         slit_right += sci_spat_flexure
-                        msgs.info(f'Offseting slits by {sci_spat_flexure} pixels.')
+                        log.info(f'Offseting slits by {sci_spat_flexure} pixels.')
                     pypeline = hdu[f'{detname}-SCIIMG'].header['PYPELINE'] \
                                     if 'PYPELINE' in hdu[f'{detname}-SCIIMG'].header else None
                     if pypeline in ['MultiSlit', 'SlicerIFU']:
@@ -267,14 +267,14 @@ class Show2DSpec(scriptbase.ScriptBase):
 
             img_gpm = spec2DObj.select_flag(invert=True)
             if not np.any(img_gpm):
-                msgs.warning('The full science image is masked!')
+                log.warning('The full science image is masked!')
 
             model_gpm = img_gpm.copy()
             if args.ignore_extract_mask:
                 model_gpm |= spec2DObj.select_flag(flag='EXTRACT')
 
             if spec2DObj.sci_spat_flexure is not None:
-                msgs.info(f'Offseting slits by {spec2DObj.sci_spat_flexure}')
+                log.info(f'Offseting slits by {spec2DObj.sci_spat_flexure}')
             slit_left, slit_right, slit_mask \
                     = spec2DObj.slits.select_edges(flexure=spec2DObj.sci_spat_flexure)
             slit_spat_id = spec2DObj.slits.spat_id
@@ -289,7 +289,7 @@ class Show2DSpec(scriptbase.ScriptBase):
                 sobjs = specobjs.SpecObjs.from_fitsfile(spec1d_file, chk_version=False)
             else:
                 sobjs = None
-                msgs.warning(f'Could not find spec1d file: {spec1d_file}\n'
+                log.warning(f'Could not find spec1d file: {spec1d_file}\n'
                              'No objects were extracted.')
                 
         # TODO: This may be too restrictive, i.e. ignore BADFLTCALIB??

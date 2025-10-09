@@ -16,7 +16,7 @@ import scipy.special
 from astropy import table
 from astropy.io import fits
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import dataPaths
 from pypeit import io
@@ -337,7 +337,7 @@ def conv_telluric(tell_model, dloglam, res):
     pix_per_sigma = 1.0/res/(dloglam*np.log(10.0))/(2.0 * np.sqrt(2.0 * np.log(2))) # number of dloglam pixels per 1 sigma dispersion
     sig2pix = 1.0/pix_per_sigma # number of sigma per 1 pix
     if sig2pix > 2.0:
-        msgs.warning('The telluric model grid is not sampled finely enough to properly convolve to the desired resolution. '
+        log.warning('The telluric model grid is not sampled finely enough to properly convolve to the desired resolution. '
                   'Skipping resolution convolution for now. Create a higher resolution telluric model grid')
         return tell_model
 
@@ -812,7 +812,7 @@ def general_spec_reader(specfile, ret_flam=False, chk_version=False, ret_order_s
     meta_spec['core'] = spect_dict
     # ASC: Reimplement the ability to return the OrderStack components at some point. 
     #if ret_order_stacks:
-    #    msgs.info('Returning order stacks')
+    #    log.info('Returning order stacks')
     #    return wave_stack, None, counts_stack, counts_ivar_stack, counts_gpm_stack, meta_spec, head
     
     return wave, wave_grid_mid, counts, counts_ivar, counts_gpm, meta_spec, head
@@ -906,7 +906,7 @@ def init_sensfunc_model(obj_params, iord, wave, counts_per_ang, ivar, gpm, tellm
     flam_true_gpm = (wave >= np.min(obj_params['std_spec'].wave)) \
                         & (wave <= np.max(obj_params['std_spec'].wave))
     if np.any(np.logical_not(flam_true_gpm)):
-        msgs.warning('Your data extends beyond the range covered by the standard star spectrum. '
+        log.warning('Your data extends beyond the range covered by the standard star spectrum. '
                   'Proceeding by masking these regions, but consider using another standard star')
     N_lam = counts_per_ang/obj_params['exptime']
     zeropoint_data, zeropoint_data_gpm \
@@ -2441,12 +2441,12 @@ class Telluric(datamodel.DataContainer):
         # 3) Read the telluric grid and initalize associated parameters
         wv_gpm = self.wave_in_arr > 1.0
         if self.teltype == 'pca':
-            msgs.info(f'Reading in the pca-based telluric model: {self.telgrid}')
+            log.info(f'Reading in the pca-based telluric model: {self.telgrid}')
             self.tell_dict = read_telluric_pca(self.telgrid, wave_min=self.wave_in_arr[wv_gpm].min(),
                                                wave_max=self.wave_in_arr[wv_gpm].max())
         elif self.teltype == 'grid':
             self.tell_npca = 4
-            msgs.info(f'Reading in the grid-based telluric model: {self.telgrid}')
+            log.info(f'Reading in the grid-based telluric model: {self.telgrid}')
             self.tell_dict = read_telluric_grid(self.telgrid, wave_min=self.wave_in_arr[wv_gpm].min(),
                                                 wave_max=self.wave_in_arr[wv_gpm].max())
 
@@ -2498,7 +2498,7 @@ class Telluric(datamodel.DataContainer):
         for counter, iord in enumerate(self.srt_order_tell):
             _ord = self.ech_orders[iord] if self.ech_orders is not None and \
                                             len(self.ech_orders) == self.norders else iord
-            msgs.info(f'Initializing object model for order: {_ord}, {counter+1}/{self.norders}'
+            log.info(f'Initializing object model for order: {_ord}, {counter+1}/{self.norders}'
                       + f' with user supplied function: {self.init_obj_model.__name__}')
             tellmodel = eval_telluric(self.tell_guess, self.tell_dict,
                                         ind_lower=self.ind_lower[iord],
@@ -2556,14 +2556,14 @@ class Telluric(datamodel.DataContainer):
         if self.ech_orders is not None and len(self.ech_orders) == self.norders:
             indx_only = np.where(np.isin(self.ech_orders, only_orders))[0]
             if (indx_only.size == 0) and (only_orders is not None):
-                msgs.warning(f'All the orders provided in `only_orders` are not among the expected orders. '
+                log.warning(f'All the orders provided in `only_orders` are not among the expected orders. '
                           f'Using all orders available in the data.')
             elif indx_only.size > 0:
                 good_orders = indx_only
-                msgs.info(f'Working only on the following orders: {self.ech_orders[indx_only]}')
+                log.info(f'Working only on the following orders: {self.ech_orders[indx_only]}')
                 if len(indx_only) != len(only_orders):
                     missing_orders = list(set(only_orders) - set(self.ech_orders[indx_only]))
-                    msgs.warning(f'Some orders provided in `only_orders` are not among the expected orders. '
+                    log.warning(f'Some orders provided in `only_orders` are not among the expected orders. '
                               f'Ignoring orders: {missing_orders}')
 
         # Run the fits
@@ -2578,7 +2578,7 @@ class Telluric(datamodel.DataContainer):
                 continue
             _ord = self.ech_orders[iord] if self.ech_orders is not None and \
                                             len(self.ech_orders) == self.norders else iord
-            msgs.info(f'Fitting object + telluric model for order: {_ord}, {counter+1}/{self.norders}'
+            log.info(f'Fitting object + telluric model for order: {_ord}, {counter+1}/{self.norders}'
                       + f' with user supplied function: {self.init_obj_model.__name__}')
             self.result_list[iord], ymodel, ivartot, self.outmask_list[iord] \
                     = fitting.robust_optimize(self.flux_arr[self.ind_lower[iord]:self.ind_upper[iord]+1,iord],

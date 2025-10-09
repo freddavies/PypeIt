@@ -468,7 +468,7 @@ from astropy.io import fits
 from astropy.table import Table
 
 from pypeit import io
-from pypeit import msgs, PypeItDataModelError
+from pypeit import log, PypeItDataModelError
 
 # TODO: There are methods in, e.g., doc/scripts/build_specobj_rst.py that output
 # datamodels for specific datacontainers.  It would be useful if we had
@@ -977,7 +977,7 @@ class DataContainer:
         # DataContainers that have no data, although such a usage case should be
         # rare.
         if np.all([_hdu[e].data is None for e in _ext]):
-            msgs.warning(f'Extensions to be read by {cls.__name__} have no data!')
+            log.warning(f'Extensions to be read by {cls.__name__} have no data!')
             # This is so that the returned booleans for reading the
             # data are not tripped as false!
             found_data = True
@@ -1157,7 +1157,7 @@ class DataContainer:
             if chk_version:
                 raise PypeItDataModelError(msg)
             else:
-                msgs.warning(msg)
+                log.warning(msg)
 
     def __getattr__(self, item):
         """Maps values to attributes.
@@ -1551,7 +1551,7 @@ class DataContainer:
             raise FileNotFoundError(f'{_ifile} does not exist!')
 
         if verbose:
-            msgs.info(f'Loading {cls.__name__} from {_ifile}')
+            log.info(f'Loading {cls.__name__} from {_ifile}')
 
         # Do it
         with io.fits_open(_ifile) as hdu:

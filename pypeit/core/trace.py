@@ -21,7 +21,7 @@ from matplotlib import pyplot as plt
 
 from astropy.stats import sigma_clipped_stats, sigma_clip
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import utils
 from pypeit import sampling
@@ -87,7 +87,7 @@ def detect_slit_edges(flux, bpm=None, median_iterations=0, min_sqm=30., sobel_mo
     # Specify how many times to repeat the median filter.  Even better
     # would be to fit the filt/sqrt(abs(binarr)) array with a Gaussian
     # near the maximum in each column
-    msgs.info("Detecting slit edges in the trace image")
+    log.info("Detecting slit edges in the trace image")
 
     # Generate sqrt image
     sqmstrace = np.sqrt(np.abs(flux))
@@ -130,7 +130,7 @@ def detect_slit_edges(flux, bpm=None, median_iterations=0, min_sqm=30., sobel_mo
     edge_img[wcr] = 1
 
     if bpm is not None:
-        msgs.info("Applying bad pixel mask")
+        log.info("Applying bad pixel mask")
         # JFH grow the bad pixel mask in the spatial direction
         _nave = np.fmin(grow_bpm, flux.shape[0])
         # Construct the kernel for mean calculation
@@ -171,7 +171,7 @@ def identify_traces(edge_img, max_spatial_separation=4, follow_span=10, minimum_
         :func:`count_edge_traces`. Pixels not associated to any edge
         have a value of 0.
     """
-    msgs.info('Finding unique traces among detected edges.')
+    log.info('Finding unique traces among detected edges.')
     # Check the input
     if edge_img.ndim > 2:
         raise PypeItError('Provided edge image must be 2D.')
@@ -180,7 +180,7 @@ def identify_traces(edge_img, max_spatial_separation=4, follow_span=10, minimum_
 
     # No edges were detected.
     if np.all(edge_img == 0):
-        msgs.warning('No edges were found!')
+        log.warning('No edges were found!')
         return np.zeros_like(edge_img, dtype=int)
 
     # Find the left and right coordinates
@@ -339,13 +339,13 @@ def atleast_one_edge(edge_img, bpm=None, flux_valid=True, buffer=0, copy=False):
 
     if nleft == 0:
         # Add a left edge trace at the first valid column
-        msgs.warning('No left edge found. Adding one at the detector edge.')
+        log.warning('No left edge found. Adding one at the detector edge.')
         gdi0 = np.min(np.where(sum_bpm[buffer:] == 0)[0]) + buffer
         _edge_img[:,gdi0] = -1
 
     if nright == 0:
         # Add a right edge trace at the last valid column
-        msgs.warning('No right edge found. Adding one at the detector edge.')
+        log.warning('No right edge found. Adding one at the detector edge.')
         gdi1 = np.max(np.where(sum_bpm[:-buffer] == 0)[0])
         _edge_img[:,gdi1] = 1
 
@@ -416,8 +416,8 @@ def handle_orphan_edges(edge_img, sobel_sig, bpm=None, flux_valid=True, buffer=0
     if nright > 1:
         # To get here, nleft must be 1.  This is mainly in here for
         # LRISb, which is a real pain..
-        msgs.warning('Only one left edge, and multiple right edges.')
-        msgs.info('Restricting right edge detection to the most significantly detected edge.')
+        log.warning('Only one left edge, and multiple right edges.')
+        log.info('Restricting right edge detection to the most significantly detected edge.')
         # Find the most significant right trace
         best_trace = np.argmin([-np.median(sobel_sig[_edge_img==t]) for t in range(nright)])+1
         # Remove the other right traces
@@ -428,8 +428,8 @@ def handle_orphan_edges(edge_img, sobel_sig, bpm=None, flux_valid=True, buffer=0
         return _edge_img
 
     # To get here, nright must be 1.
-    msgs.warning('Only one right edge, and multiple left edges.')
-    msgs.info('Restricting left edge detection to the most significantly detected edge.')
+    log.warning('Only one right edge, and multiple left edges.')
+    log.info('Restricting left edge detection to the most significantly detected edge.')
     # Find the most significant left trace
     best_trace = np.argmax([np.median(sobel_sig[_edge_img == -t]) for t in range(nleft)])+1
     # Remove the other left traces
@@ -1423,7 +1423,7 @@ def peak_trace(flux, ivar=None, bpm=None, trace_map=None, extract_width=None, sm
         # Check there is a trace for each image pixel
         if trace_map.shape != flux.shape:
             raise ValueError('Provided trace data must match the image shape.')
-        msgs.info('Rectifying image by extracting along trace for each spatial pixel')
+        log.info('Rectifying image by extracting along trace for each spatial pixel')
         # TODO: JFH What should this aperture size be? I think fwhm=3.0
         # since that is the width of the sobel filter
         flux_extract = sampling.rectify_image(flux, trace_map, bpm=bpm, extract_width=fwhm_gaussian 
@@ -1431,7 +1431,7 @@ def peak_trace(flux, ivar=None, bpm=None, trace_map=None, extract_width=None, sm
 
     # Collapse the image along the spectral direction to isolate peaks/troughs
     start, end = np.clip(np.asarray(smash_range)*nspec, 0, nspec).astype(int)
-    msgs.info('Collapsing image spectrally between pixels {0}:{1}'.format(start, end))
+    log.info('Collapsing image spectrally between pixels {0}:{1}'.format(start, end))
     flux_smash_mean, flux_smash_median, flux_smash_sig \
             = sigma_clipped_stats(flux_extract[start:end,:], axis=0, sigma=4.0)
 
@@ -1460,16 +1460,16 @@ def peak_trace(flux, ivar=None, bpm=None, trace_map=None, extract_width=None, sm
     for i,(l,s) in enumerate(zip(label,sign)):
 
         # Identify the peaks
-        msgs.info('Searching for peaks.')
+        log.info('Searching for peaks.')
         peak, _, _cen, _, _, best, _, _ \
                 = arc.detect_lines(s*flux_smash_mean, cont_subtract=False, fwhm=fwhm_gaussian,
                                    input_thresh=peak_thresh, max_frac_fwhm=4.0,
                                    min_pkdist_frac_fwhm=min_pkdist_frac_fwhm, debug=show_peaks)
 
         if len(_cen) == 0 or not np.any(best):
-            msgs.warning('No good {0}s found!'.format(l))
+            log.warning('No good {0}s found!'.format(l))
             continue
-        msgs.info('Found {0} good {1}(s) in the rectified, collapsed image'.format(
+        log.info('Found {0} good {1}(s) in the rectified, collapsed image'.format(
                     len(_cen[best]),l))
 
         # Set the reference spatial locations to use for tracing the
@@ -1485,7 +1485,7 @@ def peak_trace(flux, ivar=None, bpm=None, trace_map=None, extract_width=None, sm
             clipped_peak = sigma_clip(peak[best], sigma_lower=peak_clip, sigma_higher=np.inf)
             peak_mask = np.ma.getmaskarray(clipped_peak)
             if np.any(peak_mask):
-                msgs.warning('Clipping {0} detected peak(s) with aberrant amplitude(s).'.format(
+                log.warning('Clipping {0} detected peak(s) with aberrant amplitude(s).'.format(
                                 np.sum(peak_mask)))
                 loc = loc[np.invert(peak_mask)]
                 _cen = _cen[np.invert(peak_mask)]

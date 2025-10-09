@@ -17,7 +17,7 @@ import numpy as np
 
 from astropy import table, time
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import inputfiles
 from pypeit.core import framematch
@@ -98,7 +98,7 @@ class PypeItMetaData:
 
         if data is None and files is None:
             # Warn that table will be empty
-            msgs.warning('Both data and files are None in the instantiation of PypeItMetaData.'
+            log.warning('Both data and files are None in the instantiation of PypeItMetaData.'
                       '  The table will be empty!')
 
         # Initialize internals
@@ -173,11 +173,11 @@ class PypeItMetaData:
             # An empty table is allowed
             if len(instr_names) > 0:
                 if len(instr_names) != 1:
-                    msgs.warning(f'More than one instrument in your dataset! {instr_names} \n'
+                    log.warning(f'More than one instrument in your dataset! {instr_names} \n'
                               'Proceed with great caution...')
                 # Check the name
                 if not instr_names[0].startswith(self.spectrograph.header_name):
-                    msgs.warning('The instrument name in the headers of the raw files does not match the '
+                    log.warning('The instrument name in the headers of the raw files does not match the '
                               f'expected one! Found {instr_names[0]}, expected {self.spectrograph.header_name}.  '
                               'You may have chosen the wrong PypeIt spectrograph name!')
 
@@ -203,7 +203,7 @@ class PypeItMetaData:
         # Allow for single files
         _files = files if hasattr(files, '__len__') else [files]
 
-        msgs.info(f"Building metadata for {len(_files)} files.")
+        log.info(f"Building metadata for {len(_files)} files.")
         # Build lists to fill
         data = {k:[] for k in self.spectrograph.meta.keys()}
         data['directory'] = ['None']*len(_files)
@@ -232,7 +232,7 @@ class PypeItMetaData:
             # Read the fits headers.  NOTE: If the file cannot be opened,
             # headarr will be None, and the subsequent loop over the meta keys
             # will fill the data dictionary with None values.
-            msgs.info(f'Adding metadata for {data["filename"][idx]}')
+            log.info(f'Adding metadata for {data["filename"][idx]}')
             headarr = self.spectrograph.get_headarr(_ifile, strict=strict)
 
             # Grab Meta
@@ -244,7 +244,7 @@ class PypeItMetaData:
                             self.par['rdx']['ignore_bad_headers'] or strict))
                 if isinstance(value, str) and '#' in value:
                     value = value.replace('#', '')
-                    msgs.warning('Removing troublesome # character from {0}.  Returning {1}.'.format(
+                    log.warning('Removing troublesome # character from {0}.  Returning {1}.'.format(
                               meta_key, value))
                 data[meta_key].append(value)
 
@@ -264,7 +264,7 @@ class PypeItMetaData:
                   'frames either could not be opened, are empty, or have corrupt headers:\n'
             for file in bad_files:
                 msg += f'    {file}\n'
-            msgs.warning(msg)
+            log.warning(msg)
 
         # Return
         return data
@@ -720,20 +720,20 @@ class PypeItMetaData:
             return self._get_cfgs(copy=copy, rm_none=rm_none)
 
         if 'setup' in self.keys():
-            msgs.info('Setup column already set.  Finding unique configurations.')
+            log.info('Setup column already set.  Finding unique configurations.')
             uniq, indx = np.unique(self['setup'], return_index=True)
             ignore = uniq == 'None'
             if np.sum(ignore) > 0:
-                msgs.warning(f'Ignoring {np.sum(ignore)} frames with configuration set to None.')
+                log.warning(f'Ignoring {np.sum(ignore)} frames with configuration set to None.')
             self.configs = {}
             for i in range(len(uniq)):
                 if ignore[i]:
                     continue
                 self.configs[uniq[i]] = self.get_configuration(indx[i])
-            msgs.info('Found {0} unique configurations.'.format(len(self.configs)))
+            log.info('Found {0} unique configurations.'.format(len(self.configs)))
             return self._get_cfgs(copy=copy, rm_none=rm_none)
 
-        msgs.info('Using metadata to determine unique configurations.')
+        log.info('Using metadata to determine unique configurations.')
 
         # sort self.table
         mjd = self.table['mjd'].copy()
@@ -760,7 +760,7 @@ class PypeItMetaData:
         if len(self.spectrograph.configuration_keys()) == 0:
             self.configs = {}
             self.configs[next(cfg_gen)] = {}
-            msgs.info('All files assumed to be from a single configuration.')
+            log.info('All files assumed to be from a single configuration.')
             return self._get_cfgs(copy=copy, rm_none=rm_none)
 
         # Use the first file to set the first unique configuration
@@ -790,7 +790,7 @@ class PypeItMetaData:
             # Add the configuration
             self.configs[setup] = cfg
 
-        msgs.info(f'Found {len(self.configs)} unique configuration(s).')
+        log.info(f'Found {len(self.configs)} unique configuration(s).')
         return self._get_cfgs(copy=copy, rm_none=rm_none)
 
     def set_configurations(self, configs=None, force=False, fill=None):
@@ -927,7 +927,7 @@ class PypeItMetaData:
                     # Warn the user that the matching meta values are not
                     # unique for this configuration.
                     if uniq_meta.size != 1:
-                        msgs.warning('When setting the instrument configuration for {0} '.format(ftype)
+                        log.warning('When setting the instrument configuration for {0} '.format(ftype)
                                   + 'frames, configuration {0} does not have unique '.format(cfg_key)
                                   + '{0} values.' .format(mkey))
                     # Find the frames of this type that match any of the
@@ -952,7 +952,7 @@ class PypeItMetaData:
             cfg_gen = self.configuration_generator(start=len(np.unique(self.table['setup'][np.logical_not(not_setup)])))
             nw_setup = next(cfg_gen)
             self.configs[nw_setup] = {}
-            msgs.warning('All files that did not match any setup are grouped into a single configuration.')
+            log.warning('All files that did not match any setup are grouped into a single configuration.')
             self.table['setup'][not_setup] = nw_setup
 
     def clean_configurations(self):
@@ -982,7 +982,7 @@ class PypeItMetaData:
             # Check that the metadata are valid for this column.
             indx = np.isin(self[key], cfg_limits[key])
             if not np.all(indx):
-                msgs.warning('Found frames with invalid {0}.'.format(key))
+                log.warning('Found frames with invalid {0}.'.format(key))
             good &= indx
 
         if np.all(good):
@@ -996,7 +996,7 @@ class PypeItMetaData:
         indx = np.where(np.logical_not(good))[0]
         for i in indx:
             msg += '    {0}\n'.format(self['filename'][i])
-        msgs.warning(msg)
+        log.warning(msg)
         # And remove 'em
         self.table = self.table[good]
 
@@ -1227,7 +1227,7 @@ class PypeItMetaData:
             if 'frametype' not in self.keys():
                 raise PypeItError('To ignore frames, types must have been defined; run get_frame_types.')
             list_ignore_frames = list(ignore_frames.keys())
-            msgs.info('Unique configurations ignore frames with type: {0}'.format(list_ignore_frames))
+            log.info('Unique configurations ignore frames with type: {0}'.format(list_ignore_frames))
             for ftype in list_ignore_frames:
                 ignmsk |= self.find_frames(ftype)
         # Isolate the frames to be ignored
@@ -1408,14 +1408,14 @@ class PypeItMetaData:
         """
         # Checks
         if 'frametype' in self.keys() or 'framebit' in self.keys():
-            msgs.warning('Removing existing frametype and framebit columns.')
+            log.warning('Removing existing frametype and framebit columns.')
         if 'frametype' in self.keys():
             del self.table['frametype']
         if 'framebit' in self.keys():
             del self.table['framebit']
 
         # Start
-        msgs.info("Typing files")
+        log.info("Typing files")
         type_bits = np.zeros(len(self), dtype=self.type_bitmask.minimum_dtype())
     
         # Use the user-defined frame types from the input dictionary
@@ -1425,7 +1425,7 @@ class PypeItMetaData:
                     raise PypeItError('Your pypeit file has duplicate filenames which is not allowed.')
                 else:
                     raise PypeItError('The user-provided dictionary does not match table length.')
-            msgs.info('Using user-provided frame types.')
+            log.info('Using user-provided frame types.')
             for ifile,ftypes in user.items():
                 indx = self['filename'] == ifile
                 try:
@@ -1456,19 +1456,19 @@ class PypeItMetaData:
         # Find the files without any types
         indx = np.logical_not(self.type_bitmask.flagged(type_bits))
         if np.any(indx):
-            msgs.info("Couldn't identify the following files:")
+            log.info("Couldn't identify the following files:")
             for f in self['filename'][indx]:
-                msgs.info(f)
+                log.info(f)
             if not flag_unknown:
                 raise PypeItError("Check these files before continuing")
-            msgs.warning("These files are commented out and will be ignored during the reduction.")
+            log.warning("These files are commented out and will be ignored during the reduction.")
             # Comment out the frames that could not be identified
             # first change the dtype of the filename column to be able to add a #
             self['filename'] = self['filename'].value.astype(f"<U{np.char.str_len(self['filename']).max() + 3}")
             self['filename'][indx] = ['# ' + fname for fname in self['filename'][indx]]
     
         # Finish up (note that this is called above if user is not None!)
-        msgs.info("Typing completed!")
+        log.info("Typing completed!")
         return self.set_frame_types(type_bits, merge=merge)
 
     def set_pypeit_cols(self, write_bkg_pairs=False, write_manual=False, write_shift = False):
@@ -1503,7 +1503,7 @@ class PypeItMetaData:
         if write_manual:
             extras += ['manual']
         if write_shift:
-            msgs.info('Adding Shift Column')
+            log.info('Adding Shift Column')
             extras += ['shift']
         for key in extras:
             if key not in columns:
@@ -1620,7 +1620,7 @@ class PypeItMetaData:
         # Grab output columns
         output_cols = self.set_pypeit_cols(write_bkg_pairs=write_bkg_pairs,
                                            write_manual=write_manual)
-        msgs.info(f'Columns being used are: {output_cols}')
+        log.info(f'Columns being used are: {output_cols}')
         cfgs = self.unique_configurations(copy=ignore is not None)
         if ignore is not None:
             for key in cfgs.keys():

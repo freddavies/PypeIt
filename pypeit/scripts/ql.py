@@ -49,7 +49,7 @@ import configobj
 from astropy.table import Table
 
 from pypeit import PypeItError
-from pypeit import msgs
+from pypeit import log
 from pypeit import pypeitsetup
 from pypeit import metadata
 from pypeit import io
@@ -164,7 +164,7 @@ def quicklook_regroup(fitstbl):
                 # Group the unique dither positions
                 dith, inv = np.unique(fitstbl['dithoff'].data[is_type], return_inverse=True)
                 if len(dith) == 1:
-                    msgs.warning('All exposures have the same offset!')
+                    log.warning('All exposures have the same offset!')
                     fitstbl['comb_id'][is_type] = comb_strt
                 else:
                     # This creates comb+bkg pairs that match the absolute value of the offset
@@ -309,7 +309,7 @@ def generate_sci_pypeitfile(redux_path:str,
         if std_spec1d is not None:
             # Found an existing reduction, so remove the standard frames.
             # NOTE: Should not need to regroup!
-            msgs.warning(f'Found existing standard star reduction: {std_spec1d}.  This will be used '
+            log.warning(f'Found existing standard star reduction: {std_spec1d}.  This will be used '
                       'and the standards will not be re-reduced!  To force them to be '
                       're-reduced, use the --clear_science option.')
             ps_sci.remove_table_rows(is_std)
@@ -512,7 +512,7 @@ def match_to_calibs(ps:pypeitsetup.PypeItSetup, calib_dir:str, calibrated_setups
             matched_configs[setup] = None
             continue
         elif len(matched_configs[setup]['setup']) > 1:
-            msgs.warning('Existing calibrations have degenerate configurations!  We recommend you '
+            log.warning('Existing calibrations have degenerate configurations!  We recommend you '
                       'clean your calibrations parent directory.  For now, using the first match.')
         matched_configs[setup]['setup'] = matched_configs[setup]['setup'][0]
         matched_configs[setup]['calib_dir'] = matched_configs[setup]['calib_dir'][0]
@@ -848,7 +848,7 @@ class QL(scriptbase.ScriptBase):
             # TODO: This is now the only place bkg_redux is used...
             bkg_redux = 'bkg_id' in ps_sci.fitstbl.keys() and any(ps_sci.fitstbl['bkg_id'] != -1)
             if bkg_redux:
-                msgs.warning('Dither pattern automatically detected for these observations.  Image '
+                log.warning('Dither pattern automatically detected for these observations.  Image '
                           'combination and background subtraction sequences automatically set; '
                           'confirm the behavior is what you want by checking the auto-generated '
                           'pypeit file.')
@@ -868,7 +868,7 @@ class QL(scriptbase.ScriptBase):
             # in generate_sci_pypeitfile, but it's useful to keep the warning
             # here.
             if any(ps_sci.fitstbl['calib'] != ps_sci.fitstbl['calib'][0]):
-                msgs.warning('Automated configuration assigned multiple calibration groups to your '
+                log.warning('Automated configuration assigned multiple calibration groups to your '
                           'science frames.  Ignoring!  Assigning all frames to the same group.')
                 ps_sci.fitstbl['calib'] = ps_sci.fitstbl['calib'][0]
 
@@ -883,10 +883,10 @@ class QL(scriptbase.ScriptBase):
                                f'in provided parent directory: {args.parent_calib_dir}')
                 # NOTE: Code above check that there is only one setup in ps_sci
                 setup_calib_dir = setup_calib_dir[ps_sci.fitstbl['setup'][0]]['calib_dir']
-                msgs.info(f'Attempting to use archived calibrations found in {setup_calib_dir}.')
+                log.info(f'Attempting to use archived calibrations found in {setup_calib_dir}.')
 
         elif not args.calibs_only:
-            msgs.warning('No science frames found among the files provided.  Will only process '
+            log.warning('No science frames found among the files provided.  Will only process '
                       'calibration frames.  If you have provided science frames, you can specify '
                       'which ones they are using the --sci_files option.')
 
@@ -895,7 +895,7 @@ class QL(scriptbase.ScriptBase):
 
         # Calibrate, if necessary
         if setup_calib_dir is None:
-            msgs.info('Building the processed calibration frames.')
+            log.info('Building the processed calibration frames.')
             # Set the parent directory
             parent_calib_dir = args.redux_path if args.parent_calib_dir is None \
                                     else args.parent_calib_dir
@@ -944,7 +944,7 @@ class QL(scriptbase.ScriptBase):
                 # relevant directory.
                 calib_files = list(setup_calib_dir.glob('*'))
                 if len(calib_files) > 0 and not args.overwrite_calibs:
-                    msgs.info('Calibration files already exist.  Skipping calibration.')
+                    log.info('Calibration files already exist.  Skipping calibration.')
                     continue
 
                 # Run
@@ -955,7 +955,7 @@ class QL(scriptbase.ScriptBase):
                 pypeIt.calib_all()
 
         if args.calibs_only or not any(sci_idx):
-            msgs.info('Only calibrations exist or requested calibration processing only.  Done.')
+            log.info('Only calibrations exist or requested calibration processing only.  Done.')
             return
 
         # Build the PypeIt file for the science frames and link to the existing
@@ -1037,7 +1037,7 @@ class QL(scriptbase.ScriptBase):
         #     screen output)?
 
         exec_s = np.around(time.perf_counter()-tstart, decimals=1)
-        msgs.info(f'Quicklook execution time: {datetime.timedelta(seconds=exec_s)}')
+        log.info(f'Quicklook execution time: {datetime.timedelta(seconds=exec_s)}')
 
 
 def print_offset_report(fitstbl:Table, platescale:float):
@@ -1080,5 +1080,5 @@ def print_offset_report(fitstbl:Table, platescale:float):
             f'{offset_arcsec[iexp] / platescale:6.2f}'
         )
     msg_string += '\n********************************************************'
-    msgs.info(msg_string)
+    log.info(msg_string)
 

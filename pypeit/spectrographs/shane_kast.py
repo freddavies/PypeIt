@@ -10,7 +10,7 @@ import numpy as np
 
 from astropy.time import Time
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit.core import framematch
@@ -154,7 +154,7 @@ class ShaneKastSpectrograph(spectrograph.Spectrograph):
         if ftype in ['arc', 'tilt']:
             return good_exp & self.lamps(fitstbl, 'arcs')#  & (fitstbl['target'] == 'Arcs')
 
-        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
   
     def lamps(self, fitstbl, status):
@@ -422,7 +422,7 @@ class ShaneKastRedSpectrograph(ShaneKastSpectrograph):
 
         # Allow for reading only Amp 2!
         if x1_1 < 3:
-            msgs.warning("Only Amp 2 data was written.  Ignoring Amp 1")
+            log.warning("Only Amp 2 data was written.  Ignoring Amp 1")
             detector_dict['numamplifiers'] = 1
             detector_dict['gain'] = np.atleast_1d(detector_dict['gain'][0])
             detector_dict['ronoise'] = np.atleast_1d(detector_dict['ronoise'][0])

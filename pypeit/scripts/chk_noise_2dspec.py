@@ -16,7 +16,7 @@ from astropy.modeling.models import Gaussian1D
 from astropy.table import Table
 
 from pypeit import spec2dobj
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import io
 from pypeit import utils
@@ -275,7 +275,7 @@ class ChkNoise2D(scriptbase.ScriptBase):
                 # Cut down
                 chi_select = chi_slit * input_mask
                 if np.all(chi_select == 0):
-                    msgs.warning(f"All of the chi values are masked in slit {pypeit_id} of {basename}!")
+                    log.warning(f"All of the chi values are masked in slit {pypeit_id} of {basename}!")
                     continue
 
                 # Flux to show
@@ -294,7 +294,7 @@ class ChkNoise2D(scriptbase.ScriptBase):
 
                 # Wavelengths
                 if spec2DObj.waveimg[input_mask].size == 0:
-                    msgs.warning(f"None of the wavelength values work in slit {pypeit_id} of {basename}!")
+                    log.warning(f"None of the wavelength values work in slit {pypeit_id} of {basename}!")
                     continue
                 lbda_1darray = spec2DObj.waveimg[:, mid_spat]
 

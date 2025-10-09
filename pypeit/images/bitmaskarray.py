@@ -17,7 +17,7 @@ from astropy.io import fits
 
 from pypeit.datamodel import DataContainer
 from pypeit.bitmask import BitMask
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 
 class BitMaskArray(DataContainer):

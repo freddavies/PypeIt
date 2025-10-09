@@ -15,7 +15,7 @@ import scipy.ndimage
 import scipy.optimize
 import scipy.signal
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import utils
 
@@ -167,7 +167,7 @@ def lacosmic(sciframe, saturation=None, nonlinear=1., bpm=None, varframe=None, m
     if varframe is not None and varframe.shape != sciframe.shape:
         raise PypeItError('Variance frame must match shape of science frame.')
 
-    msgs.info("Detecting cosmic rays with the L.A.Cosmic algorithm")
+    log.info("Detecting cosmic rays with the L.A.Cosmic algorithm")
 
     # Setup
     # NOTE: We only need a copy of the image if we're performing more than one
@@ -205,7 +205,7 @@ def lacosmic(sciframe, saturation=None, nonlinear=1., bpm=None, varframe=None, m
     for i in range(maxiter):
 
         if varframe is None:
-            msgs.info("Updating the noise model")
+            log.info("Updating the noise model")
             m5 = scipy.ndimage.median_filter(_sciframe, size=5, mode='mirror')
             noise = np.sqrt(np.absolute(m5))
             # NOTE: Inverting the error avoids division by 0 errors
@@ -215,7 +215,7 @@ def lacosmic(sciframe, saturation=None, nonlinear=1., bpm=None, varframe=None, m
         # get its S/N.  NOTE: the division by 2 in the S/N calculation is from
         # the 2x2 subsampling.  astropy.convolution.convolve gives the same
         # result as scipy.signal.convolve2d, but is nearly a factor of 2 faster.
-        msgs.info("Convolving image with Laplacian kernel")
+        log.info("Convolving image with Laplacian kernel")
         deriv = convolve(boxcar_replicate(_sciframe, 2), laplkernel, normalize_kernel=False,
                          boundary='extend')
         s = utils.rebinND(np.clip(deriv, 0, None), _sciframe.shape) * _inv_err / 2.0
@@ -226,13 +226,13 @@ def lacosmic(sciframe, saturation=None, nonlinear=1., bpm=None, varframe=None, m
         # Candidate cosmic rays
         cosmics = sp > sigclip
         ncr = np.sum(cosmics)
-        msgs.info(f'Found {ncr} candidate cosmic-ray pixels')
+        log.info(f'Found {ncr} candidate cosmic-ray pixels')
 
         if _bpm is not None:
             # Remove known bad pixels
             cosmics &= np.logical_not(_bpm)
             ncr = np.sum(cosmics)
-            msgs.info(f'Reduced to {ncr} candidates after excluding known bad pixels.')
+            log.info(f'Reduced to {ncr} candidates after excluding known bad pixels.')
 
         if remove_compact_obj:
             # Build the fine structure image
@@ -243,11 +243,11 @@ def lacosmic(sciframe, saturation=None, nonlinear=1., bpm=None, varframe=None, m
             # Require cosmics to have significant contrast
             cosmics &= sp/f > objlim
             ncr = np.sum(cosmics)
-            msgs.info(f'Reduced to {ncr} candidates after excluding compact objects.')
+            log.info(f'Reduced to {ncr} candidates after excluding compact objects.')
 
         # What follows is a special treatment for neighbors, with more relaxed
         # constraints.
-        msgs.info("Finding neighboring pixels affected by cosmic rays")
+        log.info("Finding neighboring pixels affected by cosmic rays")
         # We grow these cosmics a first time to determine the immediate
         # neighborhod, keeping those that also meet the S/N requirement
         cosmics = scipy.ndimage.binary_dilation(cosmics, structure=growkernel)
@@ -257,18 +257,18 @@ def lacosmic(sciframe, saturation=None, nonlinear=1., bpm=None, varframe=None, m
         cosmics = scipy.ndimage.binary_dilation(cosmics, structure=growkernel)
         cosmics &= sp > sigcliplow
         ncr = np.sum(cosmics)
-        msgs.info(f'Changed to {ncr} candidates after evaluating neighboring pixels.')
+        log.info(f'Changed to {ncr} candidates after evaluating neighboring pixels.')
 
         if _bpm is not None:
             # Remove known bad pixels
             cosmics &= np.logical_not(_bpm)
             ncr = np.sum(cosmics)
-            msgs.info(f'Reduced to {ncr} candidates after excluding known bad pixels.')
+            log.info(f'Reduced to {ncr} candidates after excluding known bad pixels.')
 
         # Determine how many new cosmics were found
         nnew = np.sum(np.logical_not(crmask) & cosmics)
         crmask |= cosmics
-        msgs.info(f'Iteration {i+1}: {np.sum(crmask)} pixels identified as cosmic rays '
+        log.info(f'Iteration {i+1}: {np.sum(crmask)} pixels identified as cosmic rays '
                   f'({nnew} are new)')
         if nnew == 0 or i == maxiter - 1:
             # TODO: Warn the user if the maximum number of iterations was
@@ -276,7 +276,7 @@ def lacosmic(sciframe, saturation=None, nonlinear=1., bpm=None, varframe=None, m
             break
 
         # Prepare for the next iteration
-        msgs.info('Preparing for next iteration')
+        log.info('Preparing for next iteration')
         _sciframe = boxcar_fill(_sciframe, 5, bpm=crmask if _bpm is None else crmask | _bpm)
 
     if not rm_false_pos:
@@ -284,7 +284,7 @@ def lacosmic(sciframe, saturation=None, nonlinear=1., bpm=None, varframe=None, m
 
     # Additional algorithms (not traditionally implemented by LA cosmic) to
     # remove some false positives.
-    #msgs.debug("The following algorithm would be better on the rectified, tilts-corrected image")
+    #log.debug("The following algorithm would be better on the rectified, tilts-corrected image")
     filt  = scipy.ndimage.sobel(sciframe, axis=1, mode='constant')
     _inv_mad = utils.inverse(np.sqrt(np.abs(sciframe))) # Avoid divisions by 0
     filty = scipy.ndimage.sobel(filt * _inv_mad, axis=0, mode='constant')
@@ -297,7 +297,7 @@ def lacosmic(sciframe, saturation=None, nonlinear=1., bpm=None, varframe=None, m
     sigsmth[np.isnan(sigsmth)] = 0.0
 
     crmask &= sigsmth > sigclip
-    msgs.info(f'{np.sum(crmask)} pixels identified as cosmic rays after removing false positives')
+    log.info(f'{np.sum(crmask)} pixels identified as cosmic rays after removing false positives')
     return grow_mask(crmask, grow) if grow > 0 else crmask
 
 
@@ -459,7 +459,7 @@ def gain_frame(amp_img, gain):
         `numpy.ndarray`_: Image with the gain for each pixel.
     """
     # TODO: Remove this or actually do it.
-    # msgs.warning("Should probably be measuring the gain across the amplifier boundary")
+    # log.warning("Should probably be measuring the gain across the amplifier boundary")
     # Build and return the gain image
     gain_img = np.zeros_like(amp_img, dtype=float)
     for i,_gain in enumerate(gain):
@@ -785,7 +785,7 @@ def subtract_pattern(rawframe, datasec_img, oscansec_img, frequency=None, axis=1
     Returns:
         `numpy.ndarray`_: The input frame with the pattern subtracted
     """
-    msgs.info("Analyzing detector pattern")
+    log.info("Analyzing detector pattern")
 
     # Copy the data so that the subtraction is not done in place
     frame_orig = rawframe.copy()
@@ -848,7 +848,7 @@ def subtract_pattern(rawframe, datasec_img, oscansec_img, frequency=None, axis=1
         frq_mod = np.polyval(cc, all_rows) * (overscan.shape[1]-1)
 
         # Convert frequency to the size of the overscan region
-        msgs.info("Subtracting detector pattern from amplifier {0:d} with frequency = {1:f}".format(amp, use_fr))
+        log.info("Subtracting detector pattern from amplifier {0:d} with frequency = {1:f}".format(amp, use_fr))
 
         # Get a first guess of the amplitude and phase information
         xdata, step = np.linspace(0.0, 1.0, overscan.shape[1], retstep=True)
@@ -860,7 +860,7 @@ def subtract_pattern(rawframe, datasec_img, oscansec_img, frequency=None, axis=1
 
         # STEP 2 - Using the model frequency, calculate how amplitude depends on pixel row (usually constant)
         # Use the above to as initial guess parameters for a chi-squared minimisation of the amplitudes
-        msgs.info("Measuring amplitude-pixel dependence of amplifier {0:d}".format(amp))
+        log.info("Measuring amplitude-pixel dependence of amplifier {0:d}".format(amp))
         nspec = overscan.shape[0]
         model_pattern = np.zeros_like(oscandata)
         cosfunc = lambda xarr, *p: p[0] * np.cos(2.0 * np.pi * xarr + p[1])
@@ -883,10 +883,10 @@ def subtract_pattern(rawframe, datasec_img, oscansec_img, frequency=None, axis=1
                     bounds=([0, -np.inf],[np.inf, np.inf])
                 )
             except ValueError:
-                msgs.warning("Input data invalid for pattern subtraction of row {0:d}/{1:d}".format(ii + 1, overscan.shape[0]))
+                log.warning("Input data invalid for pattern subtraction of row {0:d}/{1:d}".format(ii + 1, overscan.shape[0]))
                 continue
             except RuntimeError:
-                msgs.warning("Pattern subtraction fit failed for row {0:d}/{1:d}".format(ii + 1, overscan.shape[0]))
+                log.warning("Pattern subtraction fit failed for row {0:d}/{1:d}".format(ii + 1, overscan.shape[0]))
                 continue
             amps_fit[ii] = popt[0]
         # Construct a model of the amplitudes as a fucntion of spectral pixel
@@ -895,7 +895,7 @@ def subtract_pattern(rawframe, datasec_img, oscansec_img, frequency=None, axis=1
 
         # STEP 3 - Using the model frequency and amplitude, calculate the phase of every pixel row
         # Now determine the phase, given a prior on the amplitude and frequency
-        msgs.info("Calculating pattern phases of amplifier {0:d}".format(amp))
+        log.info("Calculating pattern phases of amplifier {0:d}".format(amp))
         cosfunc = lambda xarr, *p: np.cos(2.0 * np.pi * xarr + p[0])
         cosfunc_full = lambda xarr, *p: p[0] * np.cos(2.0 * np.pi * p[1] * xarr + p[2])
         for ii in range(nspec):
@@ -913,10 +913,10 @@ def subtract_pattern(rawframe, datasec_img, oscansec_img, frequency=None, axis=1
                     bounds=([-np.inf], [np.inf])
                 )
             except ValueError:
-                msgs.warning("Input data invalid for pattern subtraction of row {0:d}/{1:d}".format(ii + 1, overscan.shape[0]))
+                log.warning("Input data invalid for pattern subtraction of row {0:d}/{1:d}".format(ii + 1, overscan.shape[0]))
                 continue
             except RuntimeError:
-                msgs.warning("Pattern subtraction fit failed for row {0:d}/{1:d}".format(ii + 1, overscan.shape[0]))
+                log.warning("Pattern subtraction fit failed for row {0:d}/{1:d}".format(ii + 1, overscan.shape[0]))
                 continue
             # Calculate the model pattern, given the amplitude, frequency and phase information
             model_pattern[ii, :] = cosfunc_full(xdata_all, amp_mod[ii], frq_mod[ii], popt[0])
@@ -925,7 +925,7 @@ def subtract_pattern(rawframe, datasec_img, oscansec_img, frequency=None, axis=1
         full_model[osd_slice] = model_pattern
         old_ron = astropy.stats.sigma_clipped_stats(overscan, sigma=5, stdfunc='mad_std')[-1]
         new_ron = astropy.stats.sigma_clipped_stats(overscan-full_model[os_slice], sigma=5, stdfunc='mad_std')[-1]
-        msgs.info(f'Effective read noise of amplifier {amp} reduced by a factor of {old_ron/new_ron:.2f}x')
+        log.info(f'Effective read noise of amplifier {amp} reduced by a factor of {old_ron/new_ron:.2f}x')
 
     # Transpose if the input frame if applied along a different axis
     if axis == 0:
@@ -1432,7 +1432,7 @@ def nonlinear_counts(counts, ampimage, nonlinearity_coeffs):
     corr_counts :
         Array with the corrected counts.
     """
-    msgs.info('Applying a non-linearity correction to the counts.')
+    log.info('Applying a non-linearity correction to the counts.')
     # Check the input
     if counts.shape != ampimage.shape:
         raise PypeItError('Counts and amplifier image have different shapes.')

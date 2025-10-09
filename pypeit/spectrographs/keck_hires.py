@@ -14,7 +14,7 @@ from scipy.io import readsav
 
 from astropy import time
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit import io
@@ -427,7 +427,7 @@ class KECKHIRESSpectrograph(spectrograph.Spectrograph):
             # Arc and tilt frames are typed together
             return good_exp & (fitstbl['idname'] == 'Line')
 
-        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def vet_assigned_ftypes(self, type_bits, fitstbl):
@@ -509,11 +509,11 @@ class KECKHIRESSpectrograph(spectrograph.Spectrograph):
         if ftype == 'slitless_pixflat':
             # Check for the required info
             if len(fitstbl) == 0:
-                msgs.warning('Fitstbl provided is emtpy. No parsing done.')
+                log.warning('Fitstbl provided is emtpy. No parsing done.')
                 # return empty array
                 return np.array([], dtype=int)
             elif det is None:
-                msgs.warning('Detector number must be provided to parse slitless_pixflat frames.  No parsing done.')
+                log.warning('Detector number must be provided to parse slitless_pixflat frames.  No parsing done.')
                 # return index array of length of fitstbl
                 return np.arange(len(fitstbl))
 
@@ -534,7 +534,7 @@ class KECKHIRESSpectrograph(spectrograph.Spectrograph):
                     # red detector
                     return np.where(np.int32(fitstbl['xdangle'].value) == -5)[0]
             else:
-                msgs.warning('The provided list of slitless_pixflat frames does not have exactly 3 unique XDANGLE values. '
+                log.warning('The provided list of slitless_pixflat frames does not have exactly 3 unique XDANGLE values. '
                           'Pypeit cannot determine which slitless_pixflat frame corresponds to the requested detector. '
                           'All frames will be used.')
                 return np.arange(len(fitstbl))
@@ -600,7 +600,7 @@ class KECKHIRESSpectrograph(spectrograph.Spectrograph):
         binning = self.get_meta_value(self.get_headarr(hdu), 'binning')
 #        # TODO: JFH I think this works fine
 #        if binning != '3,1':
-#            msgs.warning("This binning for HIRES might not work.  But it might..")
+#            log.warning("This binning for HIRES might not work.  But it might..")
 
         # We are flipping this because HIRES stores the binning oppostire of the (binspec, binspat) pypeit convention.
         binspatial, binspec = parse.parse_binning(head0['BINNING'])

@@ -92,7 +92,7 @@ class SensFunc(scriptbase.ScriptBase):
 
         import os
 
-        from pypeit import msgs
+        from pypeit import log
         from pypeit import PypeItError
         from pypeit import inputfiles
         from pypeit import io
@@ -101,7 +101,7 @@ class SensFunc(scriptbase.ScriptBase):
         from pypeit.spectrographs.util import load_spectrograph
 
         # Set the verbosity, and create a logfile if verbosity == 2
-#        msgs.set_logfile_and_verbosity('sensfunc', args.verbosity)
+#        log.set_logfile_and_verbosity('sensfunc', args.verbosity)
 
         # Check parameter inputs
         if args.algorithm is not None and args.sens_file is not None:
@@ -195,7 +195,7 @@ class SensFunc(scriptbase.ScriptBase):
         # command line, overwrite the parset values read in from the .sens file
 
         # Write the par to disk
-        msgs.info(f'Writing the parameters to {args.par_outfile}')
+        log.info(f'Writing the parameters to {args.par_outfile}')
         par['sensfunc'].to_config(args.par_outfile, section_name='sensfunc', include_descr=False)
 
         # TODO JFH I would like to be able to run only

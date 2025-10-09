@@ -13,7 +13,7 @@ import numpy as np
 
 from astropy.io import fits
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import utils
 from pypeit.io import hdu_iter_by_ext
@@ -407,7 +407,7 @@ def pca_trace_object(trace_cen, order=None, trace_bpm=None, min_length=0.6, npca
         _order = np.clip(order - np.arange(cenpca.npca), 1, None).astype(int)
     if _order.size != cenpca.npca:
         raise PypeItError('Number of polynomial orders does not match the number of PCA components.')
-    msgs.info('Order of function fit to each component: {0}'.format(_order))
+    log.info('Order of function fit to each component: {0}'.format(_order))
 
     # Apply a 10% relative error to each coefficient. This performs
     # better than use_mad, since larger coefficients will always be

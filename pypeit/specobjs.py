@@ -18,7 +18,7 @@ from astropy.io import fits
 from astropy.table import Table
 from astropy.time import Time
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import specobj
 from pypeit import io
@@ -250,7 +250,7 @@ class SpecObjs:
                 raise PypeItError(msg)
             else:
                 msg += f"\n-- The missing data will be removed --"
-                msgs.warning(msg)
+                log.warning(msg)
                 # Remove missing data
                 r_indx = np.where(none_flux)[0]
                 self.remove_sobj(r_indx)
@@ -407,7 +407,7 @@ class SpecObjs:
 
         """
         if sobjs_neg.nobj == 0:
-            msgs.warning("No negative objects found...")
+            log.warning("No negative objects found...")
             return
         # Assign the sign and the objids
         sobjs_neg.sign = -1.0
@@ -684,7 +684,7 @@ class SpecObjs:
                                              extinct_file=par['extinct_file'],
                                              airmass=float(self.header['AIRMASS']))
                 elif indx.size == 0:
-                    msgs.info('Unable to flux calibrate order = {:} as it is not in your sensitivity function. '
+                    log.info('Unable to flux calibrate order = {:} as it is not in your sensitivity function. '
                               'Something is probably wrong with your sensitivity function.'.format(sci_obj.ECH_ORDER))
                 else:
                     raise PypeItError('This should not happen')
@@ -800,7 +800,7 @@ class SpecObjs:
                 If True, run in debug mode.
         """
         if os.path.isfile(outfile) and not overwrite:
-            msgs.warning(f'{outfile} exits. Set overwrite=True to overwrite it.')
+            log.warning(f'{outfile} exits. Set overwrite=True to overwrite it.')
             return
 
         # If the file exists and update_det (and slit_spat_num) is provided, use the existing header
@@ -914,7 +914,7 @@ class SpecObjs:
              #embed()
              #exit()
         hdulist.writeto(outfile, overwrite=overwrite)
-        msgs.info(f'Wrote 1D spectra to {outfile}')
+        log.info(f'Wrote 1D spectra to {outfile}')
 
     def write_info(self, outfile, pypeline):
         """

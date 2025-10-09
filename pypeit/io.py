@@ -36,7 +36,7 @@ import time
 # favor of specutils.Spectrum1D (or whatever it is in specutils>2.0).
 from linetools.spectra import xspectrum1d
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import dataPaths
 from pypeit import __version__
@@ -672,9 +672,9 @@ def write_to_fits(d, ofile, name=None, hdr=None, overwrite=False, checksum=True)
     # this is slow but still faster than if you have astropy.io.fits do
     # it directly
     if _ofile is not ofile:
-        msgs.info('Compressing file: {0}'.format(_ofile))
+        log.info('Compressing file: {0}'.format(_ofile))
         compress_file(_ofile, overwrite=True)
-    msgs.info('File written to: {0}'.format(ofile))
+    log.info('File written to: {0}'.format(ofile))
 
 
 def hdu_iter_by_ext(hdu, ext=None, hdu_prefix=None):
@@ -788,7 +788,7 @@ def fits_open(filename, **kwargs):
     try:
         return fits.open(filename, **kwargs)
     except OSError as e:
-        msgs.warning(f'Error opening {filename} ({e}).  Trying again by setting '
+        log.warning(f'Error opening {filename} ({e}).  Trying again by setting '
                   'ignore_missing_end=True, assuming the error was a header problem.')
         try:
             return fits.open(filename, ignore_missing_end=True, **kwargs)

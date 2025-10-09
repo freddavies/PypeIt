@@ -9,7 +9,7 @@ import astropy.table
 import linetools.utils
 import numpy as np
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import dataPaths
 from pypeit import cache
@@ -221,7 +221,7 @@ def load_line_lists(lamps, all=False, include_unknown:bool=False, restrict_on_in
             i1 = line_file.rfind('_')
             lamps.append(line_file[i0+1:i1])
 
-    msgs.info(f"Arc lamps used: {', '.join(lamps)}")
+    log.info(f"Arc lamps used: {', '.join(lamps)}")
     # Read standard files
     # NOTE: If one of the `lamps` does not exist, dataPaths.linelist.get_file_path()
     #       will exit with raise PypeItError().
@@ -298,7 +298,7 @@ def load_tree(polygon=4, numsearch=20):
             file_load = pickle.load(f_obj)
         index = np.load(fileindx)
     except FileNotFoundError:
-        msgs.info(
+        log.info(
             'The requested KDTree was not found on disk\nplease be patient while the ThAr KDTree '
             'is built and saved to disk.'
         )

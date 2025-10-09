@@ -16,7 +16,7 @@ from astropy.table import Table
 from astropy import convolution
 from astropy import constants
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import cache
 from pypeit import utils
 from pypeit.core import arc
@@ -288,9 +288,9 @@ def get_wave_grid(waves=None, gpms=None, wave_method='linear', iref=0, wave_grid
             wave_grid = np.power(10.0,newloglam)
 
         elif wave_method == 'iref': # Use the iref index wavelength array
-            msgs.info(f'iref for the list is set to {iref}')
-            msgs.info(f'The shape of the list is: {np.shape(waves)}')
-            msgs.info(f'shape of the first wave_grid in the list is: {np.shape(waves[iref])}')
+            log.info(f'iref for the list is set to {iref}')
+            log.info(f'The shape of the list is: {np.shape(waves)}')
+            log.info(f'shape of the first wave_grid in the list is: {np.shape(waves[iref])}')
             wave_tmp = waves[iref]
             wave_grid = wave_tmp[wave_tmp > 1.0]
             if spec_samp_fact != 1: # adjust sampling via internal interpolation
@@ -455,7 +455,7 @@ def zerolag_shift_stretch(theta, y1, y2, stretch_func = 'quadratic'):
     corr_zero = np.sum(y1*y2_corr)
     corr_denom = np.sqrt(np.sum(y1*y1)*np.sum(y2_corr*y2_corr))
     if corr_denom == 0.0:
-        msgs.warning('The shifted and stretched spectrum is zero everywhere. Cross-correlation cannot be performed. There is likely a bug somewhere')
+        log.warning('The shifted and stretched spectrum is zero everywhere. Cross-correlation cannot be performed. There is likely a bug somewhere')
         raise PypeItError()
     corr_norm = corr_zero / corr_denom
     return -corr_norm
@@ -515,7 +515,7 @@ def get_xcorr_arc(inspec1, sigdetect=5.0, input_thresh=None, sig_ceil=10.0, perc
 
     ampl_clip = np.clip(ampl, None, ceil_upper)
     if ampl_clip.size == 0:
-        msgs.warning('No lines were detected in the arc spectrum. Cannot create a synthetic arc spectrum for cross-correlation.')
+        log.warning('No lines were detected in the arc spectrum. Cannot create a synthetic arc spectrum for cross-correlation.')
         return np.zeros_like(inspec1)
 
     # Make a fake arc by plopping down Gaussians at the location of every centroided line we found
@@ -597,7 +597,7 @@ def xcorr_shift(inspec1, inspec2, percent_ceil=50.0, use_raw_arc=False, sigdetec
         y1, y2 = inspec1, inspec2
 
     if np.all(y1 == 0) or np.all(y2 == 0):
-        msgs.warning('One of the input spectra is all zeros. Returning shift = 0.0')
+        log.warning('One of the input spectra is all zeros. Returning shift = 0.0')
         return 0.0, 0.0
 
     nspec = y1.shape[0]
@@ -760,7 +760,7 @@ def xcorr_shift_stretch(inspec1, inspec2, cc_thresh=-1.0, percent_ceil=50.0, use
                        sig_ceil=sig_ceil, fwhm=fwhm)
 
     if np.all(y1 == 0) or np.all(y2 == 0):
-        msgs.warning('No lines detected punting on shift/stretch')
+        log.warning('No lines detected punting on shift/stretch')
         return 0, None, None, None, None, None, None
 
     # Do the cross-correlation first and determine the initial shift
@@ -787,7 +787,7 @@ def xcorr_shift_stretch(inspec1, inspec2, cc_thresh=-1.0, percent_ceil=50.0, use
                 zerolag_shift_stretch, args=(y1,y2), x0=x0_guess, tol=toler, 
                 bounds=bounds, disp=False, polish=True, seed=seed)
     except PypeItError:
-        msgs.warning("Differential evolution failed.")
+        log.warning("Differential evolution failed.")
         return 0, None, None, None, None, None, None
     corr_de = -result.fun
     shift_de = result.x[0]
@@ -796,11 +796,11 @@ def xcorr_shift_stretch(inspec1, inspec2, cc_thresh=-1.0, percent_ceil=50.0, use
 
 
     if not result.success:
-        msgs.warning('Fit for shift and stretch did not converge!')
+        log.warning('Fit for shift and stretch did not converge!')
 
     if(corr_de < corr_cc):
         # Occasionally the differential evolution crapps out and returns a value worse that the CC value. In these cases just use the cc value
-        msgs.warning(
+        log.warning(
             'Shift/Stretch optimizer performed worse than simple x-correlation.  '
             'Returning simple x-correlation shift and no stretch:\n'
             f' Optimizer: corr={corr_de:5.3f}, shift={shift_de:5.3f}, stretch={stretch_de:7.5f}\n'
@@ -953,12 +953,12 @@ def write_template(nwwv, nwspec, binspec, outpath, outroot, det_cut=None,
     # Write
     outfile = os.path.join(outpath, outroot)
     tbl.write(outfile, overwrite=overwrite)
-    msgs.info(f"Your arxiv solution has been written to {outfile}\n")
+    log.info(f"Your arxiv solution has been written to {outfile}\n")
     if to_cache:
         # Also copy the file to the cache for direct use
         cache.write_file_to_cache(outroot, outroot, "arc_lines/reid_arxiv")
 
-        msgs.info(f"Your arxiv solution has also been cached.\n"
+        log.info(f"Your arxiv solution has also been cached.\n"
                   f"To utilize this wavelength solution, insert the\n"
                   f"following block in your PypeIt Reduction File:\n"
                   f" [calibrations]\n"
@@ -966,7 +966,7 @@ def write_template(nwwv, nwspec, binspec, outpath, outroot, det_cut=None,
                   f"     reid_arxiv = {outroot}\n"
                   f"     method = full_template\n")
         print("")  # Empty line for clarity
-        msgs.info(f"To use exactly the solutions created above\n"
+        log.info(f"To use exactly the solutions created above\n"
                   f"disable the 2d fitting by adding the keyword ech_2dfit = False")
     print("")  # Empty line for clarity
-    msgs.info("Please consider sharing your solution with the PypeIt Developers.")
+    log.info("Please consider sharing your solution with the PypeIt Developers.")

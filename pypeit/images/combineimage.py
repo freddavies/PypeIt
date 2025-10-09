@@ -8,7 +8,7 @@ from IPython import embed
 
 import numpy as np
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit.core import combine
 from pypeit.core import procimg
@@ -192,7 +192,7 @@ class CombineImage:
         # TODO: JFH suggests that we move this to calibrations.check_calibrations
         if np.any(np.absolute(np.diff(exptime)) > 0):
             # TODO: This should likely throw an error instead!
-            msgs.warning('Exposure time is not consistent for all images being combined!  '
+            log.warning('Exposure time is not consistent for all images being combined!  '
                       'Using the average.')
             comb_texp = np.mean(exptime)
         else:
@@ -205,15 +205,15 @@ class CombineImage:
         no_nan = np.logical_not(np.isnan(spat_flex))
         if np.sum(no_nan) > 0:
             if np.any(np.absolute(np.diff(spat_flex[no_nan])) > 0.1):
-                msgs.warning(f'Spatial flexure is not consistent for all images being combined: {spat_flex}.')
+                log.warning(f'Spatial flexure is not consistent for all images being combined: {spat_flex}.')
                 comb_spat_flex = np.round(np.mean(spat_flex[no_nan]),3)
-                msgs.warning(f'Using the average: {comb_spat_flex}.')
+                log.warning(f'Using the average: {comb_spat_flex}.')
             else:
                 comb_spat_flex = spat_flex[no_nan][0]
 
         # scale the images to their mean, if requested, before combining
         if self.par['scale_to_mean']:
-            msgs.info("Scaling images to have the same mean before combining")
+            log.info("Scaling images to have the same mean before combining")
             # calculate the mean of the images
             [mean_img], _, mean_gpm, _ = combine.weighted_combine(np.ones(self.nimgs, dtype=float)/self.nimgs,
                                                                   [img_stack],

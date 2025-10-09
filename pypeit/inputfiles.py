@@ -17,7 +17,7 @@ import yaml
 
 from pypeit import utils
 from pypeit.io import files_from_extension
-from pypeit import msgs, __version__
+from pypeit import log, __version__
 from pypeit import PypeItError
 from pypeit.spectrographs.util import load_spectrograph
 from pypeit.par.pypeitpar import PypeItPar
@@ -133,7 +133,7 @@ class InputFile:
             :class:`InputFile`: An instance of the InputFile class
         """
         # Read in the pypeit reduction file
-        msgs.info('Loading the reduction file')
+        log.info('Loading the reduction file')
         lines = cls.readlines(input_file)
        
         if not preserve_comments:
@@ -211,7 +211,7 @@ class InputFile:
                 is_config[data_end+1:] = False
 
         # vet
-        msgs.info(f'{cls.flavor} input file loaded successfully.')
+        log.info(f'{cls.flavor} input file loaded successfully.')
 
         # Instantiate
         return cls(config=list(lines[is_config]), 
@@ -589,7 +589,7 @@ class InputFile:
                     f.write(f"{self.data_block} end\n")
                     f.write("\n")
 
-        msgs.info(f'{self.flavor} input file written to: {input_file}')
+        log.info(f'{self.flavor} input file written to: {input_file}')
 
     def get_spectrograph(self):
         """
@@ -669,7 +669,7 @@ class PypeItFile(InputFile):
             raise PypeItError("Setup does not appear in your setup block! Add it")
 
         # Done
-        msgs.info('PypeIt file successfully vetted.')
+        log.info('PypeIt file successfully vetted.')
 
     @property
     def frametypes(self):
@@ -756,7 +756,7 @@ class FluxFile(InputFile):
         #  This is allowed if using an archived sensitivity function
         #  And the checking has to be done in the script as the specgtrograph must be known..
         if 'sensfile' not in self.data.keys():
-            msgs.warning("sensfile column not provided.  Fluxing will crash if an archived sensitivity function does not exist")
+            log.warning("sensfile column not provided.  Fluxing will crash if an archived sensitivity function does not exist")
             self.data['sensfile'] = ''
 
     @property
@@ -866,7 +866,7 @@ class Coadd2DFile(InputFile):
             raise PypeItError(f"Missing spectrograph in the Parameter block of your .coadd2d file.  Add it!")
 
         # Done
-        msgs.info('.coadd2d file successfully vetted.')
+        log.info('.coadd2d file successfully vetted.')
 
 
 class Coadd3DFile(InputFile):
@@ -889,7 +889,7 @@ class Coadd3DFile(InputFile):
             raise PypeItError(f"Missing spectrograph in the Parameter block of your .coadd2d file.  Add it!")
 
         # Done
-        msgs.info('.coadd3d file successfully vetted.')
+        log.info('.coadd3d file successfully vetted.')
 
     @property
     def options(self):
@@ -1046,7 +1046,7 @@ class FlexureFile(InputFile):
             raise PypeItError(f"Missing spectrograph in the Parameter block of your .flex file.  Add it!")
 
         # Done
-        msgs.info('.flex file successfully vetted.')
+        log.info('.flex file successfully vetted.')
 
 class Collate1DFile(InputFile):
     """Child class for collate 1D script
@@ -1094,7 +1094,7 @@ class RawFiles(InputFile):
         super().vet()
 
         # Done
-        msgs.info('.rawfiles file successfully vetted.')
+        log.info('.rawfiles file successfully vetted.')
 
 
 # NOTE: I originally had this in pypeit/io.py, but I think it was causing a

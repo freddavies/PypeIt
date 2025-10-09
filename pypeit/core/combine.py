@@ -6,7 +6,7 @@ import numpy as np
 
 from astropy import stats
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import utils
 
@@ -109,7 +109,7 @@ def weighted_combine(weights, sci_list, var_list, inmask_stack,
     if nimgs == 1:
         # If only one image is passed in, simply return the input lists of images, but reshaped
         # to be (nspec, nspat)
-        msgs.warning('Cannot combine a single image. Returning input images')
+        log.warning('Cannot combine a single image. Returning input images')
         sci_list_out = []
         for sci_stack in sci_list:
             sci_list_out.append(sci_stack.reshape(img_shape))
@@ -145,7 +145,7 @@ def weighted_combine(weights, sci_list, var_list, inmask_stack,
         mask_stack = np.logical_not(data_clipped.mask)  # mask_stack = True are good values
     else:
         if sigma_clip and nimgs < 3:
-            msgs.warning('Sigma clipping requested, but you cannot sigma clip with less than 3 '
+            log.warning('Sigma clipping requested, but you cannot sigma clip with less than 3 '
                       'images.  Proceeding without sigma clipping')
         mask_stack = inmask_stack  # mask_stack = True are good values
 

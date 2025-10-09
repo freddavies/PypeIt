@@ -16,7 +16,7 @@ from astropy import units
 
 import linetools.utils
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit import utils
@@ -210,13 +210,13 @@ class KeckLRISSpectrograph(spectrograph.Spectrograph):
         # LRIS sometime misses RA and/or Dec in the header. When this happens, set them to 0
         if meta_key == 'ra':
             if headarr[0].get('RA') is None:
-                msgs.warning('Keyword RA not found in header. Setting to 0')
+                log.warning('Keyword RA not found in header. Setting to 0')
                 return '00:00:00.00'
             else:
                 return headarr[0]['RA']
         elif meta_key == 'dec':
             if headarr[0].get('DEC') is None:
-                msgs.warning('Keyword DEC not found in header. Setting to 0')
+                log.warning('Keyword DEC not found in header. Setting to 0')
                 return '+00:00:00.0'
             else:
                 return headarr[0]['DEC']
@@ -403,7 +403,7 @@ class KeckLRISSpectrograph(spectrograph.Spectrograph):
         if ftype in ['arc', 'tilt']:
             return good_exp & self.lamps(fitstbl, 'arcs') & (fitstbl['hatch'] == 'closed') & no_img
 
-        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def vet_assigned_ftypes(self, type_bits, fitstbl):
@@ -551,7 +551,7 @@ class KeckLRISSpectrograph(spectrograph.Spectrograph):
         fil = utils.find_single_file(f'{raw_file}*', required=True)
 
         # Read
-        msgs.info(f'Reading LRIS file: {fil}')
+        log.info(f'Reading LRIS file: {fil}')
         hdu = io.fits_open(fil)
         head0 = hdu[0].header
 
@@ -1083,7 +1083,7 @@ class KeckLRISBSpectrograph(KeckLRISSpectrograph):
 
         # Only defined for det=1
         if det == 1:
-            msgs.info("Using hard-coded BPM for det=1 on LRISb")
+            log.info("Using hard-coded BPM for det=1 on LRISb")
             bpm_img[:,:3] = 1
 
         return bpm_img
@@ -1285,7 +1285,7 @@ class KeckLRISRSpectrograph(KeckLRISSpectrograph):
             if date < t2020_1:
                 pass
             elif date < t2020_2: # This is for the June 30 2020 run
-                msgs.warning("We are using LRISr gain/RN values based on WMKO estimates.")
+                log.warning("We are using LRISr gain/RN values based on WMKO estimates.")
                 detector_dict1['gain'] = np.atleast_1d([37.6])
                 detector_dict2['gain'] = np.atleast_1d([1.26])
                 detector_dict1['ronoise'] = np.atleast_1d([99.])
@@ -1294,7 +1294,7 @@ class KeckLRISRSpectrograph(KeckLRISSpectrograph):
                 # Note:  We are unlikely to trip this.  Other things probably failed first
                 raise PypeItError("This is the new detector.  Use keck_lris_red_mark4")
             else: # This is the 2020 July 29 run
-                msgs.warning("We are using LRISr gain/RN values based on WMKO estimates.")
+                log.warning("We are using LRISr gain/RN values based on WMKO estimates.")
                 detector_dict1['gain'] = np.atleast_1d([1.45])
                 detector_dict2['gain'] = np.atleast_1d([1.25])
                 detector_dict1['ronoise'] = np.atleast_1d([4.47])
@@ -1555,7 +1555,7 @@ class KeckLRISRSpectrograph(KeckLRISSpectrograph):
 
         # Only defined for det=2
         if det == 2:
-            msgs.info("Using hard-coded BPM for det=2 on LRISr")
+            log.info("Using hard-coded BPM for det=2 on LRISr")
 
             # Get the binning
             hdu = io.fits_open(filename)
@@ -1640,7 +1640,7 @@ class KeckLRISRMark4Spectrograph(KeckLRISRSpectrograph):
         # Deal with the intermediate headers
         if date < t_gdhead:
             amp_mode = hdu[0].header['AMPMODE']
-            msgs.info("AMPMODE = {:s}".format(amp_mode))
+            log.info("AMPMODE = {:s}".format(amp_mode))
             # Load up translation dict
             ampmode_translate_file = dataPaths.spectrographs.get_file_path(
                     'keck_lris_red_mark4/dict_for_ampmode.json')
@@ -2017,7 +2017,7 @@ def lris_read_amp(inp, ext):
         raise PypeItError("Something wrong in LRIS datasec or precol")
     xshape = 1024 // xbin * (4//n_ext)  # Allow for single amp
     if (xshape+precol+postpix) != temp.shape[0]:
-        msgs.warning("Unexpected size for LRIS detector.  We expect you did some windowing...")
+        log.warning("Unexpected size for LRIS detector.  We expect you did some windowing...")
         xshape = temp.shape[0] - precol - postpix
     data = temp[precol:precol+xshape,:]
     postdata = temp[nxt-postpix:nxt, :]

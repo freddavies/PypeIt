@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 
 from IPython import embed
 
-from pypeit import msgs
+from pypeit import log
 from pypeit.core import coadd
 from pypeit import utils
 
@@ -186,7 +186,7 @@ def construct_illum_profile(norm_spec, spat_coo, slitwidth, spat_gpm=None, spat_
 
     """
     if illum_rej is None and illum_iter > 0:
-        msgs.warning('Cannot use iterative rejection to construct the illumination function if the '
+        log.warning('Cannot use iterative rejection to construct the illumination function if the '
                   'rejection is not provided.  Continuing without iteration.')
 
     _spat_gpm = np.ones(norm_spec.shape, dtype=bool) if spat_gpm is None else np.copy(spat_gpm)
@@ -286,7 +286,7 @@ def illum_profile_spectral_poly(rawimg, waveimg, slitmask, slitmask_trim, model,
     scale_model: `numpy.ndarray`_
         An image containing the appropriate scaling
     """
-    msgs.info(f"Performing relative spectral sensitivity correction (reference slit = {slit_illum_ref_idx})")
+    log.info(f"Performing relative spectral sensitivity correction (reference slit = {slit_illum_ref_idx})")
     # Generate the mask
     _thismask = thismask if (thismask is not None) else (slitmask > 0)
     gpm = gpmask if (gpmask is not None) else np.ones_like(rawimg, dtype=bool)
@@ -322,7 +322,7 @@ def illum_profile_spectral_poly(rawimg, waveimg, slitmask, slitmask_trim, model,
         if sl == slit_illum_ref_idx:
             scaleImg[_thismask] *= utils.inverse(np.polyval(coeff, waveimg[_thismask]))
     minv, maxv = np.min(scaleImg[_thismask]), np.max(scaleImg[_thismask])
-    msgs.info("Minimum/Maximum scales = {0:.5f}, {1:.5f}".format(minv, maxv))
+    log.info("Minimum/Maximum scales = {0:.5f}, {1:.5f}".format(minv, maxv))
     return scaleImg
 
 
@@ -439,7 +439,7 @@ def poly_map(rawimg, rawivar, waveimg, slitmask, slitmask_trim, modelimg, deg=3,
                                      bounds_error=False, fill_value=0.0, assume_sorted=True)
     modelmap = np.ones_like(rawimg)
     relscale = np.ones_like(rawimg)
-    msgs.info("Generating a polynomial map between the model and the raw data")
+    log.info("Generating a polynomial map between the model and the raw data")
     for sl, spatid in enumerate(slitmask_spatid):
         # Prepare the masks, edges, and fitting variables
         this_slit = (slitmask == spatid)
@@ -534,22 +534,22 @@ def tweak_slit_edges_gradient(left, right, spat_coo, norm_flat, maxfrac=0.1, deb
 
     # Check if the shift is within the allowed range
     if np.abs(left_shift) > maxfrac:
-        msgs.warning(
+        log.warning(
             f'Left slit edge shift of {100*left_shift:.1f}% exceeds the maximum allowed of '
             f'{100*maxfrac:.1f}%\nThe left edge will not be tweaked.'
         )
         left_shift = 0.0
     else:
-        msgs.info('Tweaking left slit boundary by {0:.1f}%'.format(100 * left_shift) +
+        log.info('Tweaking left slit boundary by {0:.1f}%'.format(100 * left_shift) +
                   ' ({0:.2f} pixels)'.format(left_shift * slitwidth))
     if np.abs(right_shift) > maxfrac:
-        msgs.warning(
+        log.warning(
             f'Right slit edge shift of {100*right_shift:.1f}% exceeds the maximum allowed of '
             f'{100*maxfrac:.1f}%\nThe right edge will not be tweaked.'
         )
         right_shift = 0.0
     else:
-        msgs.info('Tweaking right slit boundary by {0:.1f}%'.format(100 * right_shift) +
+        log.info('Tweaking right slit boundary by {0:.1f}%'.format(100 * right_shift) +
                   ' ({0:.2f} pixels)'.format(right_shift * slitwidth))
 
     # Calculate the tweak for the left edge
@@ -677,7 +677,7 @@ def tweak_slit_edges_threshold(left, right, spat_coo, norm_flat, thresh=0.93, ma
             raise PypeItError('Tweak left edge has failed!  Bad continuous region.')
         i = contiguous_region.stop-1
         if i >= 0 and norm_flat[i-1] > norm_flat[i]:
-            msgs.warning('When adjusting left edge, found noisy illumination profile structure.')
+            log.warning('When adjusting left edge, found noisy illumination profile structure.')
         if debug:
             plt.scatter(spat_coo[masked_flat.mask], norm_flat[masked_flat.mask], marker='.', s=10,
                         color='C3', lw=0)
@@ -686,13 +686,13 @@ def tweak_slit_edges_threshold(left, right, spat_coo, norm_flat, thresh=0.93, ma
             plt.scatter(spat_coo[i], norm_flat[i], marker='o', facecolor='none', s=50, color='C1')
             plt.show()
         if norm_flat[i+1] < left_thresh:
-            msgs.warning('Left slit boundary tweak limited by maximum allowed shift: {:.1f}%'.format(
+            log.warning('Left slit boundary tweak limited by maximum allowed shift: {:.1f}%'.format(
                         100*maxfrac))
             left_shift = maxfrac
         else:
             left_shift = utils.linear_interpolate(norm_flat[i], spat_coo[i], norm_flat[i+1],
                                                   spat_coo[i+1], left_thresh)
-        msgs.info('Tweaking left slit boundary by {0:.1f}%'.format(100*left_shift) +
+        log.info('Tweaking left slit boundary by {0:.1f}%'.format(100*left_shift) +
                   ' ({0:.2f} pixels)'.format(left_shift*slitwidth))
         new_left += left_shift * slitwidth
 
@@ -731,7 +731,7 @@ def tweak_slit_edges_threshold(left, right, spat_coo, norm_flat, thresh=0.93, ma
             raise PypeItError('Tweak right edge has failed!  Bad continuous region.')
         i = contiguous_region.start
         if i < norm_flat.size-1 and norm_flat[i+1] > norm_flat[i]:
-            msgs.warning('When adjusting right edge, found noisy illumination profile structure.')
+            log.warning('When adjusting right edge, found noisy illumination profile structure.')
         if debug:
             plt.scatter(spat_coo[masked_flat.mask], norm_flat[masked_flat.mask], marker='.', s=10,
                         color='C3', lw=0)
@@ -740,13 +740,13 @@ def tweak_slit_edges_threshold(left, right, spat_coo, norm_flat, thresh=0.93, ma
             plt.scatter(spat_coo[i], norm_flat[i], marker='o', facecolor='none', s=50, color='C1')
             plt.show()
         if norm_flat[i-1] < right_thresh:
-            msgs.warning('Right slit boundary tweak limited by maximum allowed shift: {:.1f}%'.format(
+            log.warning('Right slit boundary tweak limited by maximum allowed shift: {:.1f}%'.format(
                         100*maxfrac))
             right_shift = maxfrac
         else:
             right_shift = 1-utils.linear_interpolate(norm_flat[i-1], spat_coo[i-1], norm_flat[i],
                                                      spat_coo[i], right_thresh)
-        msgs.info('Tweaking right slit boundary by {0:.1f}%'.format(100*right_shift) +
+        log.info('Tweaking right slit boundary by {0:.1f}%'.format(100*right_shift) +
                   ' ({0:.2f} pixels)'.format(right_shift*slitwidth))
         new_right -= right_shift * slitwidth
 

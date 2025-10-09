@@ -12,7 +12,7 @@ from IPython import embed
 import numpy as np
 
 # Logging
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 
 def load_sections(string, fmt_iraf=True):
@@ -155,7 +155,7 @@ def parse_binning(binning:str):
         elif 'x' in binning:
             binspectral, binspatial = [int(item) for item in binning.split('x')]  # LRIS
         elif binning == 'None':
-            msgs.warning("Assuming unbinned, i.e.  1x1")
+            log.warning("Assuming unbinned, i.e.  1x1")
             binspectral, binspatial = 1,1
         else:
             binspectral, binspatial = [int(item) for item in binning.strip().split(' ')]  # Gemini

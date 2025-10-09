@@ -14,7 +14,7 @@ from pypeit.utils import jsonify
 from astropy.table import Table
 from astropy.io import fits
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit.core import arc, qa
 from pypeit.core import fitting
@@ -627,7 +627,7 @@ class BuildWaveCalib:
 
         # print to screen the slit widths if maskdef_designtab is available
         if self.slits.maskdef_designtab is not None:
-            msgs.info("Slit widths (arcsec): {}".format(np.round(self.slits.maskdef_designtab['SLITWID'].data, 2)))
+            log.info("Slit widths (arcsec): {}".format(np.round(self.slits.maskdef_designtab['SLITWID'].data, 2)))
 
         # Generate a map of the instrumental spectral FWHM
         # TODO nsample should be a parameter
@@ -659,7 +659,7 @@ class BuildWaveCalib:
             raise NotImplementedError('method = identify not yet implemented')
             final_fit = {}
             # Manually identify lines
-            msgs.info("Initializing the wavelength calibration tool")
+            log.info("Initializing the wavelength calibration tool")
             #embed(header='line 222 wavecalib.py')
             for slit_idx in ok_mask_idx:
                 arcfitter = Identify.initialise(arccen, self.lamps, self.slits, slit=slit_idx, par=self.par)
@@ -709,7 +709,7 @@ class BuildWaveCalib:
             angle_fits_file, composite_arc_file = self.spectrograph.get_echelle_angle_files()
 
             # Identify the echelle orders
-            msgs.info("Finding the echelle orders")
+            log.info("Finding the echelle orders")
             order_vec, wave_soln_arxiv, arcspec_arxiv = echelle.identify_ech_orders(
                     arccen, self.meta_dict['echangle'],
                     self.meta_dict['xdangle'],
@@ -720,7 +720,7 @@ class BuildWaveCalib:
                     cc_percent_ceil = self.par['cc_percent_ceil'], debug=False)
             # Put the order numbers in the slit object
             self.slits.ech_order = order_vec
-            msgs.info(f"The observation covers the following orders: {order_vec}")
+            log.info(f"The observation covers the following orders: {order_vec}")
 
             patt_dict, final_fit = autoid.echelle_wvcalib(
                 arccen, order_vec, arcspec_arxiv, wave_soln_arxiv,
@@ -792,7 +792,7 @@ class BuildWaveCalib:
         if not skip_QA:
             ok_mask_idx = np.where(np.invert(self.wvc_bpm))[0]
             for slit_idx in ok_mask_idx:
-                msgs.info(f"Preparing wavelength calibration QA for slit {slit_idx+1}/{self.slits.nslits}")
+                log.info(f"Preparing wavelength calibration QA for slit {slit_idx+1}/{self.slits.nslits}")
                 # Obtain the output QA name for the wavelength solution
                 outfile = qa.set_qa_filename(
                     self.wv_calib.calib_key, 'arc_fit_qa', 
@@ -843,11 +843,11 @@ class BuildWaveCalib:
             in_det = np.in1d(bad_orders, order_dets[idet])
             if not np.any(in_det):
                 continue
-            msgs.info(f"Attempting to refit bad orders in detector={dets[idet]}")
+            log.info(f"Attempting to refit bad orders in detector={dets[idet]}")
             # Are there few enough?
             max_bad = int(len(order_dets[idet])*bad_orders_maxfrac)
             if np.sum(in_det) > max_bad:
-                msgs.warning(f"Too many bad orders in detector={dets[idet]} to attempt a refit.")
+                log.warning(f"Too many bad orders in detector={dets[idet]} to attempt a refit.")
                 continue
             # Loop
             for order in bad_orders[in_det]:
@@ -872,7 +872,7 @@ class BuildWaveCalib:
                 fwhm=fwhm)
 
                 if not patt_dict_slit['acceptable']:
-                    msgs.warning(f"Order {order} is still not acceptable after attempt to reidentify.")
+                    log.warning(f"Order {order} is still not acceptable after attempt to reidentify.")
                     continue
 
                 # Fit me -- RMS may be too high again
@@ -886,11 +886,11 @@ class BuildWaveCalib:
                     sigrej_first=self.par['sigrej_first'],
                     n_final=n_final, 
                     sigrej_final=self.par['sigrej_final'])
-                msgs.info(f"New RMS for redo of order={order}: {final_fit['rms']}")
+                log.info(f"New RMS for redo of order={order}: {final_fit['rms']}")
 
                 # Keep?
                 if final_fit['rms'] < frac_rms_thresh*wave_rms_thresh:
-                    msgs.info('Updating wavelength solution.')
+                    log.info('Updating wavelength solution.')
                     # TODO -- This is repeated from build_wv_calib()
                     #  Would be nice to consolidate
                     # QA
@@ -910,7 +910,7 @@ class BuildWaveCalib:
                     self.wvc_bpm[iord] = False
                     fixed = True
                 else:
-                    msgs.warning(f'New RMS is too high (>{frac_rms_thresh}xRMS threshold). '
+                    log.warning(f'New RMS is too high (>{frac_rms_thresh}xRMS threshold). '
                               f'Not updating wavelength solution.')
         #
         return fixed
@@ -945,7 +945,7 @@ class BuildWaveCalib:
         if self.spectrograph.pypeline != 'Echelle':
             raise PypeItError('Cannot execute echelle_2dfit for a non-echelle spectrograph.')
 
-        msgs.info('Fitting 2-d wavelength solution for echelle....')
+        log.info('Fitting 2-d wavelength solution for echelle....')
 
         # Obtain a list of good slits
         ok_mask_idx = np.where(np.logical_not(self.wvc_bpm))[0]
@@ -967,7 +967,7 @@ class BuildWaveCalib:
         save_order_dets = []
         for idet in dets:
             order_in_dets = []
-            msgs.info('Fitting detector {:d}'.format(idet))
+            log.info('Fitting detector {:d}'.format(idet))
             # Init
             all_wave = np.array([], dtype=float)
             all_pixel = np.array([],dtype=float)
@@ -1004,7 +1004,7 @@ class BuildWaveCalib:
 
             # Fit
             if len(all_order) < 2:
-                msgs.warning(f"Fewer than 2 orders to fit for detector {idet}.  Skipping")
+                log.warning(f"Fewer than 2 orders to fit for detector {idet}.  Skipping")
                 save_order_dets.append([])
                 # Add a dummy fit
                 fit2ds.append(fitting.PypeItFit())
@@ -1022,7 +1022,7 @@ class BuildWaveCalib:
             # QA
             if not skip_QA:
                 if wv_calib.calib_key is None:
-                    msgs.warning('WaveCalib object provided does not have a defined calibration '
+                    log.warning('WaveCalib object provided does not have a defined calibration '
                               'key.  The QA files will not include this key in the file name, '
                               'meaning that existing QA files may be overwritten.')
                     calib_key = '' 
@@ -1144,7 +1144,7 @@ class BuildWaveCalib:
             bad_rms = rms > wave_rms_thresh
             if np.any(bad_rms):
                 self.wvc_bpm[bad_rms] = True
-                msgs.warning("Masking one or more bad orders (RMS)")
+                log.warning("Masking one or more bad orders (RMS)")
             # Fit
             fit2ds, dets, order_dets = self.echelle_2dfit(
                 self.wv_calib, skip_QA = skip_QA, debug=debug)

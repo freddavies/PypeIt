@@ -8,7 +8,7 @@ import numpy as np
 
 from astropy.time import Time
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit.core import framematch
@@ -126,7 +126,7 @@ class TNGDoloresSpectrograph(spectrograph.Spectrograph):
             par['calibrations']['wavelengths']['lamps'] = ['NeI', 'HgI']
         else:
             par['calibrations']['wavelengths']['method'] = 'holy-grail'
-            msgs.warning('Check wavelength calibration file.')
+            log.warning('Check wavelength calibration file.')
 
         # Return
         return par
@@ -249,7 +249,7 @@ class TNGDoloresSpectrograph(spectrograph.Spectrograph):
         if ftype in ['arc', 'tilt']:
             return good_exp & (fitstbl['idname'] == 'CALIB') & ( (fitstbl['lampstat01'] == 'Ne+Hg') | (fitstbl['lampstat01'] == 'Helium') ) \
                         & (fitstbl['dispname'] != 'OPEN')
-        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
 

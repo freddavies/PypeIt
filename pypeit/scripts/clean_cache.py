@@ -34,7 +34,7 @@ class CleanCache(scriptbase.ScriptBase):
         from IPython import embed
         import astropy.utils.data
 
-        from pypeit import msgs
+        from pypeit import log
         from pypeit import PypeItError
         from pypeit import cache
 
@@ -42,7 +42,7 @@ class CleanCache(scriptbase.ScriptBase):
             # Print the full contents
             contents = cache.search_cache(None, path_only=False)
             if len(contents) == 0:
-                msgs.info('Cache is empty!')
+                log.info('Cache is empty!')
                 return
             cache.list_cache_contents(contents)
             return
@@ -52,7 +52,7 @@ class CleanCache(scriptbase.ScriptBase):
 
         if args.clear:
             # Removes the entire cache
-            msgs.info('Clearing the cache!')
+            log.info('Clearing the cache!')
             astropy.utils.data.clear_download_cache(pkgname='pypeit')
             return
         
@@ -78,13 +78,13 @@ class CleanCache(scriptbase.ScriptBase):
         # For now, we only need the urls.
         contents = list(contents.keys())
         if len(contents) == 0:
-            msgs.warning('No files to remove.')
+            log.warning('No files to remove.')
             return
 
         # Report
-        msgs.info('Removing the following files from the cache:')
+        log.info('Removing the following files from the cache:')
         for c in contents:
-            msgs.info(f'    {c}')
+            log.info(f'    {c}')
         # TODO: Require confirmation?
 
         # Remove the selected contents.  cache_url argument must be a list

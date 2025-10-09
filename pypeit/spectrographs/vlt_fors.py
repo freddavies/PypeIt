@@ -4,7 +4,7 @@ Module for VLT FORS (1 and 2)
 .. include:: ../include/links.rst
 """
 import numpy as np
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit.core import parse
@@ -204,7 +204,7 @@ class VLTFORSSpectrograph(spectrograph.Spectrograph):
             return good_exp & ((fitstbl['target'] == 'LAMP,WAVE')
                                | (fitstbl['target'] == 'WAVE,LAMP'))
 
-        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
 
@@ -437,7 +437,7 @@ class VLTFORS2Spectrograph(VLTFORSSpectrograph):
                 ra, dec = meta.convert_radec(self.get_meta_value(hdr, 'ra', no_fussing=True),
                                     self.get_meta_value(hdr, 'dec', no_fussing=True))
             except:
-                msgs.warning('Encounter invalid value of your coordinates. Give zeros for both RA and DEC. Check that this does not cause problems with the offsets')
+                log.warning('Encounter invalid value of your coordinates. Give zeros for both RA and DEC. Check that this does not cause problems with the offsets')
                 ra, dec = 0.0, 0.0
             if ifile == 0:
                 coord_ref = SkyCoord(ra*units.deg, dec*units.deg)

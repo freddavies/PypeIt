@@ -36,7 +36,7 @@ class ExtractDataCube(scriptbase.ScriptBase):
     def main(args):
         import time
 
-        from pypeit import msgs
+        from pypeit import log
         from pypeit import PypeItError
         from pypeit import par
         from pypeit import inputfiles
@@ -45,7 +45,7 @@ class ExtractDataCube(scriptbase.ScriptBase):
         from pypeit.coadd3d import DataCube
 
         # Set the verbosity, and create a logfile if verbosity == 2
-#        msgs.set_logfile_and_verbosity('extract_datacube', args.verbosity)
+#        log.set_logfile_and_verbosity('extract_datacube', args.verbosity)
 
         # Check that a file has been provided
         if args.file is None:
@@ -77,4 +77,4 @@ class ExtractDataCube(scriptbase.ScriptBase):
         extcube.extract_spec(parset['reduce'], outname=outname, boxcar_radius=boxcar_radius, overwrite=args.overwrite)
 
         # Report the extraction time
-        msgs.info(utils.get_time_string(time.time()-tstart))
+        log.info(utils.get_time_string(time.time()-tstart))

@@ -8,7 +8,7 @@ from IPython import embed
 
 import numpy as np
 from astropy.io import fits
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit.core import framematch
@@ -314,7 +314,7 @@ class VLTSINFONISpectrograph(spectrograph.Spectrograph):
         if ftype in ['sky']:
             return good_exp & (fitstbl['idname'] == 'SINFONI_IFS_SKY')
 
-        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
 

@@ -9,7 +9,7 @@ from IPython import embed
 
 import numpy as np
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import datamodel
 from pypeit.core import parse

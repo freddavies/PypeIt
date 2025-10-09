@@ -22,7 +22,7 @@ from astropy import units, time
 
 import linetools
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit import io
@@ -234,7 +234,7 @@ class KeckDEIMOSSpectrograph(spectrograph.Spectrograph):
             measured_amptype = tab_measure['col4']
             measured_gain = tab_measure['col5']  # [e-/DN]
             measured_ronoise = tab_measure['col7']   # [e-]
-            msgs.info(f"We are using DEIMOS gain/RN values for AMPMODE = {amp} "
+            log.info(f"We are using DEIMOS gain/RN values for AMPMODE = {amp} "
                       f"based on WMKO estimates on {measure_dates[close_idx]}.")
             # find values for this amp and each detector
             this_amp = measured_amptype == 'A' if amp == 'SINGLE:A' else measured_amptype == 'B'
@@ -351,7 +351,7 @@ class KeckDEIMOSSpectrograph(spectrograph.Spectrograph):
                 self.get_meta_value(headarr, 'amp') == 'SINGLE:A'):
             # give an info message if AMPMODE = SINGLE:A
             if self.get_meta_value(headarr, 'amp') == 'SINGLE:A':
-                msgs.info('Data taken with AMPMODE = SINGLE:A. Only detectors 3,7 will be reduced. To change this,'
+                log.info('Data taken with AMPMODE = SINGLE:A. Only detectors 3,7 will be reduced. To change this,'
                           ' modify the detnum parameter in the pypeit file.')
             par['rdx']['detnum'] = [(3, 7)]
 
@@ -509,7 +509,7 @@ class KeckDEIMOSSpectrograph(spectrograph.Spectrograph):
             elif headarr[0]['GRATEPOS'] == 4:
                 return headarr[0]['G4TLTWAV']
             else:
-                msgs.warning('This is probably a problem. Non-standard DEIMOS GRATEPOS={0}.'.format(headarr[0]['GRATEPOS']))
+                log.warning('This is probably a problem. Non-standard DEIMOS GRATEPOS={0}.'.format(headarr[0]['GRATEPOS']))
         elif meta_key == 'mjd':
             if headarr[0].get('MJD-OBS', None) is not None:
                 return headarr[0]['MJD-OBS']
@@ -679,7 +679,7 @@ class KeckDEIMOSSpectrograph(spectrograph.Spectrograph):
             return good_exp & (fitstbl['idname'] == 'Line') & (fitstbl['hatch'] == 'closed') \
                         & (fitstbl['lampstat01'] != 'Off')
 
-        msgs.debug('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def get_rawimage(self, raw_file, det):
@@ -728,7 +728,7 @@ class KeckDEIMOSSpectrograph(spectrograph.Spectrograph):
             pixel. Pixels unassociated with any amplifier are set to 0.
         """
         # Read
-        msgs.info(f'Attempting to read DEIMOS file: {raw_file}')
+        log.info(f'Attempting to read DEIMOS file: {raw_file}')
         # NOTE: io.fits_open checks that the file exists
         hdu = io.fits_open(raw_file)
 
@@ -1452,41 +1452,41 @@ class KeckDEIMOSSpectrograph(spectrograph.Spectrograph):
         # `slitindex` because not always matches `SlitName` from the DEIMOS design file.
         if not debug:
             num = 0
-            msgs.info('Expected slits on current detector')
-            msgs.info('*' * 18)
-            msgs.info('{0:^6s} {1:^12s}'.format('N.', 'dSlitId'))
-            msgs.info('{0:^6s} {1:^12s}'.format('-' * 5, '-' * 9))
+            log.info('Expected slits on current detector')
+            log.info('*' * 18)
+            log.info('{0:^6s} {1:^12s}'.format('N.', 'dSlitId'))
+            log.info('{0:^6s} {1:^12s}'.format('-' * 5, '-' * 9))
             for i in range(sortindx.shape[0]):
                 if omodel_bspat[sortindx][i] != -1 or omodel_tspat[sortindx][i] != -1:
-                    msgs.info('{0:^6d} {1:^12d}'.format(num, self.slitmask.slitid[sortindx][i]))
+                    log.info('{0:^6d} {1:^12d}'.format(num, self.slitmask.slitid[sortindx][i]))
                     num += 1
-            msgs.info('*' * 18)
+            log.info('*' * 18)
 
         # If instead we run this method in debug mode, we print more info useful for comparison, for example, with
         # the IDL-based pipeline.
         if debug:
             num = 0
-            msgs.info('Expected slits on current detector')
-            msgs.info('*' * 92)
-            msgs.info('{0:^5s} {1:^10s} {2:^12s} {3:^12s} {4:^14s} {5:^16s} {6:^16s}'.format('N.',
+            log.info('Expected slits on current detector')
+            log.info('*' * 92)
+            log.info('{0:^5s} {1:^10s} {2:^12s} {3:^12s} {4:^14s} {5:^16s} {6:^16s}'.format('N.',
                                                                                              'dSlitId', 'slitLen(mm)',
                                                                                              'slitWid(mm)',
                                                                                              'spat_cen(mm)',
                                                                                              'omodel_bottom(pix)',
                                                                                              'omodel_top(pix)'))
-            msgs.info('{0:^5s} {1:^10s} {2:^12s} {3:^12s} {4:^14s} {5:^16s} {6:^14s}'.format('-' * 4, '-' * 9, '-' * 11,
+            log.info('{0:^5s} {1:^10s} {2:^12s} {3:^12s} {4:^14s} {5:^16s} {6:^14s}'.format('-' * 4, '-' * 9, '-' * 11,
                                                                                              '-' * 11, '-' * 13,
                                                                                              '-' * 18, '-' * 15))
             for i in range(sortindx.size):
                 if omodel_bspat[sortindx][i] != -1 or omodel_tspat[sortindx][i] != -1:
-                    msgs.info('{0:^5d}{1:^14d} {2:^9.3f} {3:^12.3f} {4:^14.3f}    {5:^16.2f} {6:^14.2f}'
+                    log.info('{0:^5d}{1:^14d} {2:^9.3f} {3:^12.3f} {4:^14.3f}    {5:^16.2f} {6:^14.2f}'
                               .format(num, self.slitmask.slitid[sortindx][i],
                                          self.slitmask.length[sortindx][i],
                                          self.slitmask.width[sortindx][i],
                                          self.slitmask.center[:, 0][sortindx][i],
                                          omodel_bspat[sortindx][i], omodel_tspat[sortindx][i]))
                     num += 1
-            msgs.info('*' * 92)
+            log.info('*' * 92)
 
         return omodel_bspat, omodel_tspat, sortindx, self.slitmask
 
@@ -1754,7 +1754,7 @@ class DEIMOSDetectorMap(DetectorMap):
 #            raise PypeItError('Found {0} files matching {1}'.format(len(fil), inp + '*'))
 #        # Read
 #        try:
-#            msgs.info("Reading DEIMOS file: {:s}".format(fil[0]))
+#            log.info("Reading DEIMOS file: {:s}".format(fil[0]))
 #        except AttributeError:
 #            print("Reading DEIMOS file: {:s}".format(fil[0]))
 #        # Open

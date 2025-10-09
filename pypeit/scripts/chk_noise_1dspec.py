@@ -16,7 +16,7 @@ from astropy.io import fits
 
 from pypeit.scripts import scriptbase
 from pypeit import utils
-from pypeit import msgs
+from pypeit import log
 from pypeit import specobjs
 from pypeit.onespec import OneSpec
 
@@ -254,7 +254,7 @@ class ChkNoise1D(scriptbase.ScriptBase):
                         input_mask &= lbda < args.wavemax
 
                     if lbda[input_mask].size < 10:
-                        msgs.warning("The spectrum was cut down to <10 pixels.  Skipping")
+                        log.warning("The spectrum was cut down to <10 pixels.  Skipping")
                         continue
 
                     # determine if plotting the shaded area in the plot that shows the

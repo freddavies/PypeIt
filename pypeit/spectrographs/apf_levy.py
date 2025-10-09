@@ -10,7 +10,7 @@ import numpy as np
 from astropy.time import Time
 from IPython import embed
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit import io
@@ -329,7 +329,7 @@ class APFLevySpectrograph(spectrograph.Spectrograph):
         if ftype in ['pinhole']:
             return good_exp & (fitstbl['idname'] == 'NarrowFlat') & (fitstbl['decker'] == 'Pinhole')
 
-        msgs.debug(f'Cannot determine if frames are of type {ftype}.')
+        log.debug(f'Cannot determine if frames are of type {ftype}.')
         return np.zeros(len(fitstbl), dtype=bool)
 
     def is_science(self, fitstbl):

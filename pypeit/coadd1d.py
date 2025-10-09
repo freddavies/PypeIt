@@ -20,7 +20,7 @@ from pypeit.orderstack import OrderStack
 from pypeit import utils
 from pypeit import sensfunc
 from pypeit import specobjs
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit.core import coadd, flux_calib
 from pypeit.history import History
@@ -287,8 +287,8 @@ class MultiSlitCoAdd1D(CoAdd1D):
         # check if there are exposures that are completely masked out, i.e., gpms = False for all spectral pixels
         masked_exps = [np.all(np.logical_not(gpm)) for gpm in _gpms]
         if np.any(masked_exps):
-            msgs.warning(f'The following exposure(s) is/are completely masked out. It/They will not be coadded.')
-            [msgs.warning(f"Exposure {i}: {fname.split('/')[-1]}  {obj}")
+            log.warning(f'The following exposure(s) is/are completely masked out. It/They will not be coadded.')
+            [log.warning(f"Exposure {i}: {fname.split('/')[-1]}  {obj}")
              for i, (fname, obj, masked_exp) in enumerate(zip(_spec1dfiles, _objids, masked_exps)) if masked_exp]
             # remove masked out exposure
             _waves = [wave for (wave, masked_exp) in zip(_waves, masked_exps) if not masked_exp]
@@ -319,8 +319,8 @@ class MultiSlitCoAdd1D(CoAdd1D):
                            f'({_sigrej} sigma above the median S/N in the stack).'
                 if self.par['sigrej_exp'] is not None:
                         warn_msg += ' It/They WILL NOT BE COADDED.'
-                msgs.warning(warn_msg)
-                [msgs.warning(f"Exposure {i}: {fname.split('/')[-1]}  {obj}")
+                log.warning(warn_msg)
+                [log.warning(f"Exposure {i}: {fname.split('/')[-1]}  {obj}")
                  for i, (fname, obj, bad_exp) in enumerate(zip(_spec1dfiles, _objids, bad_exps)) if bad_exp]
                 if self.par['sigrej_exp'] is not None:
                     # remove bad exposure

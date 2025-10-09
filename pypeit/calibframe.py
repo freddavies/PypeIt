@@ -13,7 +13,7 @@ import numpy as np
 
 from astropy.io import fits
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import datamodel
 from pypeit import io
@@ -197,11 +197,11 @@ class CalibFrame(datamodel.DataContainer):
         try:
             self.calib_key, self.calib_dir = CalibFrame.parse_key_dir(hdr)
         except PypeItError as e:
-            msgs.warning(f'{e}')
+            log.warning(f'{e}')
         if 'CALIBID' in hdr:
             self.calib_id = self.ingest_calib_id(hdr['CALIBID'])
         else:
-            msgs.warning('Header does not have CALIBID card; cannot parse calibration IDs.')
+            log.warning('Header does not have CALIBID card; cannot parse calibration IDs.')
 
     @staticmethod
     def parse_key_dir(inp, from_filename=False):
@@ -284,7 +284,7 @@ class CalibFrame(datamodel.DataContainer):
             _calib_id = [calib_id]
         _calib_id = np.unique(np.concatenate([str(c).split(',') for c in _calib_id]))
         if 'all' in _calib_id and len(_calib_id) != 1:
-            msgs.warning(f'Calibration groups set to {_calib_id}, resetting to simply "all".')
+            log.warning(f'Calibration groups set to {_calib_id}, resetting to simply "all".')
             _calib_id = np.array(['all'])
         for c in _calib_id:
             if c == 'all':
