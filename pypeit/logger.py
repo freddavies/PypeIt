@@ -7,25 +7,25 @@ Implementation heavily references loggers from astropy and sdsstools.
 import traceback
 import copy
 import inspect
+import io
 import logging
 from pathlib import Path
 import re
 import sys
-from typing import Optional
+from typing import Optional, List
 
 from IPython import embed
 
 import warnings
 
-#def short_warning(message, category, filename, lineno, file=None, line=None):
-#    """
-#    Return the format for a short warning message.
-#    """
-#    embed()
-#    exit()
-#    return f'{category.__name__}: {message}'
-#
-#warnings.formatwarning = short_warning
+# TODO: Can we put this *inside* the logger?
+def short_warning(message, category, filename, lineno, file=None, line=None):
+    """
+    Formatter for warning messages.  Shortens default output to just the warning
+    type and warning message.
+    """
+    return f'{category.__name__}: {message}'
+warnings.formatwarning = short_warning
 
 # NOTE: This is essentially a hack to deal with all the RankWarnings that numpy
 # can throw during polynomial fitting.  Specifically this happens frequently
@@ -38,24 +38,66 @@ import numpy as np
 warnings.simplefilter('default', np.exceptions.RankWarning)
 
 
-#WARNING_RE = re.compile(r"^.*?\s*?(\w*?Warning): (.*)")
+def color_text(
+    text:str,
+    color:List[int],
+    bold:Optional[bool] = False,
+    nchar:Optional[int] = None
+) -> str:
+    """
+    Return an input string with escape characters to colorize text written to
+    consoles.
 
+    Parameters
+    ----------
+    text
+        Text to colorize
+    color
+        3-element list of integers with the RGB color values
+    bold
+        Flag to make the text bold
+    nchar
+        Force the output text to be right-justified with this number of
+        characters
 
-def color_text(text, color, bold=False, nchar=None):
+    Returns
+    -------
+        Reformatted string
+    """
     msg = '\033[1;' if bold else '\033['
     _text = f'{text}' if nchar is None else f'{text:>{nchar}}'
     return f'{msg}38;2;{color[0]};{color[1]};{color[2]}m{_text}\033[0m'
+
+
+def clear_text_color(text:str):
+    """
+    Remove escape characters that colorize the text in a string.
+
+    Parameters
+    ----------
+    text
+        String to alter
+
+    Returns
+    -------
+        String with all color escape characters removed
+    """
+    return re.compile(r'\x1b[^m]*m').sub("", text)
 
 
 class StreamFormatter(logging.Formatter):
     """
     Custom `Formatter <logging.Formatter>` for the stream handler.
     """
-
     base_level = None
+    """
+    The base logging level for the class.  Used to determine whether or not to
+    include the calling frame in the log message.
+    """
 
     def format(self, record):
 
+        # RGB colors for the logging levels
         level_colors = {
             'debug': [116, 173, 209],
             'info': [49, 54, 149],
@@ -63,7 +105,7 @@ class StreamFormatter(logging.Formatter):
             'error': [215, 48, 39],
             'critical': [165, 0, 38],
         }
-        inspect_color = level_colors['debug']
+        frame_color = level_colors['debug']
 
         rec = copy.copy(record)
         levelname = rec.levelname.lower()
@@ -75,21 +117,11 @@ class StreamFormatter(logging.Formatter):
         msg = color_text(f'[{levelname.upper()}]', level_colors[levelname], bold=True, nchar=10)
         msg += ' - '
         if self.base_level == logging.DEBUG:
-            # If including debug messages, include file inspection in *all* log
-            # messages.
-            msg += color_text(f'{rec.filename}:{rec.funcName}:{rec.lineno}', inspect_color) + ' - '
+            # If including debug messages, include file frame inspection in
+            # *all* log messages.
+            msg += color_text(f'{rec.filename}:{rec.funcName}:{rec.lineno}', frame_color) + ' - '
         # Add the message header
         rec.msg = msg + rec.msg
-
-# NOTE: This is in the sdsstools looger, but I'm not sure what it does.  I have
-# commented it out for the moment, but we may want to bring it back.
-#        if levelname == "warning" and rec.args and len(rec.args) > 0:
-#            warning_category_groups = WARNING_RE.match(rec.args[0])
-#            if warning_category_groups is not None:
-#                wcategory, wtext = warning_category_groups.groups()
-#                wcategory_colour = color_text(wcategory, level_colors['warning'])
-#                message = f'{color_text(wtext, [256, 256, 256])}' + wcategory_colour
-#                rec.args = tuple([message] + list(args[1:]))
 
         # Return the base formatting
         return logging.Formatter.format(self, rec)
@@ -108,37 +140,10 @@ class FileFormatter(logging.Formatter):
     """
 
     base_fmt = "%(levelname)8s | %(asctime)s | %(filename)s:%(funcName)s:%(lineno)s | %(message)s"
-#    ansi_escape = re.compile(r'\x1b[^m]*m')
 
     def __init__(self, fmt=base_fmt):
         logging.Formatter.__init__(self, fmt, datefmt='%Y-%m-%d %H:%M:%S')
 
-#    def format(self, record):
-#        # Copy the record so that any modifications we make do not
-#        # affect how the record is displayed in other handlers.
-#        record_cp = copy.copy(record)
-#
-#        record_cp.msg = self.ansi_escape.sub("", record_cp.msg)
-#
-#        # TODO: Pulled this from sdsstools, but I'm not sure if it's still
-#        # relevant
-#        args = list(record_cp.args)
-#
-#        # The format of a warnings redirected with warnings.captureWarnings
-#        # has the format <path>: <category>: message\n  <some-other-stuff>.
-#        # We reorganise that into a cleaner message. For some reason in this
-#        # case the message is in record.args instead of in record.msg.
-#        if (
-#            record_cp.levelno == logging.WARNING
-#            and record_cp.args
-#            and len(record_cp.args) > 0
-#        ):
-#            match = re.match(r"^(.*?):\s*?(\w*?Warning): (.*)", args[0])
-#            if match:
-#                message = "{1} - {2} [{0}]".format(*match.groups())
-#                record_cp.args = tuple([message] + list(args[1:]))
-#
-#        return logging.Formatter.format(self, record_cp)
 
 class PypeItLogger(logging.Logger):
     """
@@ -152,7 +157,7 @@ class PypeItLogger(logging.Logger):
         level: int = logging.INFO,
         capture_exceptions: bool = True,
         capture_warnings: bool = True,
-        stream = None,
+        stream: Optional[io.TextIOBase] = None,
         log_file: Optional[str | Path] = None,
         log_file_level: Optional[int] = None,
     ):
@@ -168,19 +173,21 @@ class PypeItLogger(logging.Logger):
             logging system.
         capture_warnings
             Capture warnings and redirect them to the log.
+        stream
+            Stream for logging messages, which defaults to sys.stderr.
         log_file
             Name for a log file.  If None, logging is only recorded to the
             console.  If the file provided already exists, it will be
-            ovewritten!
+            overwritten!
         log_file_level
             The logging level specific to the log file.  If None, adopt the
             console logging level.
         """
+        # NOTE: Because of how get_logger works, this makes warnings_logger an
+        # instance of PypeItLogger.
         self.warnings_logger = logging.getLogger("py.warnings")
 
-        embed()
-        exit()
-
+        # Set the base level of the logger to DEBUG    
         self.setLevel(logging.DEBUG)
 
         # Clear handlers before recreating.
@@ -200,7 +207,8 @@ class PypeItLogger(logging.Logger):
             self._excepthook_orig = sys.excepthook
             sys.excepthook = self._excepthook
 
-        # Set the stream handler
+        # Set the stream handler, its formatting, its level, and then add it to
+        # the set of handlers
         self.sh = logging.StreamHandler(stream=stream)
         formatter = DebugStreamFormatter() if level <= logging.DEBUG else StreamFormatter()
         self.sh.setFormatter(formatter)
@@ -268,13 +276,29 @@ class PypeItLogger(logging.Logger):
         Override the default makeRecord function to rework the message for exceptions.
         """
 
-        embed()
-        exit()
+        # If the warning was issued by "warnings", try to recover the calling
+        # frame details
+        if name == 'py.warnings':
+            frame = inspect.currentframe()
+            save_frame = None
+            while frame is not None:
+                # Work backwards through the frame to find the first occurrence
+                # of the call to the warnings.warn function.
+                if (
+                    Path(frame.f_code.co_filename).name == "warnings.py"
+                    and frame.f_code.co_name == '_showwarnmsg'
+                ):
+                    save_frame = frame.f_back
+                frame = frame.f_back
+            if save_frame is not None:
+                pathname = save_frame.f_code.co_filename
+                lineno = save_frame.f_lineno
+                func = save_frame.f_code.co_name
 
-        # If this is an error message, the execution information is provided,
-        # and the error originates from the exception hook, reset the frame
-        # information (file, function, and line number) to the calling function.
-        if (level == logging.ERROR
+        # Do the same if (1) this is an error message, (2) the execution
+        # information is provided, and (3) the error originates from the
+        # exception hook.
+        elif (level == logging.ERROR
             and exc_info is not None
             and Path(pathname).name == 'logger.py'
             and func is not None
@@ -286,6 +310,8 @@ class PypeItLogger(logging.Logger):
             func = calling_frame.name
             # This keeps the traceback from being printed twice!
             exc_info = None
+
+        # Call the base-class method
         return logging.Logger.makeRecord(
             self, name, level, pathname, lineno, msg, args, exc_info, func=func, extra=extra,
             sinfo=sinfo
@@ -295,6 +321,7 @@ def get_logger(
     level: int = logging.INFO,
     capture_exceptions: bool = True,
     capture_warnings: bool = True,
+    stream: Optional[io.TextIOBase] = None,
     log_file: Optional[str | Path] = None,
     log_file_level: Optional[int] = None,
 ):
@@ -310,6 +337,8 @@ def get_logger(
         logging system.
     capture_warnings
         Capture warnings and redirect them to the log.
+    stream
+        Stream for logging messages, which defaults to sys.stderr.
     log_file
         Name for a log file.  If None, logging is only recorded to the
         console.  If the file provided already exists, it will be
@@ -328,6 +357,7 @@ def get_logger(
             level=level,
             capture_exceptions=capture_exceptions,
             capture_warnings=capture_warnings,
+            stream=stream,
             log_file=log_file,
             log_file_level=log_file_level
         )
