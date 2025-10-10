@@ -286,7 +286,7 @@ def get_sensfunc_factor(wave, wave_zp, zeropoint, exptime, tellmodel=None, delta
     else:
         # Apply Extinction if optical bands
         log.info("Applying extinction correction")
-#        log.warn("Extinction correction applied only if the spectra covers <10000Ang.")
+#        log.warning("Extinction correction applied only if the spectra covers <10000Ang.")
         senstot = sensfunc_obs * atmext.correction_factor(wave, airmass=airmass)
 
     # senstot is the conversion from N_lam to F_lam, and the division by exptime and delta_wave are to convert
