@@ -528,17 +528,17 @@ class PypeIt:
         objFind_list = []
 
         # Print status message
-        log_string = f'Reducing target {self.fitstbl['target'][frames[0]]}\n'
+        log_string = f'Reducing target {self.fitstbl["target"][frames[0]]}\n'
         # TODO: Print these when the frames are actually combined,
         # backgrounds are used, etc?
         log_string += 'Combining frames:\n'
         for iframe in frames:
-            log_string += f'{self.fitstbl['filename'][iframe]}\n'
+            log_string += f'{self.fitstbl["filename"][iframe]}\n'
         log.info(log_string)
         if has_bg:
             bg_log_string = ''
             for iframe in bg_frames:
-                bg_log_string += f'{self.fitstbl['filename'][iframe]}\n'
+                bg_log_string += f'{self.fitstbl["filename"][iframe]}\n'
             bg_log_string = '\nUsing background from frames:\n' + bg_log_string
             log.info(bg_log_string)
 

@@ -1585,7 +1585,7 @@ def report_final(nslits, all_patt_dict, detections,
             f'{report_ttl}'
             f'  Pixels {signtxt} with wavelength\n'
             f'  Number of lines detected      = {detections[st].size}\n'
-            f'  Number of lines that were fit = {len(wv_calib[st]['pixel_fit'])}\n'
+            f'  Number of lines that were fit = {len(wv_calib[st]["pixel_fit"])}\n'
             f'  Central wavelength            = {cen_wave}A\n'
             f'  Central dispersion            = {cen_disp}A/pix\n'
             f'  Central wave/disp             = {cen_wave / cen_disp}\n'
