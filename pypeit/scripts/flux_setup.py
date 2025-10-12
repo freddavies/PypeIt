@@ -23,9 +23,7 @@ def match_spec1ds_to_sensfuncs(spectrograph_name, spec1dfiles, sensfiles):
     This needs a docstring
     """
     result_map = {}
-    spectrograph = load_spectrograph(spectrograph_name)
-    if '.fits' not in spectrograph.allowed_extensions:
-        spectrograph.allowed_extensions.append('.fits')
+    spectrograph = load_spectrograph(spectrograph_name, pypeit_fits=True)
 
     # Read configurations of each sensfile
     sens_configs = []

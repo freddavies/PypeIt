@@ -153,19 +153,9 @@ class CoAdd1DSpec(scriptbase.ScriptBase):
         # Set the verbosity, and create a logfile if verbosity == 2
         msgs.set_logfile_and_verbosity('coadd_1dspec', args.verbosity)
 
-        # Load the file
-        #config_lines, spec1dfiles, objids = read_coaddfile(args.coadd1d_file)
+        # Read in the relevant information from the .coadd2d file
         coadd1dFile = inputfiles.Coadd1DFile.from_file(args.coadd1d_file)
-
-        # Append path for testing
-        #if args.test_spec_path is not None:
-        #    spec1dfiles = [os.path.join(args.test_spec_path, ifile) for ifile in spec1dfiles]
-
-        # Read in spectrograph from spec1dfile header
-        header = fits.getheader(coadd1dFile.filenames[0])
-        spectrograph = load_spectrograph(header['PYP_SPEC'])
-        if '.fits' not in spectrograph.allowed_extensions:
-            spectrograph.allowed_extensions.append('.fits')
+        spectrograph = load_spectrograph(coadd1dFile.config['rdx']['spectrograph'], pypeit_fits=True)
 
         # Parameters
         spectrograph_def_par = spectrograph.default_pypeit_par()
