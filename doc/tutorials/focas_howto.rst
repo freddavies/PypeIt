@@ -66,14 +66,6 @@ associated outputs and we run:
 .. code-block:: bash
 
     cd folder_for_reducing
-    pypeit_setup -s keck_lris_red_mark4 -r /PypeIt-development-suite/RAW_DATA/keck_lris_red_mark4/multi_600_10000_slitmask
-
-This creates, in a folder called ``setup_files/``, a ``.sorted`` file that shows the raw files organized
-by datasets. We inspect the ``.sorted`` file and identify the dataset that we want to reduced
-(in this case it is indicated with the letter ``A`` ) and re-run :ref:`pypeit_setup` as:
-
-.. code-block:: bash
-
     pypeit_setup -s subaru_focas -r ../../../RAW_DATA/subaru_focas/300R_O58/FCSA00216 -G
 
 This launches the :ref:`pypeit_setup` GUI, which allows us to select the dataset 
@@ -102,10 +94,10 @@ under [reduce][[findobj]] in the :ref:`pypeit_file`.
 
     PypeIt has a long list of parameters that can be set by the user to customize the reduction. This
     makes PypeIt very flexible and able to reduce a wide range of data from many instruments. Most
-    parameters are set by default for the specific instrument, see  :ref:`instr_par-keck_lris_red_mark4`.
+    parameters are set by default for the specific instrument, see  :ref:`instr_par-subaru_focas`.
     Moreover, there are some parameters that are set by default for a specific configuration within
     the same instrument. For example, in many cases, PypeIt uses by default different wavelength templates
-    for different gratings (see :ref:`lrisr_wavesol`). The default parameters are not shown in the
+    for different gratings.  The default parameters are not shown in the
     :ref:`pypeit_file`, therefore it may be sometime difficult to know which parameters to set
     and which ones to leave as default.
     To help with this, the user can inspect the ``.par`` file, which is generated at the very beginning
@@ -267,7 +259,7 @@ To inspect the ``Flat`` images we can use the script :ref:`pypeit_chk_flats`, wi
 
 Here is a zoom-in screenshot from the first tab in the `ginga`_ window (``pixflat_norm``):
 
-.. image:: ../figures/lris_flat.png
+.. image:: ../figures/focas_flat.png
    :scale: 60%
    :align: center
 
@@ -326,11 +318,13 @@ The first plot shows the polynomial fit (black line) between the top seven highe
 cross-correlation is the flexure correction applied to the wavelength solution (also printed in the plot).
 The user should inspect this plot to make sure that the fit is good and that the value of the flexure shift
 is comparable to what expected for the observations.
-The second plot shows sky spectrum cutouts around some of the sky lines used for the flexure correction.
+The second plot shows sky spectrum cutouts around some of the sky lines used for the 
+flexure correction.
 The black line is the sky spectrum extracted at the center of the slit shifted by the
-computed flexure correction, while the red line is the archived sky spectrum. This is another way to
-assess that the computed flexure correction is good. The user should hope to see a good match between
-the two spectra.
+computed flexure correction, while the red line is the archived sky spectrum. 
+This is another way to
+assess that the computed flexure correction is good. The user should hope to see a 
+good match between the two spectra.
 
 Outputs
 =======
@@ -350,27 +344,25 @@ In this example, we can inspect the reduced 2D spectrum with this explicit call:
 
 .. code-block:: bash
 
-     pypeit_parse_slits Science/spec2d_r230417_01033-frb22022_LRISr_20230417T082242.672.fits
+     pypeit_parse_slits Science/spec2d_FCSA00216334-SN2019muj_FOCAS_20201121T083826.517.fits
 
 which print the following (here truncated) table in the terminal:
 
 .. code-block:: bash
 
     ============================== DET01 ==============================
-    SpatID   MaskID   MaskOFF (pix)  Flags
-    0212     0011     0.42           None
-    0265     0008     0.42           None
-    0335     0007     0.42           None
-    0384     0021     0.42           BOXSLIT
-    0474     0020     0.42           BOXSLIT
+    SpatID Flags
+    ------ -----
+    313  None
+    760  None
 
 
-The four columns printed to screen are ``SpatID`` (the internal PypeIt ID), ``MaskID``,
-(the slit ID from the slitmask design), ``MaskOFF`` (the dither offset) and ``Flags`` for each slit.
-Slits with ``Flags`` set to ``BOXSLIT`` are alignment boxes and are not reduced by PypeIt. If the
-calibration failed for some slits, the ``Flags`` column will show the reason for the failure.
+
+The two columns printed to screen are ``SpatID`` (the internal PypeIt ID), 
+and ``Flags`` for each slit.
+If the calibration failed for some slits, the ``Flags`` column will show the reason for 
+the failure.
 Those slits with *None* in the ``Flags`` column have been successfully reduced.
-**Note that the MaskID and MaskOFF columns are not printed for long-slit observations.**
 
 
 Visual inspection
@@ -381,7 +373,7 @@ In this example, we can visualize the 2D spectrum with this explicit call:
 
 .. code-block:: bash
 
-    pypeit_show_2dspec Science/spec2d_r230417_01033-frb22022_LRISr_20230417T082242.672.fits --removetrace
+    pypeit_show_2dspec Science/spec2d_FCSA00216334-SN2019muj_FOCAS_20201121T083826.517.fits
 
 The ``--removetrace`` only shows the object trace in the first channel (the channel showing the
 calibrated science image), but does not include it in the remaining channels. It is helpful to
@@ -392,24 +384,21 @@ objects).
 We show here a zoom-in screenshot from three (``sciimg-DET01``, ``sky_resid-DET01``, ``resid-DET01``) of the
 four tabs in the `ginga`_ window:
 
-.. image:: ../figures/lris_sciimg.png
+.. image:: ../figures/focas_sciimg.png
    :scale: 60%
    :align: center
-.. image:: ../figures/lris_skyres.png
+.. image:: ../figures/focas_skyres.png
    :scale: 60%
    :align: center
-.. image:: ../figures/lris_res.png
+.. image:: ../figures/focas_res.png
    :scale: 60%
    :align: center
 
-This shows on the top the calibrated science image, in the middle the sky residual image (sky-subtracted
+This shows on the top the calibrated science image, in the middle the sky residual image 
+(sky-subtracted
 calibrated image divided by the uncertainties), and on the right the residual image.
 The green/magenta lines are the slit edges.  The orange lines (shown only in the first channel)
-are the object traces and the orange text is the PypeIt assigned name (starting with ``SPAT``).
-**Only for multi-slit observations, and if the slitmask design information is provided,**
-The orange text also includes the object name from the slitmask design information (starting with ``OBJNAME``).
-Yellow lines, if present, indicate sources that, although not detected, have been extracted
-at the expected location using the slitmask design information (still **only for multi-slit observations**).
+are the object traces. 
 See :ref:`spec-2d-output` for further details.
 
 The main assessments to perform are to make sure that the object is well traced,
@@ -422,14 +411,17 @@ Spec1D
 
 You can see a summary of all the extracted sources in the ``spec1d*.txt`` files saved
 in the ``Science/`` folder.  For this example, here are the first few lines of the file
-``Science/spec1d_r230417_01033-frb22022_LRISr_20230417T082242.672.txt``:
+``Science/spec1d_FCSA00216334-SN2019muj_FOCAS_20201121T083826.517.txt``:
 
 .. code-block:: console
 
-    | slit |                    name | maskdef_id |  objname |     objra |    objdec | spat_pixpos | spat_fracpos | box_width | opt_fwhm |   s2n | maskdef_extract | wv_rms |
-    |  212 | SPAT0216-SLIT0212-DET01 |         11 |   gal172 | 203.89073 | -28.09230 |       216.3 |        0.454 |      3.00 |    1.184 |  2.21 |           False |  0.027 |
-    |  265 | SPAT0264-SLIT0265-DET01 |          8 |   gal227 | 203.84148 | -28.07640 |       263.5 |        0.384 |      3.00 |    1.240 |  2.19 |           False |  0.025 |
-    |  335 | SPAT0338-SLIT0335-DET01 |          7 |   gal158 | 203.91662 | -28.08936 |       338.1 |        0.458 |      3.00 |    0.829 |  4.22 |           False |  0.348 |
+    | slit |                    name | obj_id | spat_pixpos | spat_fracpos | box_width | opt
+    _fwhm |  s2n | wv_rms |
+    |  760 | SPAT0634-SLIT0760-DET01 |    634 |       634.2 |        0.249 |      3.00 |    
+    0.805 | 2.14 |  0.231 |
+    |  760 | SPAT0700-SLIT0760-DET01 |    700 |       699.6 |        0.380 |      3.00 |    
+    3.944 | 1.37 |  0.231 |
+
 
 It shows a table with the PypeIt names of the extracted spectra in each slit and all the associated
 information about the extraction and the object. See :ref:`spec1d-extract_info` for a detailed description of this file.
@@ -440,22 +432,23 @@ To inspect the 1D spectrum, we can use the script :ref:`pypeit_show_1dspec`, wit
 
 .. code-block:: bash
 
-    pypeit_show_1dspec Science/spec1d_r230417_01033-frb22022_LRISr_20230417T082242.672.fits --exten 3
+    pypeit_show_1dspec Science/spec1d_FCSA00216334-SN2019muj_FOCAS_20201121T083826.517.fits --exten 1
 
 Since ``spec1d*.fits`` is a multi-extension FITS file that contains all the 1D extracted spectra
 (one per each extension), we need to specify which 1D spectrum (i.e., extension) we want to inspect
-by passing ``--exten 3`` to the call. To help decide which 1D spectrum to visualize,
+by passing ``--exten 1`` to the call.  This selects the supernova spectrum. 
+To help decide which 1D spectrum to visualize,
 we can run beforehand the following:
 
 .. code-block:: bash
 
-    pypeit_show_1dspec Science/spec1d_r230417_01033-frb22022_LRISr_20230417T082242.672.fits --list
+    pypeit_show_1dspec Science/spec1d_FCSA00216334-SN2019muj_FOCAS_20201121T083826.517.fits  --list
 
 which lists all the extensions with the associated 1D spectrum PypeIt name and a few other information.
 
 This is a screenshot from the GUI showing the 1D spectrum:
 
-.. image:: ../figures/lris_spec1d.png
+.. image:: ../figures/focas_spec1d.png
 
 This uses the `XSpecGUI`_ from the `linetools`_ package.  The black line is the
 flux and the red line is the estimated error. In the window, the user can press ``?`` to open
