@@ -314,7 +314,7 @@ There are two QA files (two for the ``global`` and two for the ``local`` correct
 that can be used to assess the flexure correction. Here is an example of two QA files
 for the ``global`` correction, called
 ``QA/PNGs/FCSA00216334-SN2019muj_FOCAS_20201121T083826.517_global_DET01_S0760_spec_flex_corr.png``
-``QA/PNGs/
+``QA/PNGs/FCSA00216334-SN2019muj_FOCAS_20201121T083826.517_global_DET01_S0760_spec_flex_sky.png``:
 
 .. image:: ../figures/focas_flexure_qa2.png
    :scale: 90%
