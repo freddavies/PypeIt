@@ -75,7 +75,7 @@ But one of the files (FCSA00216242.fits) is mis-typed as a science
 frame instead of a standard star. We change the ``frametype`` of this
 file to ``standard`` and then click on the ``Save All`` button.
 
-This writes the :pypeit_file`` called ``subaru_focas_A.pypeit``:
+This writes the :ref:`pypeit_file` called ``subaru_focas_A.pypeit``:
 
 
 .. include:: ../include/subaru_focas_A.pypeit.rst
@@ -346,7 +346,7 @@ In this example, we can inspect the reduced 2D spectrum with this explicit call:
 
      pypeit_parse_slits Science/spec2d_FCSA00216334-SN2019muj_FOCAS_20201121T083826.517.fits
 
-which print the following (here truncated) table in the terminal:
+which print the following table in the terminal:
 
 .. code-block:: bash
 
@@ -377,11 +377,11 @@ In this example, we can visualize the 2D spectrum with this explicit call:
 
 The ``--removetrace`` only shows the object trace in the first channel (the channel showing the
 calibrated science image), but does not include it in the remaining channels. It is helpful to
-to use the ``--removetrace`` option to better visualize the object traces (especially for faint
+use the ``--removetrace`` option to better visualize the object traces (especially for faint
 objects).
 
 
-We show here a zoom-in screenshot from three (``sciimg-DET01``, ``sky_resid-DET01``, ``resid-DET01``) of the
+We show here a zoom-in screenshot from three (``sciimg-DET01``, ``skysub-DET01``, ``sky_resid-DET01``) of the
 four tabs in the `ginga`_ window:
 
 .. image:: ../figures/focas_sciimg.png
@@ -394,9 +394,9 @@ four tabs in the `ginga`_ window:
    :scale: 60%
    :align: center
 
-This shows on the top the calibrated science image, in the middle the sky residual image 
-(sky-subtracted
-calibrated image divided by the uncertainties), and on the right the residual image.
+This shows on the top the calibrated science image, in the middle the sky-subtracted
+calibrated image, and on the bottom the sky residual image (sky-subtracted
+calibrated image divided by the uncertainties).
 The green/magenta lines are the slit edges.  The orange lines (shown only in the first channel)
 are the object traces. 
 See :ref:`spec-2d-output` for further details.
@@ -415,12 +415,9 @@ in the ``Science/`` folder.  For this example, here are the first few lines of t
 
 .. code-block:: console
 
-    | slit |                    name | obj_id | spat_pixpos | spat_fracpos | box_width | opt
-    _fwhm |  s2n | wv_rms |
-    |  760 | SPAT0634-SLIT0760-DET01 |    634 |       634.2 |        0.249 |      3.00 |    
-    0.805 | 2.14 |  0.231 |
-    |  760 | SPAT0700-SLIT0760-DET01 |    700 |       699.6 |        0.380 |      3.00 |    
-    3.944 | 1.37 |  0.231 |
+    | slit |                    name | obj_id | spat_pixpos | spat_fracpos | box_width | opt_fwhm |  s2n | wv_rms |
+    |  760 | SPAT0634-SLIT0760-DET01 |    634 |       634.2 |        0.249 |      3.00 |    0.805 | 2.14 |  0.231 |
+    |  760 | SPAT0700-SLIT0760-DET01 |    700 |       699.6 |        0.380 |      3.00 |    3.944 | 1.37 |  0.231 |
 
 
 It shows a table with the PypeIt names of the extracted spectra in each slit and all the associated
@@ -430,29 +427,46 @@ printed for long-slit observations.**
 
 To inspect the 1D spectrum, we can use the script :ref:`pypeit_show_1dspec`, with a call like this:
 
-.. code-block:: bash
+    .. code-block:: bash
 
-    pypeit_show_1dspec Science/spec1d_FCSA00216334-SN2019muj_FOCAS_20201121T083826.517.fits --exten 1
+        pypeit_show_1dspec Science/spec1d_FCSA00216334-SN2019muj_FOCAS_20201121T083826.517.fits --ginga
 
-Since ``spec1d*.fits`` is a multi-extension FITS file that contains all the 1D extracted spectra
-(one per each extension), we need to specify which 1D spectrum (i.e., extension) we want to inspect
-by passing ``--exten 1`` to the call.  This selects the supernova spectrum. 
-To help decide which 1D spectrum to visualize,
-we can run beforehand the following:
+which plots the spectrum in a tab of the `ginga`_ viewer and allows to select the different extracted spectra using a
+drop down menu, in addition to selecting other properties of the spectrum. Here is one exemple:
 
-.. code-block:: bash
+.. figure:: ../figures/focas_spec1d_ginga.png
+   :scale: 60%
+   :align: center
 
-    pypeit_show_1dspec Science/spec1d_FCSA00216334-SN2019muj_FOCAS_20201121T083826.517.fits  --list
+The black line is the flux and the red line is the estimated error. In the `ginga`_ window, the user can
+select the different extracted spectra, the extraction type (``OPT`` or ``BOX`), fluxed or not fluxed spectrum, and
+if showing masked data, by using the drop down menu on the right of the window. Line lists of common spectral features
+can be over-plotted by selecting an option in the ``Line lists``drop down menu and providing a redshift.
 
-which lists all the extensions with the associated 1D spectrum PypeIt name and a few other information.
+..  REMOVE?
+    .. code-block:: bash
 
-This is a screenshot from the GUI showing the 1D spectrum:
+        pypeit_show_1dspec Science/spec1d_FCSA00216334-SN2019muj_FOCAS_20201121T083826.517.fits --exten 1
 
-.. image:: ../figures/focas_spec1d.png
+    Since ``spec1d*.fits`` is a multi-extension FITS file that contains all the 1D extracted spectra
+    (one per each extension), we need to specify which 1D spectrum (i.e., extension) we want to inspect
+    by passing ``--exten 1`` to the call.  This selects the supernova spectrum.
+    To help decide which 1D spectrum to visualize,
+    we can run beforehand the following:
 
-This uses the `XSpecGUI`_ from the `linetools`_ package.  The black line is the
-flux and the red line is the estimated error. In the window, the user can press ``?`` to open
-a webpage with the `XSpecGUI keystrokes`_ that help you navigate through the spectrum.
+    .. code-block:: bash
+
+        pypeit_show_1dspec Science/spec1d_FCSA00216334-SN2019muj_FOCAS_20201121T083826.517.fits  --list
+
+    which lists all the extensions with the associated 1D spectrum PypeIt name and a few other information.
+
+    This is a screenshot from the GUI showing the 1D spectrum:
+
+    .. image:: ../figures/focas_spec1d.png
+
+    This uses the `XSpecGUI`_ from the `linetools`_ package.  The black line is the
+    flux and the red line is the estimated error. In the window, the user can press ``?`` to open
+    a webpage with the `XSpecGUI keystrokes`_ that help you navigate through the spectrum.
 
 See :ref:`spec-1d-output` for further details.
 
