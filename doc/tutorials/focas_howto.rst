@@ -69,7 +69,13 @@ associated outputs and we run:
     pypeit_setup -s subaru_focas -r ../../../RAW_DATA/subaru_focas/300R_O58/FCSA00216 -G
 
 This launches the :ref:`pypeit_setup` GUI, which allows us to select the dataset 
-we want to reduce.  In this case, all of the files have already been selected
+we want to reduce.  Here is a screenshot of the "A" tab:  
+
+.. image:: ../figures/focas_setupgui.png
+   :scale: 60%
+   :align: center
+
+In this case, all of the files have already been selected
 to have a similar setup (i.e., same grating, decker, binning, etc.).
 But one of the files (FCSA00216242.fits) is mis-typed as a science 
 frame instead of a standard star. We change the ``frametype`` of this
