@@ -3,8 +3,6 @@ Module for P200/DBSP specific methods.
 
 .. include:: ../include/links.rst
 """
-from typing import List, Optional
-
 import numpy as np
 
 from astropy.io import fits
@@ -61,7 +59,7 @@ class P200DBSPSpectrograph(spectrograph.Spectrograph):
         # Lamps
         self.meta['lampstat01'] = dict(ext=0, card='LAMPS')
 
-    def compound_meta(self, headarr: List[fits.Header], meta_key: str):
+    def compound_meta(self, headarr: list[fits.Header], meta_key: str):
         """
         Methods to generate metadata requiring interpretation of the header
         data, instead of simply reading the value of a header card.
@@ -192,7 +190,7 @@ class P200DBSPBlueSpectrograph(P200DBSPSpectrograph):
     supported = True
     comment = 'Blue camera'
     
-    def compound_meta(self, headarr: List[fits.Header], meta_key: str):
+    def compound_meta(self, headarr: list[fits.Header], meta_key: str):
         """
         Methods to generate metadata requiring interpretation of the header
         data, instead of simply reading the value of a header card.
@@ -217,7 +215,7 @@ class P200DBSPBlueSpectrograph(P200DBSPSpectrograph):
             return parse.binning2string(binspec, binspatial)
         raise PypeItError(f"Not ready for this compound meta: {meta_key}")
 
-    def get_detector_par(self, det: int, hdu: Optional[fits.HDUList] = None):
+    def get_detector_par(self, det: int, hdu: fits.HDUList | None = None):
         """
         Return metadata for the selected detector.
 
@@ -415,7 +413,7 @@ class P200DBSPRedSpectrograph(P200DBSPSpectrograph):
     supported = True
     comment = 'Red camera'
     
-    def compound_meta(self, headarr: List[fits.Header], meta_key: str):
+    def compound_meta(self, headarr: list[fits.Header], meta_key: str):
         """
         Methods to generate metadata requiring interpretation of the header
         data, instead of simply reading the value of a header card.
@@ -441,7 +439,7 @@ class P200DBSPRedSpectrograph(P200DBSPSpectrograph):
         else:
             raise PypeItError(f"Not ready for this compound meta: {meta_key}")
 
-    def get_detector_par(self, det: int, hdu: Optional[fits.HDUList] = None):
+    def get_detector_par(self, det: int, hdu: fits.HDUList | None = None):
         """
         Return metadata for the selected detector.
 
