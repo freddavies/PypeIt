@@ -1,8 +1,8 @@
 .. _setup_gui:
 
-========================
+=========================
 PypeIt Setup GUI Tutorial
-========================
+=========================
 
 Overview
 ========
@@ -20,7 +20,7 @@ The Setup GUI performs the same core functions as the command-line :ref:`pypeit_
 - Save your setup for reduction
 
 Launching the Setup GUI
-========================
+=======================
 
 There are two ways to launch the Setup GUI:
 
@@ -119,7 +119,7 @@ The setup process:
     The scan may take a few moments depending on the number of files. Watch the status bar or log window for progress.
 
 Step 4: Inspect the Observation Log
-------------------------------------
+-----------------------------------
 
 After setup completes, examine the observation log table:
 
@@ -132,7 +132,7 @@ After setup completes, examine the observation log table:
     Always check that frame types are correctly assigned! Misidentified frames can cause reduction failures.
 
 Step 5: Edit Configuration Tabs
---------------------------------
+-------------------------------
 
 Click on the configuration tabs (A, B, C, etc.) to view and edit the `.pypeit` files:
 
@@ -155,7 +155,7 @@ To edit frame types:
 3. Multiple types can be comma-separated (e.g., `arc,tilt`)
 
 Step 6: Save Your Setup
-------------------------
+-----------------------
 
 When you're satisfied with your configuration:
 
@@ -174,7 +174,7 @@ Advanced Features
 =================
 
 Opening Existing PypeIt Files
-------------------------------
+-----------------------------
 
 To load and edit an existing `.pypeit` file:
 
@@ -187,7 +187,7 @@ To load and edit an existing `.pypeit` file:
     Opening a `.pypeit` file will also load the associated spectrograph and update the ObsLog accordingly.
 
 Working with Multiple Configurations
--------------------------------------
+------------------------------------
 
 If PypeIt detects multiple instrument configurations:
 
@@ -248,7 +248,7 @@ Your setup is now ready! Run the reduction with:
     run_pypeit keck_deimos_A.pypeit
 
 Tips and Best Practices
-========================
+=======================
 
 Organizing Your Data
 --------------------
