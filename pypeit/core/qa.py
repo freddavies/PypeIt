@@ -16,7 +16,7 @@ from IPython import embed
 
 # TODO: Move these names to the appropriate class.  This always writes
 # to QA directory, even if the user sets something else...
-def set_qa_filename(root, method, det=None, slit=None, prefix=None, out_dir=None):
+def set_qa_filename(root, method:str, det:str=None, slit:int=None, prefix:str=None, out_dir:str=None) -> str:
     """
     Generate the filename for the QA file from the input parameters.
     
@@ -41,60 +41,80 @@ def set_qa_filename(root, method, det=None, slit=None, prefix=None, out_dir=None
     """
     if out_dir is None:
         out_dir = os.getcwd()
-    #
-    if method == 'slit_trace_qa':
-#        outfile = 'QA/PNGs/Slit_Trace_{:s}.png'.format(root)
-        outfile = 'PNGs/Slit_Trace_{:s}.png'.format(root)
-    elif method == 'slit_profile_qa':
-        outfile = 'QA/PNGs/Slit_Profile_{:s}_'.format(root)
-    elif method == 'arc_fit_qa':
-#        outfile = 'QA/PNGs/Arc_1dfit_{:s}_S{:04d}.png'.format(root, slit)
-        outfile = 'PNGs/Arc_1dfit_{:s}_S{:04d}.png'.format(root, slit)
-    elif method == 'arc_fwhm_qa':
-        outfile = 'PNGs/Arc_FWHMfit_{:s}_S{:04d}.png'.format(root, slit)
-    elif method == 'plot_orderfits_Arc':  # This is root for multiple PNGs
-        outfile = 'QA/PNGs/Arc_lines_{:s}_S{:04d}_'.format(root, slit)
-    elif method == 'arc_fit2d_global_qa':
-#        outfile = 'QA/PNGs/Arc_2dfit_global_{:s}'.format(root)
-        outfile = 'PNGs/Arc_2dfit_global_{:s}'.format(root)
-    elif method == 'arc_fit2d_orders_qa':
-#        outfile = 'QA/PNGs/Arc_2dfit_orders_{:s}'.format(root)
-        outfile = 'PNGs/Arc_2dfit_orders_{:s}'.format(root)
-    elif method == 'arc_tilts_spec_qa':
-#        outfile = 'QA/PNGs/Arc_tilts_spec_{:s}_S{:04d}.png'.format(root, slit)
-        outfile = 'PNGs/Arc_tilts_spec_{:s}_S{:04d}.png'.format(root, slit)
-    elif method == 'arc_tilts_spat_qa':
-#        outfile = 'QA/PNGs/Arc_tilts_spat_{:s}_S{:04d}.png'.format(root, slit)
-        outfile = 'PNGs/Arc_tilts_spat_{:s}_S{:04d}.png'.format(root, slit)
-    elif method == 'arc_tilts_2d_qa':
-#        outfile = 'QA/PNGs/Arc_tilts_2d_{:s}_S{:04d}.png'.format(root, slit)
-        outfile = 'PNGs/Arc_tilts_2d_{:s}_S{:04d}.png'.format(root, slit)
-    elif method == 'pca_plot':  # This is root for multiple PNGs
-        outfile = 'QA/PNGs/{:s}_pca_{:s}_'.format(prefix, root)
-    elif method == 'pca_arctilt':  # This is root for multiple PNGs
-        outfile = 'QA/PNGs/Arc_pca_{:s}_'.format(root)
-    elif method == 'plot_orderfits_Blaze':  # This is root for multiple PNGs
-        outfile = 'QA/PNGs/Blaze_{:s}_'.format(root)
-    elif method == 'obj_trace_qa':
-        print(f"For method {method}, types: root: {type(root)}  det: {type(det)}  slit: {type(slit)}")
-        outfile = 'PNGs/{:s}_{:s}_S{:04d}_obj_trace.png'.format(root, det, slit)
-    elif method == 'obj_profile_qa':
-        print(f"For method {method}, types: root: {type(root)}  det: {type(det)}  slit: {type(slit)}")
-        outfile = 'PNGs/{:s}_{:s}_S{:04d}_obj_prof.png'.format(root, det, slit)
-    elif method == 'spat_flexure_qa_corr':
-        outfile = 'QA/PNGs/{:s}_spat_flex_corr.png'.format(root)
-    elif method == 'spec_flexure_qa_corr':
-#        outfile = 'QA/PNGs/{:s}_D{:02d}_S{:04d}_spec_flex_corr.png'.format(root, det, slit)
-        outfile = 'PNGs/{:s}_S{:04d}_spec_flex_corr.png'.format(root, slit)
-    elif method == 'spec_flexure_qa_sky':
-#        outfile = 'QA/PNGs/{:s}_D{:02d}_S{:04d}_spec_flex_sky.png'.format(root, det, slit)
-        outfile = 'PNGs/{:s}_S{:04d}_spec_flex_sky.png'.format(root, slit)
-    elif method == 'spatillum_finecorr':
-        outfile = 'PNGs/{:s}_S{:04d}_spatillum_finecorr.png'.format(root, slit)
-    elif method == 'detector_structure':
-        outfile = 'PNGs/{:s}_{:s}_detector_structure.png'.format(root, det)
-    else:
-        raise IOError("NOT READY FOR THIS QA: {:s}".format(method))
+
+    match method:
+        case 'slit_trace_qa':
+            # outfile = 'QA/PNGs/Slit_Trace_{:s}.png'.format(root)
+            outfile = 'PNGs/Slit_Trace_{:s}.png'.format(root)
+
+        case 'slit_profile_qa':
+            outfile = 'QA/PNGs/Slit_Profile_{:s}_'.format(root)
+
+        case 'arc_fit_qa':
+            # outfile = 'QA/PNGs/Arc_1dfit_{:s}_S{:04d}.png'.format(root, slit)
+            outfile = 'PNGs/Arc_1dfit_{:s}_S{:04d}.png'.format(root, slit)
+
+        case 'arc_fwhm_qa':
+            outfile = 'PNGs/Arc_FWHMfit_{:s}_S{:04d}.png'.format(root, slit)
+
+        case 'plot_orderfits_Arc':  # This is root for multiple PNGs
+            outfile = 'QA/PNGs/Arc_lines_{:s}_S{:04d}_'.format(root, slit)
+
+        case 'arc_fit2d_global_qa':
+            # outfile = 'QA/PNGs/Arc_2dfit_global_{:s}'.format(root)
+            outfile = 'PNGs/Arc_2dfit_global_{:s}'.format(root)
+
+        case 'arc_fit2d_orders_qa':
+            # outfile = 'QA/PNGs/Arc_2dfit_orders_{:s}'.format(root)
+            outfile = 'PNGs/Arc_2dfit_orders_{:s}'.format(root)
+
+        case 'arc_tilts_spec_qa':
+            # outfile = 'QA/PNGs/Arc_tilts_spec_{:s}_S{:04d}.png'.format(root, slit)
+            outfile = 'PNGs/Arc_tilts_spec_{:s}_S{:04d}.png'.format(root, slit)
+
+        case 'arc_tilts_spat_qa':
+            # outfile = 'QA/PNGs/Arc_tilts_spat_{:s}_S{:04d}.png'.format(root, slit)
+            outfile = 'PNGs/Arc_tilts_spat_{:s}_S{:04d}.png'.format(root, slit)
+
+        case 'arc_tilts_2d_qa':
+            # outfile = 'QA/PNGs/Arc_tilts_2d_{:s}_S{:04d}.png'.format(root, slit)
+            outfile = 'PNGs/Arc_tilts_2d_{:s}_S{:04d}.png'.format(root, slit)
+
+        case 'pca_plot':  # This is root for multiple PNGs
+            outfile = 'QA/PNGs/{:s}_pca_{:s}_'.format(prefix, root)
+
+        case 'pca_arctilt':  # This is root for multiple PNGs
+            outfile = 'QA/PNGs/Arc_pca_{:s}_'.format(root)
+
+        case 'plot_orderfits_Blaze':  # This is root for multiple PNGs
+            outfile = 'QA/PNGs/Blaze_{:s}_'.format(root)
+
+        case 'obj_trace_qa':
+            outfile = 'PNGs/{:s}_{:s}_S{:04d}_obj_trace.png'.format(root, det, slit)
+
+        case 'obj_profile_qa':
+            outfile = 'PNGs/{:s}_{:s}_S{:04d}_obj_prof.png'.format(root, det, slit)
+
+        case 'spat_flexure_qa_corr':
+            outfile = 'QA/PNGs/{:s}_spat_flex_corr.png'.format(root)
+
+        case 'spec_flexure_qa_corr':
+            # outfile = 'QA/PNGs/{:s}_D{:02d}_S{:04d}_spec_flex_corr.png'.format(root, det, slit)
+            outfile = 'PNGs/{:s}_S{:04d}_spec_flex_corr.png'.format(root, slit)
+
+        case 'spec_flexure_qa_sky':
+            # outfile = 'QA/PNGs/{:s}_D{:02d}_S{:04d}_spec_flex_sky.png'.format(root, det, slit)
+            outfile = 'PNGs/{:s}_S{:04d}_spec_flex_sky.png'.format(root, slit)
+
+        case 'spatillum_finecorr':
+            outfile = 'PNGs/{:s}_S{:04d}_spatillum_finecorr.png'.format(root, slit)
+
+        case 'detector_structure':
+            outfile = 'PNGs/{:s}_{:s}_detector_structure.png'.format(root, det)
+
+        case _:
+            raise IOError("NOT READY FOR THIS QA: {:s}".format(method))
+
     # Return
     return os.path.join(out_dir, outfile)
 
@@ -307,7 +327,7 @@ def html_mf_pngs(idval):
     return links, body
 
 
-def html_exp_pngs(exp_name, det):
+def html_exp_pngs(exp_name:str, det:int) -> tuple[str,str]:
     """
     Generate HTML for Exposure PNGs
 
@@ -322,6 +342,8 @@ def html_exp_pngs(exp_name, det):
     body : str
 
     """
+    det_str = f"DET{det:02d}"
+
     links = ''
     body = ''
     # QA root
@@ -332,15 +354,14 @@ def html_exp_pngs(exp_name, det):
                                href='otrace', label='Object Traces')
     html_dict['prof'] = dict(fname='obj_profile_qa', ext='', slit=True,
                               href='oprofile', label='Object Profiles')
-    html_dict['flex_corr'] = dict(fname='flexure_qa_corr', ext='', slit=True,
+    html_dict['flex_corr'] = dict(fname='spec_flexure_qa_corr', ext='', slit=True,
                              href='flex_corr', label='Flexure Cross Correlation')
-    html_dict['flex_sky'] = dict(fname='flexure_qa_sky', ext='', slit=True,
+    html_dict['flex_sky'] = dict(fname='spec_flexure_qa_sky', ext='', slit=True,
                                   href='flex_sky', label='Flexure Sky')
 
     # Generate HTML
     for key in ['trace', 'prof', 'flex_corr', 'flex_sky']:
-        print(f"**TEST**: {key} {exp_name} {html_dict[key]['fname']} {det} {9999}")
-        png_root = set_qa_filename(exp_name, html_dict[key]['fname'], det=det, slit=9999)
+        png_root = set_qa_filename(exp_name, html_dict[key]['fname'], det=det_str, slit=9999)
         if html_dict[key]['slit']:  # Kludge to handle multiple slits
             png_root = png_root.replace('S9999', 'S*')
         pngs = glob.glob(png_root+html_dict[key]['ext'])
@@ -434,6 +455,8 @@ def gen_exp_html():
     """ Generate the HTML for an Exposure set
     """
     # Find all obj_trace files -- Not fool proof but ok
+    # NOTE: At some point, the obj_trace QA was removed from the repo.  Adding
+    #       it back reactivates this code.  (TEB, 21-Oct-2025)
     obj_files = glob.glob('QA/PNGs/*obj_trace.png')
     # Parse for names
     names = []

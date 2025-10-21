@@ -2044,7 +2044,7 @@ def objs_in_slit(image, ivar, thismask, slit_left, slit_righ,
             sobjs[iobj].SPAT_PIXPOS_ID = int(np.rint(sobjs[iobj].SPAT_PIXPOS))
             sobjs[iobj].set_name()
 
-        # TODO: Create a QA plot for the object traces based on plots in ``fit_trace``
+        # Create a QA plot for the object traces based on plots in ``fit_trace``
         objtrace_QA(xfit_gweight, traceset, cen, msk, xinit_fweight, np.invert(trc_inmask),
                     idx=sobjs.NAME,objtraceQA_filename=objfindQA_filename.replace("prof","trace"))
 

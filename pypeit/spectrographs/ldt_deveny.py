@@ -487,7 +487,7 @@ class LDTDeVenySpectrograph(spectrograph.Spectrograph):
             par['calibrations']['wavelengths']['n_first'] = 3  # Default: 2
             par['calibrations']['wavelengths']['n_final'] = 5  # Default: 4
             # Allow for larger curvature in the object trace due to atmospheric dispersion
-            par['reduce']['findobj']['find_maxshift'] = 2.0
+            par['reduce']['findobj']['trace_maxshift'] = 2.0
 
             # The approximate resolution of this grating
             par['sensfunc']['UVIS']['resolution'] = 400
