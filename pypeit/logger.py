@@ -16,11 +16,14 @@ import warnings
 
 from IPython import embed
 
+# NOTE: BEWARE of importing anything from pypeit into this module.  It is likely
+# to cause a circular import.
+
 # TODO: Can we put this *inside* the logger?
-def short_warning(message, category, filename, lineno, file=None, line=None):
+def short_warning(message, category, filename, lineno, line=None):
     """
-    Formatter for warning messages.  Shortens default output to just the warning
-    type and warning message.
+    Overrides default formatting of warning messages.  The only arguments used
+    are ``message`` and ``category``.  See :func:`warnings.formatwarning`.
     """
     return f'{category.__name__}: {message}'
 warnings.formatwarning = short_warning
