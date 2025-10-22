@@ -2045,8 +2045,9 @@ def objs_in_slit(image, ivar, thismask, slit_left, slit_righ,
             sobjs[iobj].set_name()
 
         # Create a QA plot for the object traces based on plots in ``fit_trace``
+        objtraceQA_filename = None if objfindQA_filename is None else objfindQA_filename.replace("prof","trace")
         objtrace_QA(xfit_gweight, traceset, cen, msk, xinit_fweight, np.invert(trc_inmask),
-                    idx=sobjs.NAME,objtraceQA_filename=objfindQA_filename.replace("prof","trace"))
+                    idx=sobjs.NAME,objtraceQA_filename=objtraceQA_filename)
 
     # Now deal with the hand apertures if a hand_extract_dict was passed in. Add these to the SpecObj objects
     if hand_extract_dict is not None:

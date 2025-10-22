@@ -484,11 +484,11 @@ class LDTDeVenySpectrograph(spectrograph.Spectrograph):
             # Because of the wide wavelength range, split DV1 arcs in half for reidentification
             par['calibrations']['wavelengths']['nsnippet'] = 2
             # Higher order wavelength fits because of larger span
-            par['calibrations']['wavelengths']['n_first'] = 3  # Default: 2
-            par['calibrations']['wavelengths']['n_final'] = 5  # Default: 4
+            par['calibrations']['wavelengths']['n_first'] = 4  # Default: 2
+            par['calibrations']['wavelengths']['n_final'] = 7  # Default: 4
             # Allow for larger curvature in the object trace due to atmospheric dispersion
             par['reduce']['findobj']['trace_maxshift'] = 2.0
-
+            par['reduce']['findobj']['trace_npoly'] = 5   # Default: 3
             # The approximate resolution of this grating
             par['sensfunc']['UVIS']['resolution'] = 400
 
