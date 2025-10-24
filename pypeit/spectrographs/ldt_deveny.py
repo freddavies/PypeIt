@@ -429,7 +429,8 @@ class LDTDeVenySpectrograph(spectrograph.Spectrograph):
             :ref:`pypeit_file`.
         """
         pypeit_keys = super().pypeit_file_keys()
-        pypeit_keys.remove('decker')  # Until the decker is actually installed
+        if 'decker' in pypeit_keys:
+            pypeit_keys.remove('decker')  # Until the decker is actually installed
         pypeit_keys.remove('cenwave')
         return pypeit_keys + ['dispangle', 'slitwid', 'lampstat01']
 
@@ -562,10 +563,10 @@ class LDTDeVenySpectrograph(spectrograph.Spectrograph):
 
             case 'DV10 (2160/5000)':
                 # Presently unsupported; no parameter changes
-                pass
+                msgs.warn("The DV10 grating is not present supported; no config-specific pars set!")
 
             case _:
-                pass
+                msgs.warn("No recognized grating passed; no config-specific pars set!")
 
         # Adjust parameters based on CCD binning
         binspec, binspat = parse.parse_binning(binning)

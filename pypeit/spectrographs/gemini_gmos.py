@@ -736,7 +736,7 @@ class GeminiGMOSSpectrograph(spectrograph.Spectrograph):
                               dec=self.slitmask.mask_radec[1], unit='deg')
 
         # Load up the acquisition image (usually a sciframe)
-        hdul_acq = fits.open(wcs_file)
+        hdul_acq = io.fits_open(wcs_file)
         acq_binning = self.get_meta_value(self.get_headarr(hdul_acq), 'binning')
         _, bin_spat_acq = parse.parse_binning(acq_binning)
         wcss = [wcs.WCS(hdul_acq[i].header) for i in range(1, len(hdul_acq))]

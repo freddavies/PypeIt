@@ -1465,15 +1465,14 @@ class Spectrograph:
                 headarr = self.get_headarr(inp['filename'][0])
 
         # Otherwise, this set of statements pulls the Header array for the file in question
+        elif isinstance(inp, (str, Path, fits.HDUList)):
+            headarr = self.get_headarr(inp)
+        elif inp is None or isinstance(inp, list):
+            headarr = inp
+        elif isinstance(inp, fits.Header):
+            headarr = [inp]
         else:
-            if isinstance(inp, (str, Path, fits.HDUList)):
-                headarr = self.get_headarr(inp)
-            elif inp is None or isinstance(inp, list):
-                headarr = inp
-            elif isinstance(inp, fits.Header):
-                headarr = [inp]
-            else:
-                msgs.error(f'Unrecognized type for input: {type(inp)}')
+            msgs.error(f'Unrecognized type for input: {type(inp)}')
 
         if headarr is None:
             if required:

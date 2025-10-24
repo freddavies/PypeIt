@@ -768,7 +768,7 @@ class KeckLRISSpectrograph(spectrograph.Spectrograph):
         platescale = self.get_detector_par(det=1)['platescale']
 
 
-        hdu = fits.open(filename)
+        hdu = io.fits_open(filename)
         binning = self.get_meta_value(self.get_headarr(hdu), 'binning')
         _, bin_spat = parse.parse_binning(binning)
 

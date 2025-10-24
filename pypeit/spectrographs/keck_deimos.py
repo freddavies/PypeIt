@@ -1766,7 +1766,7 @@ class DEIMOSDetectorMap(DetectorMap):
 #        except AttributeError:
 #            print("Reading DEIMOS file: {:s}".format(fil[0]))
 #        # Open
-#        hdu = fits.open(fil[0])
+#        hdu = io.fits_open(fil[0])
 #    else:
 #        hdu = inp
 #    head0 = hdu[0].header
