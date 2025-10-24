@@ -18,7 +18,8 @@ from IPython import embed
 # TODO: Move these names to the appropriate class.  This always writes
 # to QA directory, even if the user sets something else...
 def set_qa_filename(
-    root:str, method:str, det:str=None, slit:int=None, prefix:str=None, mode:str=None, out_dir:str=None
+    root:str, method:str, det:str|None=None, slit:int|None=None, 
+    prefix:str|None=None, mode:str|None=None, out_dir:str|None=None
 ) -> str:
     """
     Generate the filename for the QA file from the input parameters.
@@ -206,7 +207,7 @@ def html_header(title:str) -> str:
 
     return head
 
-def html_end(f:io.TextIOWrapper, body:str, links:str=None) -> str:
+def html_end(f:io.TextIOWrapper, body:str, links:str|None=None) -> str:
     """
     Fill in the HTML file with a proper ending
 

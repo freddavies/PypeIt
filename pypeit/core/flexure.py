@@ -1205,8 +1205,8 @@ def spec_flexure_corrQA(ax:plt.Axes, this_flex_dict:dict, cntr:int, name:str):
 
 
 def spec_flexure_qa(slitords:np.ndarray, bpm:np.ndarray, basename:str,
-                    flex_list:list[dict], specobjs:specobjs.SpecObjs=None,
-                    out_dir:str=None):
+                    flex_list:list[dict], specobjs:specobjs.SpecObjs|None=None,
+                    out_dir:str|None=None):
     """
     Generate QA for the spectral flexure calculation
 

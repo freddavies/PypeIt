@@ -1425,8 +1425,8 @@ def objtrace_QA(
     msk: np.ndarray,
     trace_cen: np.ndarray,
     trace_bpm: np.ndarray,
-    trace_names: list = None,
-    objtraceQA_filename: str = None,
+    trace_names: list | None = None,
+    objtraceQA_filename: str | None = None,
     show: bool = False,
 ):
     """Utility routine for making object tracing QA plots.
