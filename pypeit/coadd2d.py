@@ -1425,11 +1425,10 @@ class MultiSlitCoAdd2D(CoAdd2D):
                     numiterfit=self.par['reduce']['findobj']['find_numiterfit'],
                     ncoeff=self.par['reduce']['findobj']['trace_npoly'],
                     snr_thresh=self.par['reduce']['findobj']['snr_thresh'],
-                    nperslit=1 if self.par['coadd2d']['user_obj_ids'] is None else None,
+                    nperslit=1 if self.par['coadd2d']['user_obj_ids'] is None else None, 
                     find_min_max=self.par['reduce']['findobj']['find_min_max'],
                     spec_min_max=self.par['reduce']['findobj']['trace_min_max'],
                     show_trace=self.debug_offsets, show_peaks=self.debug_offsets)
-
                 if len(sobjs_exp) == 0:
                     msgs.error(f'No objects found in the rebinned image for exposure {iexp} '
                                f'(used to compute the offsets). '

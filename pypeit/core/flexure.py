@@ -1189,8 +1189,9 @@ def spec_flexure_corrQA(ax, this_flex_dict, cntr, name):
         ax.set_xlabel('Lag')
 
 
-def spec_flexure_qa(slitords, bpm, basename, flex_list,
-                    specobjs=None, out_dir=None):
+def spec_flexure_qa(slitords:np.ndarray, bpm:np.ndarray, basename:str,
+                    flex_list:list[dict], specobjs:specobjs.SpecObjs=None,
+                    out_dir:str=None):
     """
     Generate QA for the spectral flexure calculation
 
@@ -1209,6 +1210,9 @@ def spec_flexure_qa(slitords, bpm, basename, flex_list,
             Path to the output directory for the QA plots.  If None, the current
             is used.
     """
+    # Extract the mode and detector from the ``basename``
+    *_, mode, det = basename.split("_")
+
     plt.rcdefaults()
     plt.rcParams['font.family'] = 'serif'
 
@@ -1247,7 +1251,7 @@ def spec_flexure_qa(slitords, bpm, basename, flex_list,
 
         nrow = nobj // ncol + ((nobj % ncol) > 0)
         # Outfile, one QA file per slit
-        outfile = qa.set_qa_filename(basename, method + '_corr', slit=slitord, out_dir=out_dir)
+        outfile = qa.set_qa_filename(basename, method + '_corr', slit=slitord, det=det, out_dir=out_dir)
         plt.figure(figsize=(8, 5.0))
         plt.clf()
         gs = gridspec.GridSpec(nrow, ncol)

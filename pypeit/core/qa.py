@@ -18,7 +18,7 @@ from IPython import embed
 # TODO: Move these names to the appropriate class.  This always writes
 # to QA directory, even if the user sets something else...
 def set_qa_filename(
-    root:str, method:str, det:str=None, slit:int=None, prefix:str=None, out_dir:str=None
+    root:str, method:str, det:str=None, slit:int=None, prefix:str=None, mode:str=None, out_dir:str=None
 ) -> str:
     """
     Generate the filename for the QA file from the input parameters.
@@ -35,6 +35,9 @@ def set_qa_filename(
         Name of the slit / order being plotted
     prefix
         Start the name of the QA file (used for multiple-PNG PCA plots)
+    mode
+        Additional differentiating information (*e.g.*, ``gloabl`` vs ``local``
+        flexure correction)
     out_dir
         Path to the QA/ directory
 
@@ -109,11 +112,11 @@ def set_qa_filename(
 
         case 'spec_flexure_qa_corr':
             # outfile = 'QA/PNGs/{:s}_D{:02d}_S{:04d}_spec_flex_corr.png'.format(root, det, slit)
-            outfile = 'PNGs/{:s}_local_{:s}_S{:04d}_spec_flex_corr.png'.format(root, det, slit)
+            outfile = 'PNGs/{:s}_{:s}_{:s}_S{:04d}_spec_flex_corr.png'.format(root, mode, det, slit)
 
         case 'spec_flexure_qa_sky':
             # outfile = 'QA/PNGs/{:s}_D{:02d}_S{:04d}_spec_flex_sky.png'.format(root, det, slit)
-            outfile = 'PNGs/{:s}_local_{:s}_S{:04d}_spec_flex_sky.png'.format(root, det, slit)
+            outfile = 'PNGs/{:s}_{:s}_{:s}_S{:04d}_spec_flex_sky.png'.format(root, mode, det, slit)
 
         case 'spatillum_finecorr':
             outfile = 'PNGs/{:s}_S{:04d}_spatillum_finecorr.png'.format(root, slit)
@@ -388,7 +391,7 @@ def html_exp_pngs(exp_name:str, det:int) -> tuple[str,str]:
     # Generate HTML
     for key in ['trace', 'prof', 'flex_corr', 'flex_sky']:
         # PNG Root
-        png_fileroot = set_qa_filename(exp_name, html_dict[key]['fname'], det=det_str, slit=9999, out_dir='QA')
+        png_fileroot = set_qa_filename(exp_name, html_dict[key]['fname'], det=det_str, slit=9999, mode="*", out_dir='QA')
         if html_dict[key]['slit']:  # Kludge to handle multiple slits
             png_fileroot = png_fileroot.replace('S9999', 'S*')
         # Find the PNGs

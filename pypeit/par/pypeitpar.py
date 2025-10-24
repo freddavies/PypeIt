@@ -4353,16 +4353,18 @@ class FindObjPar(ParSet):
 
         defaults['trace_extrap_npoly'] = 3
         dtypes['trace_extrap_npoly'] = int
-        descr['trace_extrap_npoly'] = 'Polynomial order used for trace extrapolation.  NOTE: Not consumed by the code at present.'
+        descr['trace_extrap_npoly'] = 'Polynomial order used for trace extrapolation.  NOTE: Not consumed by the code at present. (For ``pypeit<=1.18``, this ' \
+                                      'parameter was called ``find_extrap_npoly``.)'
+
+        defaults['trace_maxdev'] = 2.0
+        dtypes['trace_maxdev'] = [int, float]
+        descr['trace_maxdev'] = 'Maximum deviation of pixels from polynomial fit to trace used to reject bad pixels in trace fitting.  (For ``pypeit<=1.18``, this ' \
+                                      'parameter was called ``find_maxdev``.)'
 
         defaults['trace_maxshift'] = 1.0
         dtypes['trace_maxshift'] = [int, float]
         descr['trace_maxshift'] = 'Maximum shift allowed between the input and recalculated centroid in trace fitting.  This parameter may be increased to ' \
                                  'allow the fiter to follow curved traces (*e.g.*, for wide spectral ranges at high airmass).'
-
-        defaults['trace_maxdev'] = 2.0
-        dtypes['trace_maxdev'] = [int, float]
-        descr['trace_maxdev'] = 'Maximum deviation of pixels from polynomial fit to trace used to reject bad pixels in trace fitting.'
 
         defaults['trace_min_max'] = None
         dtypes['trace_min_max'] = list
