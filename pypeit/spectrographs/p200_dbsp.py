@@ -218,7 +218,7 @@ class P200DBSPBlueSpectrograph(P200DBSPSpectrograph):
             return parse.binning2string(binspec, binspatial)
         msgs.error(f"Not ready for this compound meta: {meta_key}")
 
-    def get_detector_par(self, det: int, hdu: fits.HDUList = None):
+    def get_detector_par(self, det: int, hdu: fits.HDUList | None = None):
         """
         Return metadata for the selected detector.
 
@@ -449,7 +449,7 @@ class P200DBSPRedSpectrograph(P200DBSPSpectrograph):
         else:
             msgs.error(f"Not ready for this compound meta: {meta_key}")
 
-    def get_detector_par(self, det: int, hdu: fits.HDUList = None):
+    def get_detector_par(self, det: int, hdu: fits.HDUList | None = None):
         """
         Return metadata for the selected detector.
 
