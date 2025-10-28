@@ -51,8 +51,7 @@ class RunToCalibStep(scriptbase.ScriptBase):
 
         from pypeit import pypeit
         from pypeit import msgs
-        from pypeit.pypmsgs import PypeItError
-        from pypeit.par.util import eval_tuple
+        from pypeit.core import parse
 
         # Load options from command line
         _pypeit_file = Path(args.pypeit_file).absolute()
@@ -77,19 +76,9 @@ class RunToCalibStep(scriptbase.ScriptBase):
         if args.det is None:
             dets = pypeIt.par['rdx']['detnum']
         else:
-            # TODO: We need a eval_detectors function
-            dets = None
-            try:
-                dets = int(args.det)
-            except:
-                pass
-            if dets is None:
-                try:
-                    dets = eval_tuple(args.det)
-                except:
-                    pass
-            if dets is None:
-                raise PypeItError('Could not parse detectors')
+            dets = parse.eval_detectors(args.det)
+        if dets is None:
+            msgs.error('Could not parse detectors')
 
         detectors = pypeIt.select_detectors(
             pypeIt.spectrograph, dets,
