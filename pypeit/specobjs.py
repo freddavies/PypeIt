@@ -369,11 +369,11 @@ class SpecObjs:
             else: # For normal multislit take the brightest object
                 istd = SNR.argmax()
                 # if not a mosaic reduction, just return the single object
-                if self[istd].SPEC_DET is None or not split_mosaic:
+                if not split_mosaic or (split_mosaic and self[istd].SPEC_DET is None):
                     sobjs_std.add_sobj(self[istd])
                 # if a mosaic reduction, break up the std spectrum into the different detectors.
                 # This takes into account different QE in different detectors
-                else:
+                elif self[istd].SPEC_DET is not None:
                     dets = np.unique(self[istd].SPEC_DET[self[istd].SPEC_DET > 0])
                     for idet in dets:
                         not_idet = self[istd].SPEC_DET != idet

@@ -6,6 +6,7 @@ Implements the objects used to construct sensitivity functions.
 import inspect
 
 from IPython import embed
+from pathlib import Path
 
 import numpy as np
 import scipy.interpolate
@@ -54,8 +55,8 @@ class SensFunc(datamodel.DataContainer):
     .. include:: ../include/class_datamodel_sensfunc.rst
 
     Args:
-        spec1dfile (:obj:`str`):
-            PypeIt spec1d file for the standard file.
+        spec1dfiles (:obj:`list`):
+            PypeIt spec1d file(s) for the standard file.
         sensfile (:obj:`str`):
             File name for the sensitivity function data.
         par (:class:`~pypeit.par.pypeitpar.SensFuncPar`):
@@ -81,8 +82,8 @@ class SensFunc(datamodel.DataContainer):
 
     datamodel = {'PYP_SPEC': dict(otype=str, descr='PypeIt spectrograph name'),
                  'pypeline': dict(otype=str, descr='PypeIt pipeline reduction path'),
-                 # 'spec1df': dict(otype=np.ndarray, atype=str,
-                 #                 descr='PypeIt spec1D file(s) used to for sensitivity function'),
+                 'spec1df': dict(otype=str,
+                                 descr='PypeIt spec1D file(s) used to for sensitivity function'),
                  'extr': dict(otype=str, descr='Extraction method used for the standard star (OPT or BOX)'),
                  'std_name': dict(otype=str, descr='Type of standard source'),
                  'std_cal': dict(otype=str,
@@ -113,7 +114,7 @@ class SensFunc(datamodel.DataContainer):
     """DataContainer datamodel."""
 
     internals = ['sensfile',
-                 'spec1df',
+                 'spec1d_arr',
                  'spectrograph',
                  'par',
                  'par_fluxcalib',
@@ -220,14 +221,17 @@ class SensFunc(datamodel.DataContainer):
         super().__init__()
 
         # Input and Output files
-        self.spec1df = np.array(spec1dfiles)
+        # this is just the name of the spec1d that go into the Sensfunc container
+        self.spec1df = ','.join([Path(s).name for s in spec1dfiles])
+        # this is the array of spec1d that are used in the calculations
+        self.spec1d_arr = np.array(spec1dfiles)
         self.extr = par['extr']
         self.sensfile = sensfile
         self.par = par
         self.chk_version = chk_version
         self.write_qa = write_qa
         # Spectrograph
-        header = fits.getheader(self.spec1df[0])
+        header = fits.getheader(self.spec1d_arr[0])
         self.PYP_SPEC = header['PYP_SPEC']
         self.spectrograph = load_spectrograph(self.PYP_SPEC)
         self.pypeline = self.spectrograph.pypeline
@@ -307,14 +311,14 @@ class SensFunc(datamodel.DataContainer):
 
         # Read in the Standard star data
         sobjs_std = None
-        for s, spec1df in enumerate(self.spec1df):
-            with io.fits_open(spec1df) as hdul:
+        for s, spec1d in enumerate(self.spec1d_arr):
+            with io.fits_open(spec1d) as hdul:
                 if hdul[1].header.get('DMODCLS') == 'SpecObj':
-                    _std_obj = specobjs.SpecObjs.from_fitsfile(spec1df, chk_version=self.chk_version
+                    _std_obj = specobjs.SpecObjs.from_fitsfile(spec1d, chk_version=self.chk_version
                                                                 ).get_std(multi_spec_det=self.par['multi_spec_det'],
                                                                           split_mosaic=True)
                 elif hdul[1].header.get('DMODCLS') == 'OneSpec':
-                    spec = OneSpec.from_file(spec1df, chk_version=self.chk_version)
+                    spec = OneSpec.from_file(spec1d, chk_version=self.chk_version)
                     if spec.head0['PYPELINE'] == 'Echelle':
                         msgs.error('Standard star 1D spectrum from OneSpec class cannot be used for Echelle data.')
                     if spec.fluxed:
@@ -335,19 +339,21 @@ class SensFunc(datamodel.DataContainer):
                     # add mask from OneSpec, since `from_arrays` creates a mask based on the flux ivar
                     _sobj[f'{self.extr}_MASK'] |= spec.mask.astype(bool)
                     _std_obj = specobjs.SpecObjs(specobjs=np.array([_sobj]), header=spec.head0)
+                else:
+                    msgs.error('Unrecognized class for the 1D spectrum file. Cannot read in the standard')
                 # fill sobjs_std
-                if s == 0:
+                if sobjs_std is None:
                     sobjs_std = _std_obj.copy()
                 else:
                     sobjs_std.add_sobj(_std_obj)
         if sobjs_std is None:
-            msgs.error(f'There is a problem with your standard star 1D spectrum file(s): {self.spec1df}')
+            msgs.error(f'There is a problem with your standard star 1D spectrum file(s): {self.spec1d_arr}')
         # Sort by wavelength
         s_sort = np.argsort(np.max(sobjs_std[f'{self.extr}_WAVE'], axis=1), kind='stable')
         sobjs_std = sobjs_std[s_sort]
 
         # splice together also mosaic-reduced spectra that have been split
-        if np.unique(sobjs_std.DET).size > 1 or len(self.spec1df) > 1:
+        if np.unique(sobjs_std.DET).size > 1 or len(self.spec1d_arr) > 1:
             self.splice_multi_det = True
 
         return sobjs_std
