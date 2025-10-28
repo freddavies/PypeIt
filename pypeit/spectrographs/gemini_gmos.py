@@ -686,41 +686,40 @@ class GeminiGMOSSpectrograph(spectrograph.Spectrograph):
            posx_pa=posx_pa)
         return self.slitmask
 
-    def get_maskdef_slitedges(self, ccdnum=None, filename=None, debug=None,
-                              trc_path:str=None, binning=None):
-        """ Determine the slit edges from the mask file
-
-        Here, we take advantage of the WCS solution from the input
-        `wcs_file`, which should be an alighment image from the observations.
-
-        Args:
-            binning (_type_, optional): _description_. Defaults to None.
-            binning(str, optional): spec,spat binning of the flat field image
-            filename (:obj:`list`, optional): Names
-                the mask design info and wcs_file in that order
-            debug (:obj:`bool`, optional): Debug
-            ccdnum (:obj:`int`, optional): detector number
-
-        Returns:
-            :obj:`tuple`: Three `numpy.ndarray`_ and a :class:`~pypeit.spectrographs.slitmask.SlitMask`.
-            Two arrays are the predictions of the slit edges from the slitmask design and
-            one contains the indices to order the slits from left to right in the PypeIt orientation
-        """
-        # if not isinstance(filename, list):
-        #     msgs.error('The mask design file input should be a comma separated list of two files')
-
-        # Parse
-        maskfile = filename
-        # maskfile = filename[0]
-        # wcs_file = filename[1]
-        # Add path?
-        if not os.path.isfile(maskfile):
-            maskfile = os.path.join(trc_path, maskfile)
-        # if not os.path.isfile(wcs_file):
-        #     wcs_file = os.path.join(trc_path, wcs_file)
-
-        # Slurp in the slitmask info
-        self.get_slitmask(maskfile)
+#     def get_maskdef_slitedges(self, ccdnum=None, filename=None, debug=None,
+#                               trc_path:str=None, binning=None):
+#         """ Determine the slit edges from the mask file
+#
+#         Here, we take advantage of the WCS solution from the input
+#         `wcs_file`, which should be an alighment image from the observations.
+#
+#         Args:
+#             binning (_type_, optional): _description_. Defaults to None.
+#             binning(str, optional): spec,spat binning of the flat field image
+#             filename (:obj:`list`, optional): Names
+#                 the mask design info and wcs_file in that order
+#             debug (:obj:`bool`, optional): Debug
+#             ccdnum (:obj:`int`, optional): detector number
+#
+#         Returns:
+#             :obj:`tuple`: Three `numpy.ndarray`_ and a :class:`~pypeit.spectrographs.slitmask.SlitMask`.
+#             Two arrays are the predictions of the slit edges from the slitmask design and
+#             one contains the indices to order the slits from left to right in the PypeIt orientation
+#         """
+#         if not isinstance(filename, list):
+#             msgs.error('The mask design file input should be a comma separated list of two files')
+#
+#         # Parse
+#         maskfile = filename[0]
+#         wcs_file = filename[1]
+#         # Add path?
+#         if not os.path.isfile(maskfile):
+#             maskfile = os.path.join(trc_path, maskfile)
+#         if not os.path.isfile(wcs_file):
+#             wcs_file = os.path.join(trc_path, wcs_file)
+#
+#         # Slurp in the slitmask info
+#         self.get_slitmask(maskfile)
 #
 #         # Binning of flat
 #         _, bin_spat = parse.parse_binning(binning)
@@ -777,21 +776,43 @@ class GeminiGMOSSpectrograph(spectrograph.Spectrograph):
 #         left_edges = np.array(left_edges).astype(float)
 #         right_edges = np.array(right_edges).astype(float)
 #         sortindx = np.argsort(left_edges)
+#
+#         return left_edges, right_edges, sortindx, self.slitmask
 
-        # DP: THIS SEEMS THE EASIEST WAY TO GET THE SLIT EDGES FROM THE MASKFILE. I NEED INPUTS ON WEATHER THE
-        # APPROACH ABOVE IS BETTER AND WHY.
+    # DP: THIS SEEMS THE EASIEST WAY TO GET THE SLIT EDGES FROM THE MASKFILE. DOES ANYBODY DISAGREE?
+    def get_maskdef_slitedges(self, ccdnum=None, filename=None, debug=None,
+                              trc_path: str = None, binning=None):
+        """ Determine the slit edges from the mask file
+
+        Here, we take advantage of the WCS solution from the input
+        `wcs_file`, which should be an alighment image from the observations.
+
+        Args:
+            binning (_type_, optional): _description_. Defaults to None.
+            binning(str, optional): spec,spat binning of the flat field image
+            filename (:obj:`list`, optional): Names
+                the mask design info and wcs_file in that order
+            debug (:obj:`bool`, optional): Debug
+            ccdnum (:obj:`int`, optional): detector number
+
+        Returns:
+            :obj:`tuple`: Three `numpy.ndarray`_ and a :class:`~pypeit.spectrographs.slitmask.SlitMask`.
+            Two arrays are the predictions of the slit edges from the slitmask design and
+            one contains the indices to order the slits from left to right in the PypeIt orientation
+        """
+
         # Get the left and right edges of the slits
-        tab = Table.read(maskfile, format='fits')
+        tab = Table.read(filename, format='fits')
         left_edges = tab['specbottom'].data
         right_edges = tab['spectop'].data
         # make sure that the order of the edges arrays is the same as the slitmask
         ids = np.array(tab['ID'].data, dtype=int)
-        idx = utils.index_of_x_eq_y(ids,self.slitmask.slitid, strict=True)
+        idx = utils.index_of_x_eq_y(ids, self.slitmask.slitid, strict=True)
         left_edges = left_edges[idx]
         right_edges = right_edges[idx]
         sortindx = np.argsort(left_edges)
 
-        return left_edges, right_edges, sortindx, self.slitmask
+        return left_edges, right_edges, sortindx, self.get_slitmask(filename)
 
     @staticmethod
     def maskdef_spec_minmax(maskfile=None, maskdef_ids=None, nspec=None, shift=150):
