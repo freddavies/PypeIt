@@ -232,7 +232,7 @@ class MMTMMIRSSpectrograph(spectrograph.Spectrograph):
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
-        # Start with instrument-wide parameters (does not actually use `inp`)
+        # Start with instrument-wide parameters
         par = super().config_specific_par(inp, inp_par=inp_par)
 
        # Adjust parameters based on grating & dichroic used
@@ -427,13 +427,11 @@ def mmirs_read_amp(img, namps=32):
 
     for amp in range(namps):
         img_out_ref = img_out[np.hstack([refpix1, refpix2]), :]
-        ref1, med1, std1 = sigma_clipped_stats(
-            img_out_ref[:, amp * ampsize + 2 * np.arange(int(ampsize / 2))],
-            sigma=3
+        ref1, _, _ = sigma_clipped_stats(
+            img_out_ref[:, amp * ampsize + 2 * np.arange(int(ampsize / 2))], sigma=3
         )
-        ref2, med2, std2 = sigma_clipped_stats(
-            img_out_ref[:, amp * ampsize + 2 * np.arange(int(ampsize / 2)) + 1],
-            sigma=3
+        ref2, _, _ = sigma_clipped_stats(
+            img_out_ref[:, amp * ampsize + 2 * np.arange(int(ampsize / 2)) + 1], sigma=3
         )
         ref12 = (ref1 + ref2) / 2.
         img_out[:, amp * ampsize:(amp + 1) * ampsize] -= ref12

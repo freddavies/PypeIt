@@ -481,7 +481,7 @@ class LDTDeVenySpectrograph(spectrograph.Spectrograph):
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
-        # Start with instrument-wide parameters (does not actually use `inp`)
+        # Start with instrument-wide parameters
         par = super().config_specific_par(inp, inp_par=inp_par)
 
         # Adjust parameters based on DeVeny grating used
@@ -569,13 +569,13 @@ class LDTDeVenySpectrograph(spectrograph.Spectrograph):
                 msgs.warn("No recognized grating passed; no config-specific pars set!")
 
         # Adjust parameters based on CCD binning
-        binspec, binspat = parse.parse_binning(binning)
-        par['reduce']['findobj']['find_fwhm'] /= binspat  # Specified in pixels and not arcsec
-        par['flexure']['spec_maxshift'] //= binspec  # Must be an integer
-        par['sensfunc']['UVIS']['resolution'] /= binspec
+        bin_spec, bin_spat = parse.parse_binning(binning)
+        par['reduce']['findobj']['find_fwhm'] /= bin_spat  # Specified in pixels and not arcsec
+        par['flexure']['spec_maxshift'] //= bin_spec  # Must be an integer
+        par['sensfunc']['UVIS']['resolution'] /= bin_spec
 
         # SlitEdges Exclusion Regions (30 pixels at each edge) -- adjust based on binning
-        excl_l, excl_r, last = np.array([30, 485, 515], dtype=int) // binspat
+        excl_l, excl_r, last = np.array([30, 485, 515], dtype=int) // bin_spat
         par['calibrations']['slitedges']['exclude_regions'] = f"1:0:{excl_l},1:{excl_r}:{last}"
 
         return par

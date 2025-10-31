@@ -137,7 +137,7 @@ class KeckLRISSpectrograph(spectrograph.Spectrograph):
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
-        # Start with instrument-wide parameters (does not actually use `inp`)
+        # Start with instrument-wide parameters
         par = super().config_specific_par(inp, inp_par=inp_par)
 
         # Adjust parameters based on settings used
@@ -147,8 +147,6 @@ class KeckLRISSpectrograph(spectrograph.Spectrograph):
         # Ignore PCA if longslit
         #  This is a little risky as a user could put long into their maskname
         #  But they would then need to over-ride in their PypeIt file
-        if inp is None:
-            msgs.error("You have not included a standard or science file in your PypeIt file to determine the configuration")
         if 'long' in decker:
             par['calibrations']['slitedges']['sync_predict'] = 'nearest'
             # This might only be required for det=2, but we'll see..
@@ -157,8 +155,8 @@ class KeckLRISSpectrograph(spectrograph.Spectrograph):
                 par['calibrations']['slitedges']['edge_thresh'] = 1000.
 
         # Wave FWHM
-        binning = parse.parse_binning(binning)
-        par['calibrations']['wavelengths']['fwhm'] = 8.0 / binning[0]
+        bin_spec, _ = parse.parse_binning(binning)
+        par['calibrations']['wavelengths']['fwhm'] = 8.0 / bin_spec
         # Arc lamps list from header
         par['calibrations']['wavelengths']['lamps'] = ['use_header']
 
@@ -312,7 +310,7 @@ class KeckLRISSpectrograph(spectrograph.Spectrograph):
             and used to constuct the :class:`~pypeit.metadata.PypeItMetaData`
             object.
         """
-        return super().configuration_keys() + ['amp', 'binning', 'decker']
+        return super().configuration_keys() + ['amp', 'binning']
 
     def config_independent_frames(self):
         """
@@ -342,7 +340,7 @@ class KeckLRISSpectrograph(spectrograph.Spectrograph):
             :class:`~pypeit.metadata.PypeItMetaData` instance to print to the
             :ref:`pypeit_file`.
         """
-        return super().pypeit_file_keys() + ['hatch', 'lampstat01', 'dateobs', 'utc', 'frameno']
+        return super().pypeit_file_keys() + ['decker', 'hatch', 'lampstat01', 'dateobs', 'utc', 'frameno']
 
     def check_frame_type(self, ftype, fitstbl, exprng=None):
         """
@@ -1002,7 +1000,7 @@ class KeckLRISBSpectrograph(KeckLRISSpectrograph):
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
-        # Start with instrument-wide parameters (does not actually use `inp`)
+        # Start with instrument-wide parameters
         par = super().config_specific_par(inp, inp_par=inp_par)
 
         # Adjust parameters based on settings used
@@ -1448,7 +1446,7 @@ class KeckLRISRSpectrograph(KeckLRISSpectrograph):
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
-        # Start with instrument-wide parameters (does not actually use `inp`)
+        # Start with instrument-wide parameters
         par = super().config_specific_par(inp, inp_par=inp_par)
 
         # Adjust parameters based on binning & grating used
@@ -1832,7 +1830,7 @@ class KeckLRISROrigSpectrograph(KeckLRISRSpectrograph):
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
-        # Start with instrument-wide parameters (does not actually use `inp`)
+        # Start with instrument-wide parameters
         par = super().config_specific_par(inp, inp_par=inp_par)
 
         # Adjust parameters based on grating used

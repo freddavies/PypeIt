@@ -339,7 +339,7 @@ class P200DBSPBlueSpectrograph(P200DBSPSpectrograph):
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
-        # Start with instrument-wide parameters (does not actually use `inp`)
+        # Start with instrument-wide parameters
         par = super().config_specific_par(inp, inp_par=inp_par)
 
         # Adjust parameters based on settings
@@ -570,7 +570,7 @@ class P200DBSPRedSpectrograph(P200DBSPSpectrograph):
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
-        # Start with instrument-wide parameters (does not actually use `inp`)
+        # Start with instrument-wide parameters
         par = super().config_specific_par(inp, inp_par=inp_par)
 
         # Adjust parameters based on settings

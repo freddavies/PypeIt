@@ -430,7 +430,7 @@ class LBTMODS1RSpectrograph(LBTMODSSpectrograph):
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
-        # Start with instrument-wide parameters (does not actually use `inp`)
+        # Start with instrument-wide parameters
         par = super().config_specific_par(inp, inp_par=inp_par)
 
         # Adjust parameters based on grating used
@@ -599,7 +599,7 @@ class LBTMODS1BSpectrograph(LBTMODSSpectrograph):
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
-        # Start with instrument-wide parameters (does not actually use `inp`)
+        # Start with instrument-wide parameters
         par = super().config_specific_par(inp, inp_par=inp_par)
 
         # Adjust parameters based on grating used
@@ -770,7 +770,7 @@ class LBTMODS2RSpectrograph(LBTMODSSpectrograph):
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
-        # Start with instrument-wide parameters (does not actually use `inp`)
+        # Start with instrument-wide parameters
         par = super().config_specific_par(inp, inp_par=inp_par)
 
         # Adjust parameters based on grating used
@@ -938,7 +938,7 @@ class LBTMODS2BSpectrograph(LBTMODSSpectrograph):
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
-        # Start with instrument-wide parameters (does not actually use `inp`)
+        # Start with instrument-wide parameters
         par = super().config_specific_par(inp, inp_par=inp_par)
 
         # Adjust parameters based on grating used
@@ -1131,7 +1131,7 @@ class LBTMODS1RSpectrographProc(LBTMODSSpectrograph):
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
-        # Start with instrument-wide parameters (does not actually use `inp`)
+        # Start with instrument-wide parameters
         par = super().config_specific_par(inp, inp_par=inp_par)
 
         # Adjust parameters based on grating used
@@ -1250,7 +1250,7 @@ class LBTMODS1BSpectrographProc(LBTMODSSpectrograph):
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
-        # Start with instrument-wide parameters (does not actually use `inp`)
+        # Start with instrument-wide parameters
         par = super().config_specific_par(inp, inp_par=inp_par)
 
         # Adjust parameters based on grating used
@@ -1382,7 +1382,7 @@ class LBTMODS2RSpectrographProc(LBTMODSSpectrograph):
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
-        # Start with instrument-wide parameters (does not actually use `inp`)
+        # Start with instrument-wide parameters
         par = super().config_specific_par(inp, inp_par=inp_par)
 
         # Adjust parameters based on grating used
@@ -1500,7 +1500,7 @@ class LBTMODS2BSpectrographProc(LBTMODSSpectrograph):
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
-        # Start with instrument-wide parameters (does not actually use `inp`)
+        # Start with instrument-wide parameters
         par = super().config_specific_par(inp, inp_par=inp_par)
 
         # Adjust parameters based on grating used

@@ -712,7 +712,7 @@ class PypeItFile(InputFile):
         # set of file names each time they are requested.  However, this should
         # only be done once in the code below because as soon as a relevant file
         # is found the loops are discontinued using `break`.
-        filenames = self.filenames.copy()
+        filenames = self.filenames
 
         # Search for the first science/standard frame
         config_specific_file = None

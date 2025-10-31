@@ -128,15 +128,12 @@ class KeckKCWIKCRMSpectrograph(spectrograph.Spectrograph):
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
-        # Start with instrument-wide parameters (does not actually use `inp`)
+        # Start with instrument-wide parameters
         par = super().config_specific_par(inp, inp_par=inp_par)
 
         # Adjust parameters based on grating used
         grating = self.get_meta_value(inp, 'dispname')
 
-        # Templates
-        par['calibrations']['wavelengths']['method'] = 'full_template'
-        par['calibrations']['wavelengths']['lamps'] = ['FeI', 'ArI', 'ArII']
         match grating:
             case 'BH2':
                 par['calibrations']['wavelengths']['reid_arxiv'] = 'keck_kcwi_BH2.fits'
@@ -305,6 +302,10 @@ class KeckKCWIKCRMSpectrograph(spectrograph.Spectrograph):
         # KCWI has non-uniform spectral resolution across the field-of-view
         par['calibrations']['wavelengths']['fwhm_spec_order'] = 1
         par['calibrations']['wavelengths']['fwhm_spat_order'] = 2
+
+        # Templates
+        par['calibrations']['wavelengths']['method'] = 'full_template'
+        par['calibrations']['wavelengths']['lamps'] = ['FeI', 'ArI', 'ArII']
 
         # Alter the method used to combine pixel flats
         par['calibrations']['pixelflatframe']['process']['combine'] = 'median'

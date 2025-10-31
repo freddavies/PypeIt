@@ -192,7 +192,7 @@ class GeminiGNIRSSpectrograph(spectrograph.Spectrograph):
             and used to constuct the :class:`~pypeit.metadata.PypeItMetaData`
             object.
         """
-        return ['decker', 'dispname', 'dispangle', 'camera_pos']
+        return ['decker', 'dispname', 'dispangle']
 
     def raw_header_cards(self):
         """
@@ -212,7 +212,7 @@ class GeminiGNIRSSpectrograph(spectrograph.Spectrograph):
             :obj:`list`: List of keywords from the raw data files that should
             be propagated in output files.
         """
-        return ['SLIT', 'GRATING', 'GRATTILT']
+        return ['SLIT', 'GRATING', 'GRATTILT', 'CAMERA']
 
     def pypeit_file_keys(self):
         """
@@ -223,7 +223,7 @@ class GeminiGNIRSSpectrograph(spectrograph.Spectrograph):
             :class:`~pypeit.metadata.PypeItMetaData` instance to print to the
             :ref:`pypeit_file`.
         """
-        return super().pypeit_file_keys() + ['dithoff']
+        return super().pypeit_file_keys() + ['camera_pos', 'dithoff']
 
     def check_frame_type(self, ftype, fitstbl, exprng=None):
         """
@@ -337,7 +337,7 @@ class GeminiGNIRSSpectrograph(spectrograph.Spectrograph):
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
-        # Start with instrument-wide parameters (does not actually use `inp`)
+        # Start with instrument-wide parameters
         par = super().config_specific_par(inp, inp_par=inp_par)
 
         # TODO The ``self.``` are hacks for now until we figure out how to set
@@ -482,7 +482,7 @@ class GeminiGNIRSEchelleSpectrograph(GeminiGNIRSSpectrograph):
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
-        # Start with instrument-wide parameters (does not actually use `inp`)
+        # Start with instrument-wide parameters
         par = super().config_specific_par(inp, inp_par=inp_par)
 
         # NOTE: The super() method sets ``self.dispname``
@@ -701,7 +701,7 @@ class GNIRSIFUSpectrograph(GeminiGNIRSSpectrograph):
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
-        # Start with instrument-wide parameters (does not actually use `inp`)
+        # Start with instrument-wide parameters
         par = super().config_specific_par(inp, inp_par=inp_par)
 
         # Adjust parameters based on filter used
@@ -860,18 +860,33 @@ class GNIRSIFUSpectrograph(GeminiGNIRSSpectrograph):
         spec_bins = np.arange(1+num_wave) - 0.5
         return xbins, ybins, spec_bins
 
-    def configuration_keys(self):
+    def pypeit_file_keys(self):
         """
-        Return the metadata keys that define a unique instrument
-        configuration.
-
-        This list is used by :class:`~pypeit.metadata.PypeItMetaData` to
-        identify the unique configurations among the list of frames read
-        for a given reduction.
+        Define the list of keys to be output into a standard ``PypeIt`` file.
 
         Returns:
-            :obj:`list`: List of keywords of data pulled from file headers
-            and used to constuct the :class:`~pypeit.metadata.PypeItMetaData`
-            object.
+            :obj:`list`: The list of keywords in the relevant
+            :class:`~pypeit.metadata.PypeItMetaData` instance to print to the
+            :ref:`pypeit_file`.
         """
-        return super().configuration_keys() + ['filter1']
+        return super().pypeit_file_keys() + ['filter1']
+
+    def raw_header_cards(self):
+        """
+        Return additional raw header cards to be propagated in
+        downstream output files for configuration identification.
+
+        The list of raw data FITS keywords should be those used to populate
+        the :meth:`~pypeit.spectrographs.spectrograph.Spectrograph.configuration_keys`
+        or are used in :meth:`~pypeit.spectrographs.spectrograph.Spectrograph.config_specific_par`
+        for a particular spectrograph, if different from the name of the
+        PypeIt metadata keyword.
+
+        This list is used by :meth:`~pypeit.spectrographs.spectrograph.Spectrograph.subheader_for_spec`
+        to include additional FITS keywords in downstream output files.
+
+        Returns:
+            :obj:`list`: List of keywords from the raw data files that should
+            be propagated in output files.
+        """
+        return super().raw_header_cards() + ['FILTER2']

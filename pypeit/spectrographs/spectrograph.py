@@ -198,6 +198,8 @@ class Spectrograph:
         Modify the PypeIt parameters to hard-wired values used for
         specific instrument configurations.
 
+        This method performs a check that ``inp`` is not ``None``.
+
         This method may be called with either a row from the metadata table
         (sent as a single-row Table, usually from the PypeIt Reduction File)
         or a filename/Header (used in certain scripts to populate configuration
@@ -206,7 +208,7 @@ class Spectrograph:
 
         ::
 
-            # Start with instrument-wide parameters (does not actually use `inp`)
+            # Start with instrument-wide parameters
             par = super().config_specific_par(inp, inp_par=inp_par)
 
             # Adjust parameters based on settings used
@@ -230,6 +232,8 @@ class Spectrograph:
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
+        if inp is None:
+            msgs.error("You have not included a standard or science file in your PypeIt file to determine the configuration")
         return self.__class__.default_pypeit_par() if inp_par is None else inp_par
 
     def update_edgetracepar(self, par):

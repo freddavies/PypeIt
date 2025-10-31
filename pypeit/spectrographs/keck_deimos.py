@@ -347,7 +347,7 @@ class KeckDEIMOSSpectrograph(spectrograph.Spectrograph):
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
-        # Start with instrument-wide parameters (does not actually use `inp`)
+        # Start with instrument-wide parameters
         par = super().config_specific_par(inp, inp_par=inp_par)
 
         # Adjust parameters based on instrument configuration
@@ -427,13 +427,13 @@ class KeckDEIMOSSpectrograph(spectrograph.Spectrograph):
         par['calibrations']['wavelengths']['sigdetect'] = 10.
 
         # Wavelength FWHM
-        binning = parse.parse_binning(binning)
-        par['calibrations']['wavelengths']['fwhm'] = 6.0 / binning[0]
+        bin_spec, bin_spat = parse.parse_binning(binning)
+        par['calibrations']['wavelengths']['fwhm'] = 6.0 / bin_spec
 
         # Objects FWHM
         # Find objects
         #  The following corresponds to 0.8"
-        par['reduce']['findobj']['find_fwhm'] = 7.0 / binning[1]
+        par['reduce']['findobj']['find_fwhm'] = 7.0 / bin_spat
 
         # Return
         return par
