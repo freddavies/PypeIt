@@ -720,7 +720,7 @@ class GeminiGMOSSpectrograph(spectrograph.Spectrograph):
         # Add path?
         if not Path(maskfile).is_file():
             maskfile = Path(trc_path) / maskfile
-        if not Path(wcs_file):
+        if not Path(wcs_file).is_file():
             wcs_file = Path(trc_path) / wcs_file
 
         # Slurp in the slitmask info

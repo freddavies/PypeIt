@@ -340,7 +340,7 @@ class KeckLRISSpectrograph(spectrograph.Spectrograph):
             :class:`~pypeit.metadata.PypeItMetaData` instance to print to the
             :ref:`pypeit_file`.
         """
-        return super().pypeit_file_keys() + ['decker', 'hatch', 'lampstat01', 'dateobs', 'utc', 'frameno']
+        return super().pypeit_file_keys() + ['hatch', 'lampstat01', 'dateobs', 'utc', 'frameno']
 
     def check_frame_type(self, ftype, fitstbl, exprng=None):
         """
