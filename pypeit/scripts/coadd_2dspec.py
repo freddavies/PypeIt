@@ -230,6 +230,7 @@ class CoAdd2DSpec(scriptbase.ScriptBase):
 
         # THE FOLLOWING MIMICS THE CODE IN pypeit.save_exposure()
         subheader = spectrograph.subheader_for_spec(head2d, head2d)
+        subheader['coaddobj'] = (basename, 'Coadd object base name')
         # Write spec1D
         if all_specobjs.nobj > 0:
             outfile1d = coadd_scidir / f'spec1d_{basename}.fits'
