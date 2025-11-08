@@ -49,7 +49,7 @@ class RunToCalibStep(scriptbase.ScriptBase):
         from IPython import embed
         from pathlib import Path
 
-        from pypeit import pypeit
+        from pypeit import pypeit, pypeit_steps
         from pypeit import msgs
 
         # Load options from command line
@@ -72,9 +72,10 @@ class RunToCalibStep(scriptbase.ScriptBase):
 
         # Find the detectors to reduce
         dets = pypeIt.par['rdx']['detnum'] if args.det is None else ast.literal_eval(args.det)
-        detectors = pypeIt.select_detectors(
-            pypeIt.spectrograph, dets,
-            slitspatnum=pypeIt.par['rdx']['slitspatnum'])
+        slitspatnum=pypeIt.par['rdx']['slitspatnum']
+        dets = slitspatnum if slitspatnum is not None else dets
+
+        detectors = pypeIt.spectrograph.select_detectors(dets)
 
         # Find the row of the frame
         if args.science_frame is not None:
@@ -87,10 +88,11 @@ class RunToCalibStep(scriptbase.ScriptBase):
                 msgs.error(f"Calibration group {args.calib_group} not found")
             row = rows[0]
         row = int(row)
+        calib_id = pypeIt.fitstbl.find_frame_calib_groups(row)[0]
 
         # Calibrations?
         for det in detectors:
-            pypeIt.calib_one([row], det, stop_at_step=args.step)
+            pypeit_steps.calib_one(pypeIt.spectrograph, pypeIt.fitstbl, pypeIt.par, det, calib_id, pypeIt.calibrations_path, stop_at_step=args.step)
         
         # QA HTML
         msgs.info('Generating QA HTML')

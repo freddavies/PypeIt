@@ -215,7 +215,7 @@ class ReducebyStep(scriptbase.ScriptBase):
                 calib_slits = exposure.adjust_for_slitmask(
                     sciImg_dict, pypeIt.spectrograph, pypeIt.fitstbl, pypeIt.par, 
                     frames[0], pypeIt.fitstbl['binning'][frames[0]],
-                    specobjs_objfind, calib_slits)
+                    specobjs_objfind, calib_slits)[0]
                 # Update this_calib_silts
                 idx = mosaics.index(det)
                 this_calib_silts = calib_slits[idx]
