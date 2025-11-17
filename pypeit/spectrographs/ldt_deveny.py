@@ -23,9 +23,6 @@ import pathlib
 import astropy.io.fits
 import astropy.table
 import astropy.time
-
-import astropy.table
-import astropy.time
 import numpy as np
 
 from pypeit import msgs
@@ -506,7 +503,7 @@ class LDTDeVenySpectrograph(spectrograph.Spectrograph):
                 # Allow for larger curvature in the object trace due to atmospheric dispersion
                 par['reduce']['findobj']['trace_maxshift'] = 2.0
                 par['reduce']['findobj']['trace_npoly'] = 5   # Default: 3
-            # The approximate resolution of this grating
+                # The approximate resolution of this grating
                 par['sensfunc']['UVIS']['resolution'] = 400
 
             case 'DV2 (300/4000)':
