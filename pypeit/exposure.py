@@ -174,6 +174,7 @@ def findobj_on_exposure(sciImg_dict:dict, spectrograph, fitstbl, par,
         tuple:
             - initial_sky_dict (dict): Dictionary containing the initial sky model; keys are each detector.
             - all_specobjs_objfind (SpecObjs): Collection of all identified spectral objects.
+            - all_silts (list): Slit objects, detector by detector
     """
     
     # Output
@@ -181,6 +182,7 @@ def findobj_on_exposure(sciImg_dict:dict, spectrograph, fitstbl, par,
 
     # container for specobjs during first loop (objfind)
     all_specobjs_objfind = specobjs.SpecObjs()
+    all_slits = []
 
     # Loop on the detectors
     for det in detectors:
@@ -188,12 +190,15 @@ def findobj_on_exposure(sciImg_dict:dict, spectrograph, fitstbl, par,
         sciImg = sciImg_dict[det]
 
         # Run
-        initial_sky, sobjs_obj, _ = \
+        initial_sky, sobjs_obj, objFind = \
             pypeit_steps.findobj_on_det(
                 sciImg, spectrograph, fitstbl, par, frames, calib_ID, det, 
                 calibrations_path, 
                 bkg_redux=bkg_redux, find_negative=find_negative, show=show, 
                 std_outfile=std_outfile)
+
+        # Slits
+        all_slits.append(objFind.slits)
 
         # Store em
         initial_sky_dict[det] = initial_sky
@@ -201,7 +206,7 @@ def findobj_on_exposure(sciImg_dict:dict, spectrograph, fitstbl, par,
             all_specobjs_objfind.add_sobj(sobjs_obj)
 
     # Return
-    return initial_sky_dict, all_specobjs_objfind
+    return initial_sky_dict, all_specobjs_objfind, all_slits
 
 def extract_exposure(sciImg_dict:dict, bkg_redux_sciimg_dict:dict, 
                      spectrograph, fitstbl, par, frames:list, detectors, 
@@ -392,7 +397,7 @@ def reduce_exposure(spectrograph, fitstbl, par, frames, calib_ID,
 
     # #####################################
     # Find objects + initial sky
-    initial_sky_dict, all_specobjs_find = \
+    initial_sky_dict, all_specobjs_find, all_slits = \
         findobj_on_exposure(sciImg_dict, spectrograph, 
                             fitstbl,
                             par, frames, detectors,
@@ -401,6 +406,8 @@ def reduce_exposure(spectrograph, fitstbl, par, frames, calib_ID,
                             bkg_redux=bkg_redux,
                             find_negative=find_negative,
                             show=show)
+
+    embed(header='do we need the new all_slits or is calib_slits ok?')
 
     # #####################################
     # slitmask stuff

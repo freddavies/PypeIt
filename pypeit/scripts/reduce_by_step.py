@@ -115,6 +115,7 @@ class ReducebyStep(scriptbase.ScriptBase):
         bkg_filename = outputfiles.intermediate_filename('bkgImg', basename, det_name)
         initsky_filename = outputfiles.intermediate_filename('initSky', basename,  det_name)
         spec1d_filename = outputfiles.intermediate_filename('spec1d', basename, 'all')
+        slits_filename = outputfiles.intermediate_filename('slits', basename, 'all')
 
         # Prep for background subtraction and finding negative traces
         has_bg, bkg_redux, find_negative = pypeit_steps.set_bkg_negative(
