@@ -372,7 +372,7 @@ def reduce_exposure(spectrograph, fitstbl, par, frames, calib_ID,
 
     # #####################################
     # Calibrations
-    calib_slits = []
+    #calib_slits = []
     for det in detectors:
         msgs.info(f'Calibrating detector {det}')
         # run/load calibration
@@ -385,8 +385,9 @@ def reduce_exposure(spectrograph, fitstbl, par, frames, calib_ID,
             # Remove from list of detectors
             detectors.remove(det)
             continue
+
         # Save the slits
-        calib_slits.append(caliBrate.slits)
+        #calib_slits.append(caliBrate.slits)
 
     # #####################################
     # Process or load processed frames
@@ -397,7 +398,7 @@ def reduce_exposure(spectrograph, fitstbl, par, frames, calib_ID,
 
     # #####################################
     # Find objects + initial sky
-    initial_sky_dict, all_specobjs_find, all_slits = \
+    initial_sky_dict, all_specobjs_find, calib_slits = \
         findobj_on_exposure(sciImg_dict, spectrograph, 
                             fitstbl,
                             par, frames, detectors,
