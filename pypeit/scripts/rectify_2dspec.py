@@ -33,6 +33,9 @@ class Rectify2DSpec(scriptbase.ScriptBase):
                                                 '2D spectra for all slits/orders.', width=width)
 
         parser.add_argument('files', type = str, nargs='*', help = 'PypeIt spec2d file(s)')
+        parser.add_argument('--no_rot', default=False, action='store_true',
+                            help='Do not rotate the rectified image to have wavelength '
+                                 'on the x-axis.')
         parser.add_argument('--try_old', default=False, action='store_true',
                             help='Attempt to load old datamodel versions.  A crash may ensue..')
         return parser
@@ -161,20 +164,35 @@ class Rectify2DSpec(scriptbase.ScriptBase):
 
                     spat_left = spat_righ + pad
 
-                image_rect = np.rot90(image_rect)
-
-                # Create HDU with WCS header
-                hdu = fits.ImageHDU(image_rect, name=detname)
-                hdu.header['CTYPE1'] = 'LAMBDA   '
-                hdu.header['CUNIT1'] = 'Angstrom'
-                hdu.header['CDELT1'] = dsamp
-                hdu.header['CRPIX1'] = 0
-                hdu.header['CRVAL1'] = wave_grid[0]
-                hdu.header['CTYPE2'] = 'LINEAR  '
-                hdu.header['CUNIT2'] = 'pixel'
-                hdu.header['CDELT2'] = 1.
-                hdu.header['CRPIX2'] = 0
-                hdu.header['CRVAL2'] = 0.
+                # Rotate if desired
+                if not args.no_rot:
+                    image_rect = np.rot90(image_rect)
+                    # Create HDU with WCS header
+                    hdu = fits.ImageHDU(image_rect, name=detname)
+                    hdu.header['CTYPE1'] = 'LAMBDA   '
+                    hdu.header['CUNIT1'] = 'Angstrom'
+                    hdu.header['CDELT1'] = dsamp
+                    hdu.header['CRPIX1'] = 0
+                    hdu.header['CRVAL1'] = wave_grid[0]
+                    hdu.header['CTYPE2'] = 'LINEAR  '
+                    hdu.header['CUNIT2'] = 'pixel'
+                    hdu.header['CDELT2'] = 1.
+                    hdu.header['CRPIX2'] = 0
+                    hdu.header['CRVAL2'] = 0.
+                else:
+                    # Create HDU without WCS header
+                    hdu = fits.ImageHDU(image_rect, name=detname)
+                    hdu.header['CTYPE1'] = 'LINEAR  '
+                    hdu.header['CUNIT1'] = 'pixel'
+                    hdu.header['CDELT1'] = 1.
+                    hdu.header['CRPIX1'] = 0
+                    hdu.header['CRVAL1'] = 0.
+                    hdu.header['CTYPE2'] = 'LAMBDA   '
+                    hdu.header['CUNIT2'] = 'Angstrom'
+                    hdu.header['CDELT2'] = dsamp
+                    hdu.header['CRPIX2'] = 0
+                    hdu.header['CRVAL2'] = wave_grid[0]
+                # Add other keywords
                 hdu.header['NSPEC'] = nspec_rect
                 hdu.header['NSPAT'] = nspat_rect
                 hdu.header['WAVEMIN'] = wave_grid[0]
