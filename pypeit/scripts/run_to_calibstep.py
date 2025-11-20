@@ -75,12 +75,11 @@ class RunToCalibStep(scriptbase.ScriptBase):
             dets = pypeIt.par['rdx']['detnum']
         else:
             dets = parse.eval_detectors(args.det)
-        if dets is None:
-            msgs.error('Could not parse detectors')
+        # NOTE: dets *can be* None
 
         detectors = pypeIt.select_detectors(
-            pypeIt.spectrograph, dets,
-            slitspatnum=pypeIt.par['rdx']['slitspatnum'])
+            pypeIt.spectrograph, dets, slitspatnum=pypeIt.par['rdx']['slitspatnum']
+        )
 
         # Find the row of the frame
         if args.science_frame is not None:
