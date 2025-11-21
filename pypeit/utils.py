@@ -1083,7 +1083,7 @@ def smooth(x, window_len, window='flat'):
         case 'blackman':
             w = np.blackman(window_len)
         case _:
-            msgs.error(f'Unknown window type passed to smooth(): {window}')
+            raise PypeItError(f'Unknown window type passed to smooth(): {window}')
 
     y = np.convolve(w / w.sum(), s, mode='same')
 
