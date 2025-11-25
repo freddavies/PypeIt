@@ -148,6 +148,18 @@ Here is an example:
 .. figure:: figures/qa/flex_sky_armlsd.jpg
    :align: center
 
+.. _qa-obj-find:
 
+Object Finding QA
+-----------------
+
+HHH
+
+.. _qa-obj-trace:
+
+Object Tracing QA
+-----------------
+
+HHH
 
 

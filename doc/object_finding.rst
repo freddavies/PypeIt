@@ -41,8 +41,6 @@ In a standard run, the approach to object finding adopted is:
 
 These steps are performed by :func:`pypeit.find_objects.FindObjects.run`.
 
-.. TODO: Add the QA plot example
-
 The automated object finding algorithm is
 :func:`~pypeit.core.findobj_skymask.objs_in_slit`. It performs the following
 steps:
@@ -72,7 +70,11 @@ steps:
        exposures. For multislit the defaults are ``maxnumber_sci = 10`` and
        ``maxnumber_std = 5``. For echelle spectrographs with short slits they
        are ``maxnumber_sci = 2`` and ``maxnumber_std = 1``.
-    
+
+A QA plot is generated for each slit for evaluation of the object-finding step.
+See :ref:`qa-obj-find` for examples and descriptions of the plots.
+
+
 Parameters
 ==========
 
@@ -138,8 +140,12 @@ vs spatial position vector. The best way to choose these pixels is to run PypeIt
 without it set. Then run :ref:`pypeit_show_2dspec` to view the sky-subtracted
 image and decide which pixels to use for object finding. Then re-run ``PypeIt``.
 
+
 Object Tracing
 ==============
+
+Faint Objects
+-------------
 
 For automatically identified objects (i.e., not manual extractions),
 PypeIt improves the object trace by fitting the spatial position of the peak
@@ -159,9 +165,53 @@ a relatively low order polynomial, as follows
             find_numiterfit = 100
             trace_npoly = 4
 
-Note that the default value is typically ``trace_npoly=5``. If you notice a relatively poor object trace, sometimes in
-combination with the object counts being masked, increasing the number of iterations may help to
-resolve your problem. If, on the other hand, your object is relatively faint, you
-may benefit from using the trace of a standard star (this is the default behaviour),
+Note that the default value is typically ``trace_npoly=5``. If you notice a
+relatively poor object trace, sometimes in combination with the object counts
+being masked, increasing the number of iterations may help to resolve your
+problem. If, on the other hand, your object is relatively faint, you may
+benefit from using the trace of a standard star (this is the default behaviour),
 and you can provide a 1D spectrum of a previously reduced standard star with the
 ``std_spec1d`` parameter.
+
+Observations at High Airmass
+----------------------------
+
+If you have observations taken at high airmass without the benefit of an
+atmospheric dispersion corrector, you may have spectra that curve on the
+detector with respect to the slit edges.
+
+For instance, the spectrum below was taken with a 150 l/mm grating on the
+LDT/DeVeny spectrograph.  Shown are the ``spec2d`` file and :ref:`qa-obj-trace`
+plot for an object observed at an elevation of 11º above the horizon (airmass
+5).
+
+.. figure:: figures/objtrace_high_airmass_bad.png
+   :alt: Bad tracing of object at high airmass
+   :width: 60%
+   :class: with-shadow
+
+.. figure:: figures/objtrace_qa_highX_bad.png
+   :alt: Bad tracing of object at high airmass
+   :width: 60%
+   :class: with-shadow
+
+
+In these cases, you may need to allow PypeIt to follow traces further from the
+line defined by the slit edges.  The parameter ``trace_maxshift`` (default
+value = 1 pixel) may be increased incrementally to allow the curved spectrum to
+be traced.  By adjusting ``trace_maxshift=2`` in addition to restricting the
+tracing polynomial with ``trace_npoly=4``, the object tracing algorithm is now
+able to trace the object cleanly across the entire spectral image, as shown
+below.
+
+
+.. figure:: figures/objtrace_high_airmass_good.png
+   :alt: Good tracing of object at high airmass
+   :width: 60%
+   :class: with-shadow
+
+.. figure:: figures/objtrace_qa_highX_good.png
+   :alt: Good tracing of object at high airmass
+   :width: 60%
+   :class: with-shadow
+
