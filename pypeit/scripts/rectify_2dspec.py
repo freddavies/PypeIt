@@ -114,7 +114,7 @@ class Rectify2DSpec(scriptbase.ScriptBase):
                 # Get dimensions for each slit
                 nspat_vec = np.array([cdict['nspat'] for cdict in imgrect_list])
 
-                nspec_rect = len(wave_grid)
+                nspec_rect = len(wave_grid_mid)
                 nspat_rect = int(np.sum(nspat_vec) + (spec2d.slits.nslits + 1) * pad)
 
                 # Initialize output array
@@ -122,6 +122,7 @@ class Rectify2DSpec(scriptbase.ScriptBase):
                 ivar_rect = np.zeros((nspec_rect, nspat_rect))
                 mask_rect = np.zeros((nspec_rect, nspat_rect), dtype=bool)
                 waveimg_rect = np.zeros((nspec_rect, nspat_rect))
+                wave_grid_rect2 = np.zeros((nspec_rect, nspat_rect))
 
                 # Loop over slits and rectify each one
                 spat_left = pad
@@ -138,23 +139,23 @@ class Rectify2DSpec(scriptbase.ScriptBase):
                         # Get data for this spatial pixel
                         flux = imgrect_dict['imgminsky'][:nspec_slit, ispat_slit]
                         ivar = imgrect_dict['sciivar'][:nspec_slit, ispat_slit]
+                        valid = (wave_grid_mid >= wave_slit.min()) & \
+                                (wave_grid_mid <= wave_slit.max())
 
-                        # Interpolate onto a common wavelength grid
-                        flux_interp = np.interp(wave_grid, wave_slit, flux,
-                                               left=0., right=0.)
-                        ivar_interp = np.interp(wave_grid, wave_slit, ivar,
-                                                left=0., right=0.)
-                        # Determine a valid wavelength range for this slit
-                        valid = (wave_grid >= wave_slit.min()) & \
-                                (wave_grid <= wave_slit.max())
+                        # get the spectral pixel where the slit should start/stop
+                        _wave_grid_mid = np.round(wave_grid_mid,4)
+                        _wave_slit = np.round(imgrect_dict['wave_mid'],4)
+                        wstart = np.where(_wave_grid_mid == _wave_slit[0])[0][0]
+                        wend = np.where(_wave_grid_mid == _wave_slit[-1])[0][0] + 1
 
                         # Assign to output arrays
-                        image_rect[:, spat_left + ispat_slit] = flux_interp
-                        ivar_rect[:, spat_left + ispat_slit] = ivar_interp
+                        image_rect[wstart:wend, spat_left + ispat_slit] = flux
+                        ivar_rect[wstart:wend, spat_left + ispat_slit] = ivar
                         mask_rect[:, spat_left + ispat_slit] = np.logical_not(valid)
+                        wave_grid_rect2[wstart:wend, spat_left + ispat_slit] = wave_slit
 
                     # Create a wavelength image for this slit
-                    waveimg_rect[:, ispat] = np.repeat(wave_grid[:, np.newaxis],
+                    waveimg_rect[:, ispat] = np.repeat(wave_grid_mid[:, np.newaxis],
                                                       nspat_vec[islit], axis=1)
 
                     spat_left = spat_righ + pad
@@ -168,7 +169,7 @@ class Rectify2DSpec(scriptbase.ScriptBase):
                     hdu.header['CUNIT1'] = 'Angstrom'
                     hdu.header['CDELT1'] = dsamp
                     hdu.header['CRPIX1'] = 0
-                    hdu.header['CRVAL1'] = wave_grid[0]
+                    hdu.header['CRVAL1'] = wave_grid_mid[0]
                     hdu.header['CTYPE2'] = 'LINEAR  '
                     hdu.header['CUNIT2'] = 'pixel'
                     hdu.header['CDELT2'] = 1.
@@ -186,12 +187,12 @@ class Rectify2DSpec(scriptbase.ScriptBase):
                     hdu.header['CUNIT2'] = 'Angstrom'
                     hdu.header['CDELT2'] = dsamp
                     hdu.header['CRPIX2'] = 0
-                    hdu.header['CRVAL2'] = wave_grid[0]
+                    hdu.header['CRVAL2'] = wave_grid_mid[0]
                 # Add other keywords
                 hdu.header['NSPEC'] = nspec_rect
                 hdu.header['NSPAT'] = nspat_rect
-                hdu.header['WAVEMIN'] = wave_grid[0]
-                hdu.header['WAVEMAX'] = wave_grid[-1]
+                hdu.header['WAVEMIN'] = wave_grid_mid[0]
+                hdu.header['WAVEMAX'] = wave_grid_mid[-1]
                 hdu.header['DETNAME'] = detname
                 hdu.header['PIPELINE'] = hdr['PIPELINE']
                 hdu.header['PYPELINE'] = hdr['PYPELINE']
