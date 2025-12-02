@@ -50,31 +50,31 @@ The GUI Interface
 
 The Setup GUI window consists of several main components:
 
+.. image:: ../figures/setup_gui_tutorial_1.png
+
 Main Window Components
 ----------------------
 
-1. **Button Bar** (top of window)
+1. **Button Bar** (bottom of window)
    
    - **Open**: Open an existing `.pypeit` file
    - **Clear**: Clear everything and start fresh
-   - **Run Setup**: Scan raw data directories and generate observation log
+   - **Run Setup**: Scan raw data directories and generate observation log and .pypeit files for each setup.
    - **Save Tab**: Save the currently active tab
    - **Save All**: Save all tabs with unsaved changes
    - **Help**: Opens PypeIt online documentation
    - **View log**: Opens a window showing the application log
    - **Exit**: Quit the application
 
-2. **ObsLog Tab** (main view)
-   
-   The ObsLog tab is where you configure your setup:
-   
-   - **Spectrograph Selector**: Drop-down menu to choose your instrument
-   - **Raw Data Directories**: Area to add one or more directories containing raw FITS files
-   - **Observation Log Table**: Displays metadata from all raw files after scanning
+2. **Main View (obslog tab)**
+      
+   - **Spectrograph Selector**: (top left) Drop-down menu to choose your instrument
+   - **Raw Data Directories**:  (top right) Area to add one or more directories containing raw FITS files
+   - **Observation Log Table**: (central) Displays metadata from all raw files after scanning
 
-3. **Configuration Tabs**
+3. **PypeIt File Tabs**
    
-   After running setup, additional tabs appear for each unique instrument configuration detected (labeled A, B, C, etc.). Each tab contains a complete `.pypeit` file editor.
+   After running setup, additional tabs appear for each unique instrument configuration detected (labeled A, B, C, etc.). Each tab represents a `.pypeit` file.
 
 Basic Workflow
 ==============
@@ -82,7 +82,7 @@ Basic Workflow
 Step 1: Select Your Spectrograph
 ---------------------------------
 
-1. Click on the **Spectrograph** drop-down menu in the ObsLog tab
+1. Click on the **Spectrograph** drop-down menu
 2. Select your instrument from the list of available spectrographs (e.g., `keck_deimos`, `keck_lris_blue`, `vlt_fors2`)
 3. You can also type to search through the spectrograph list
 
@@ -92,8 +92,8 @@ Step 2: Add Raw Data Directories
 ---------------------------------
 
 1. In the **Raw Data Directories** section, type the folder containing your raw FITS files or press the `Browse` button to bring up a dialog box to choose the directory.
-3. You can add multiple directories if your data is spread across different locations.
-4. Previously used directories appear in a dropdown for quick access.
+2. You can add multiple directories if your data is spread across different locations.
+3. Previously used directories appear in a dropdown for quick access.
 
 .. note::
     The directories can contain data from multiple observing configurations. PypeIt will automatically parse and separate them in the next step.
@@ -130,8 +130,10 @@ After setup completes, examine the observation log table:
 .. warning::
     Always check that frame types are correctly assigned! Misidentified frames can cause reduction failures.
 
-Step 5: Edit Configuration Tabs
--------------------------------
+Step 5: Edit PypeIt File Tabs
+-----------------------------
+
+.. image:: ../figures/setup_gui_tutorial_2.png
 
 Click on the configuration tabs (A, B, C, etc.) to view and edit the `.pypeit` files:
 
@@ -182,6 +184,15 @@ To load and edit an existing `.pypeit` file:
 
 .. note::
     Opening a `.pypeit` file will also load the associated spectrograph and update the ObsLog accordingly.
+
+Viewing Raw Data
+----------------
+
+To view the raw data files in Ginga, right click on the file in the File Metadata table and select 
+"Viiew File". Then select which detector you wish to view. 
+
+You can also view the FITS header for the raw data files by right clicking on the file and selecting 
+"View Header".
 
 Working with Multiple Configurations
 ------------------------------------
@@ -252,12 +263,11 @@ Organizing Your Data
 
 - Keep raw data in a dedicated directory
 - Use a separate working directory for reductions
-- Don't mix data from different observing runs unless intentional
 
 Checking Frame Types
 --------------------
 
-Always verify frame type assignments:
+Always verify frame type assignments. Common frame types are:
 
 - **science**: Target observations
 - **arc**: Wavelength calibration lamps
@@ -267,20 +277,11 @@ Always verify frame type assignments:
 - **trace**: Used for slit/order tracing (often same as flat)
 - **pixelflat**: Used for pixel-to-pixel sensitivity
 - **standard**: Standard star observations for flux calibration
+- **illumflat**: Flat-field exposure used for illumination flat
+- **tilt**:  Exposure used to trace the tilt in the wavelength solution
 
-Multiple frame types can be assigned by separating with commas, e.g., `arc,tilt`.
-
-Parameter Customization
------------------------
-
-The parameter block in each configuration tab uses PypeIt's standard configuration format. Common parameters include:
-
-- `[[rdx]]`: Basic reduction settings
-- `[[calibrations]]`: Calibration frame processing
-- `[[scienceframe]]`: Science frame processing  
-- `[[reduce]]`: Extraction and sky subtraction
-
-See :ref:`pypeitpar` for complete parameter documentation.
+Multiple frame types can be selected and are displayed separated by commas e.g., `arc,tilt`.
+For a full list of frame types see :ref:`frame_types`.
 
 Handling Edge Cases
 -------------------
@@ -294,15 +295,6 @@ Handling Edge Cases
     - The initial scan may take some time
     - Consider splitting into separate reduction directories by configuration
     - Use the log viewer to monitor progress
-
-Keyboard Shortcuts
-==================
-
-The GUI supports standard keyboard shortcuts:
-
-- **Ctrl+S** (or Cmd+S on Mac): Save current tab
-- **Ctrl+W** (or Cmd+W on Mac): Close current tab
-- **Ctrl+Q** (or Cmd+Q on Mac): Quit application
 
 Troubleshooting
 ===============
