@@ -136,7 +136,7 @@ class Rectify2DSpec(scriptbase.ScriptBase):
                 # the wavelength grid for each spatial pixel
                 wavegrid_image = np.repeat(wave_grid_mid[:, np.newaxis], nspat_rect, axis=1)
 
-                # Loop over slits and rectify each one
+                # Loop over the rectified slits and place them in the output arrays
                 spat_left = pad
                 for islit, imgrect_dict in enumerate(imgrect_list):
                     spat_righ = spat_left + nspat_vec[islit]
