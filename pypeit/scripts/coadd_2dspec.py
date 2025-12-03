@@ -112,7 +112,7 @@ class CoAdd2DSpec(scriptbase.ScriptBase):
         msgs_string += f"Searching for objects that are {head2d['FINDOBJ']}" + msgs.newline()
         msgs_string += 'Combining frames in 2d coadd:' + msgs.newline()
         for f, file in enumerate(spec2d_files):
-            msgs_string += f'Exp {f}: {Path(file).name}' + msgs.newline()
+            msgs_string += f'File {f}: {Path(file).name}' + msgs.newline()
         msgs.info(msgs_string)
 
         # Instantiate the sci_dict
