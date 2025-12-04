@@ -57,6 +57,8 @@ class Rectify2DSpec(scriptbase.ScriptBase):
                 pad = 10  # pixels to pad on each side
                 slitmask = spec2d.slits.slit_img(pad=pad, flexure=spec2d.sci_spat_flexure)
                 slit_ids = spec2d.slits.spat_id
+                # this is just to print useful info in the terminal
+                slitord_ids = spec2d.slits.slitord_id
 
                 # get the wave grid
                 # Do we have the spec1d file?
@@ -105,10 +107,11 @@ class Rectify2DSpec(scriptbase.ScriptBase):
                 for slitidx, slit_id in enumerate(slit_ids):
                     this_mask = (slitmask == slit_id)
                     # check if this slit was masked. If so, skip it.
+                    slitord_id = slitord_ids[slitidx]
                     if not np.any(this_mask):
-                        msgs.warn(f'Slit/order {slit_id} on {detname} is fully masked. Skipping it.')
+                        msgs.warn(f'Slit/order {slitord_id} on {detname} is fully masked. Skipping it.')
                         continue
-                    msgs.info(f'Rectifying slit/order {slit_id}')
+                    msgs.info(f'Rectifying slit/order {slitord_id}')
 
                     slit_cen = spec2d.slits.center[:,slitidx]
                     mask = spec2d.bpmmask.mask == 0
@@ -145,8 +148,10 @@ class Rectify2DSpec(scriptbase.ScriptBase):
                     wave_slit = imgrect_dict['wave_mid']
                     nspec_slit = len(wave_slit)
                     # get the spectral pixel where the slit should start/stop
-                    wstart = np.where(np.isclose(wave_grid_mid, wave_slit[0]))[0][0]
-                    wend = np.where(np.isclose(wave_grid_mid, wave_slit[-1]))[0][0] + 1
+                    _wave_grid_mid = np.round(wave_grid_mid, 4)
+                    _wave_slit = np.round(imgrect_dict['wave_mid'], 4)
+                    wstart = np.where(_wave_grid_mid == _wave_slit[0])[0][0]
+                    wend = np.where(_wave_grid_mid == _wave_slit[-1])[0][0] + 1
 
                     # Place the rectified data for this slit in the output arrays
                     for ispat_slit in range(nspat_vec[islit]):
