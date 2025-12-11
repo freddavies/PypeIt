@@ -39,11 +39,12 @@ The narrow flats are taken with the 3 arc-second long slit.
 These should be used for the trace frames for the 3 arc-second
 long slit.
 
-Currently the wide flats AND the narrow flats are identified 
-as trace frames in the PypeIt file. *EDIT the PypeIt file to
-use the wide flats for the trace images for  8 arc-second
-long slit science frames and the narrow flats for the trace 
-frames for the 3 arc-second long slit science frames.*
+Currently the wide flats are used for the pixel flats for
+both the 3 and 8 arc-second long slit data. The narrow flats
+are only used for the trace frames for the 3 arc-second
+long slit data, while the wide flats are used for the
+trace frames for the 8 arc-second long slit data. This should
+be handled automatically by PypeIt.
 
 
 Flat Fielding
