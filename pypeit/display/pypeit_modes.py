@@ -119,3 +119,10 @@ class Spec1DMode(Plot2DMode):
         """
         self.fv.showxy(viewer, data_x, data_y)
         return False
+
+    #####  KEYBOARD ACTION CALLBACKS #####
+
+    def kp_smooth(self, viewer, event, data_x, data_y):
+        event.accept()
+        plot = viewer.get_dataobj()
+        viewer.zoom_plot(delta_x, delta_y)
