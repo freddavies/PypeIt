@@ -94,7 +94,7 @@ class PypeItImage(datamodel.DataContainer):
     # TODO These docs are confusing. The __init__ method needs to be documented just as it is for
     # every other class that we have written in PypeIt, i.e. the arguments all need to be documented. They are not
     # documented here and instead we have the odd Args documentation above. 
-    version = '1.3.0'
+    version = '1.3.1'
     """Datamodel version number"""
 
     datamodel = {'PYP_SPEC': dict(otype=str, descr='PypeIt spectrograph name'),
@@ -131,7 +131,12 @@ class PypeItImage(datamodel.DataContainer):
                  'spat_flexure': dict(otype=float,
                                       descr='Shift, in spatial pixels, between this image '
                                             'and SlitTrace'), 
-                 'filename': dict(otype=str, descr='Filename for the image'),}
+                 'filename': dict(otype=str, descr='Filename for the image'),
+                 'rel_scaleImg': dict(otype=np.ndarray, atype=np.floating,
+                                  descr='Image used to apply a relative scaling to the science '
+                                        'image to correct its spectral illumination. Currently '
+                                        'only used for IFU reductions. This is calculated and '
+                                        'updated during object finding.'),}
     """Data model components."""
 
     internals = ['process_steps', 'files', 'rawheadlist']

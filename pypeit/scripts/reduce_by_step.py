@@ -136,15 +136,15 @@ class ReducebyStep(scriptbase.ScriptBase):
             # All done
             return
 
-        msgs.info(f'Loading images for detector {det}')
-        sciImg = pypeitimage.PypeItImage.from_file(sci_filename)
-        if bg_frames is not None and len(bg_frames) > 0:
-            bkg_redux_sciimg = pypeitimage.PypeItImage.from_file(bkg_filename)
-        else:
-            bkg_redux_sciimg = None
-
         # Find Objects
         if args.step == 'findobj':
+
+            msgs.info(f'Loading images for detector {det}')
+            sciImg = pypeitimage.PypeItImage.from_file(sci_filename)
+            if bg_frames is not None and len(bg_frames) > 0:
+                bkg_redux_sciimg = pypeitimage.PypeItImage.from_file(bkg_filename)
+            else:
+                bkg_redux_sciimg = None
 
             # Load up the standard star spec1d file if it exists
             if objtype_out == 'science':
@@ -181,7 +181,7 @@ class ReducebyStep(scriptbase.ScriptBase):
 
             # #####################################
             # final sky subtraction
-            final_global_sky, bkg_redux_global_sky = \
+            final_global_sky, bkg_redux_global_sky, this_objfind = \
                 pypeit_steps.finalize_sky_det(pypeIt.spectrograph, pypeIt.fitstbl, pypeIt.par, frames[0],
                                               det, objFind, initial_sky, sobjs_obj_find,
                                               bkg_redux_sciimg=bkg_redux_sciimg, bkg_redux=bkg_redux, show=args.show)
@@ -193,6 +193,13 @@ class ReducebyStep(scriptbase.ScriptBase):
                 _slits.mask[flagged_slits] = \
                     _slits.bitmask.turn_on(_slits.mask[flagged_slits], 'BADSKYSUB')
 
+            # Update the wv_calib object file with the spectral flexure information
+            if objFind.wv_calib is not None and objFind.wv_calib.flex_shift is not None:
+                msgs.info("Updating the wv_calib file with the spectral flexure information.")
+                objFind.wv_calib.to_file()
+
+            # Update the sciImg with the scaleImg information
+            sciImg.rel_scaleImg = objFind.scaleimg
 
             # Write
             # sobjs object found
@@ -212,10 +219,21 @@ class ReducebyStep(scriptbase.ScriptBase):
             # slits
             _slits.to_file(slits_filename, overwrite=True)
             msgs.info(f'Wrote intermediate slits to {slits_filename}')
+            # updated sciImg
+            sciImg.to_file(sci_filename, overwrite=True)
+            msgs.info(f'Wrote updated science image to {sci_filename}')
+
 
         # Extract?
         if args.step == 'extract':
             # Load a lot of stuff
+            msgs.info(f'Loading images for detector {det}')
+            sciImg = pypeitimage.PypeItImage.from_file(sci_filename)
+            if bg_frames is not None and len(bg_frames) > 0:
+                bkg_redux_sciimg = pypeitimage.PypeItImage.from_file(bkg_filename)
+            else:
+                bkg_redux_sciimg = None
+
             # sky images
             msgs.info(f'Loading sky image for detector {det}')
             if not sky_filename.is_file():

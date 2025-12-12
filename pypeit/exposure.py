@@ -234,7 +234,7 @@ def findobj_on_exposure(sciImg_dict:dict, bkg_redux_sciimg_dict:dict,
         bkg_redux_sciimg = bkg_redux_sciimg_dict[det]
         initial_sky = initial_sky_dict[det]
 
-        final_global_sky, bkg_redux_global_sky = \
+        final_global_sky, bkg_redux_global_sky, this_objfind = \
             pypeit_steps.finalize_sky_det(spectrograph, fitstbl, par, frames[0],
                      det, this_objfind, initial_sky, all_specobjs_objfind,
                      bkg_redux_sciimg=bkg_redux_sciimg, bkg_redux=bkg_redux, show=show)
@@ -242,9 +242,8 @@ def findobj_on_exposure(sciImg_dict:dict, bkg_redux_sciimg_dict:dict,
         # store the final skies
         final_sky_dict[det] = final_global_sky
         bkg_redux_final_sky_dict[det] = bkg_redux_global_sky
-
-        # # TODO -- worry about this
-        # scaleImg = this_objfind.scaleimg
+        # Update the sciImg with the scaleImg information
+        sciImg_dict[det].rel_scaleImg = this_objfind.scaleimg
 
         # update here slits.mask since global_skysub modify reduce_bpm, and we need to propagate it into extraction
         flagged_slits = np.where(this_objfind.reduce_bpm)[0]
@@ -252,8 +251,14 @@ def findobj_on_exposure(sciImg_dict:dict, bkg_redux_sciimg_dict:dict,
             all_slits[i].mask[flagged_slits] = \
                 all_slits[i].bitmask.turn_on(all_slits[i].mask[flagged_slits], 'BADSKYSUB')
 
+        # Update the wv_calib object file with the spectral flexure information
+        if this_objfind.wv_calib is not None and this_objfind.wv_calib.flex_shift is not None:
+            msgs.info("Updating the wv_calib file with the spectral flexure information.")
+            this_objfind.wv_calib.to_file()
+
+
     # Return
-    return final_sky_dict, bkg_redux_final_sky_dict, all_specobjs_objfind, all_slits
+    return final_sky_dict, bkg_redux_final_sky_dict, all_specobjs_objfind, all_slits, sciImg_dict
 
 def extract_exposure(sciImg_dict:dict, spectrograph, fitstbl, par, frames:list, detectors,
                      calib_ID:str, calibrations_path:str, all_specobjs_objfind, 
@@ -432,7 +437,7 @@ def reduce_exposure(spectrograph, fitstbl, par, frames, calib_ID,
 
     # #####################################
     # Find objects +  sky
-    final_sky_dict, bkg_redux_final_sky_dict, all_specobjs_find, calib_slits = \
+    final_sky_dict, bkg_redux_final_sky_dict, all_specobjs_find, calib_slits, sciImg_dict = \
         findobj_on_exposure(sciImg_dict, bkg_redux_sciimg_dict,
                             spectrograph,
                             fitstbl,

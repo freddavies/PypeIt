@@ -431,8 +431,8 @@ def finalize_sky_det(spectrograph, fitstbl, par, frame,
             - final_global_sky (`numpy.ndarray`_): The final global sky model for this detector.
             - bkg_redux_global_sky (`numpy.ndarray`_ or None): The background-reduced global sky
               model, or None if bkg_redux is False.
-            - updated_slits (:class:`~pypeit.slittrace.SlitTraceSet`): Updated slit trace set with
-              flagged slits marked as 'BADSKYSUB'.
+            - objFind (:class:`~pypeit.find_objects.FindObjects`): The updated object finding
+                class for this detector.
     """
 
     objtype, setup, obstime, basename, binning \
@@ -468,7 +468,7 @@ def finalize_sky_det(spectrograph, fitstbl, par, frame,
                                                      bkg_redux_sciimg=bkg_redux_sciimg,
                                                      reinit_bpm=False, update_crmask=False, show=show)
 
-    return final_global_sky, bkg_redux_global_sky
+    return final_global_sky, bkg_redux_global_sky, objFind
 
 
 
@@ -689,6 +689,8 @@ def extract_det(spectrograph, fitstbl, par,
     maskdef_designtab = caliBrate.slits.maskdef_designtab
     slits = copy.deepcopy(caliBrate.slits)
     slits.maskdef_designtab = None
+    # this is only used for IFU reductions currently
+    scaleImg = sciImg.rel_scaleImg
 
     if not par['reduce']['extraction']['skip_extraction']:
         msgs.info(f"Extraction begins for {basename} on det={det}")
@@ -710,18 +712,8 @@ def extract_det(spectrograph, fitstbl, par,
             tilts, slits = exTract.run()
         slitgpm = np.logical_not(exTract.extract_bpm)
         slitshift = exTract.slitshift
-        scaleImg = np.array([1.0], dtype=float) # this is only used for IFU reductions currently
     else:
         msgs.info(f"Extraction skipped for {basename} on det={det}")
-        # TODO
-        # If IFU, need to redo global sky sub for waveimg (this is a HACK)
-        # TODO
-        # Deal with slitshift too, for IFU
-        objFind = instantiate_objfind(sciImg, spectrograph, fitstbl,
-                                      par, frames, det, caliBrate,
-                                      bkg_redux,
-                                      find_negative)
-
         # Since the extraction was not performed, fill the arrays with the best available information
         skymodel, bkg_redux_skymodel, objmodel, ivarmodel, outmask, sobjs = \
             final_sky, \
@@ -732,18 +724,14 @@ def extract_det(spectrograph, fitstbl, par,
             sobjs_obj
         slitgpm = (slits.mask == 0)
         # TODO: Check these below
+        slitshift = np.zeros(slits.nslits) if caliBrate.wv_calib.flex_shift is None else caliBrate.wv_calib.flex_shift
         # get slitmask (same as in extract)
         slitmask = slits.slit_img(flexure=sciImg.spat_flexure, exclude_flag=slits.bitmask.exclude_for_reducing)
         # get spat_flexure and tilts (same as in extract)
         _spat_flexure = 0. if sciImg.spat_flexure is None else sciImg.spat_flexure
         _tilts_spat_flexure = 0. if caliBrate.wavetilts.spat_flexure is None else caliBrate.wavetilts.spat_flexure
         tilts = caliBrate.wavetilts.fit2tiltimg(slitmask, flexure=_tilts_spat_flexure)
-        waveImg = caliBrate.wv_calib.build_waveimg(tilts, slits, spat_flexure=sciImg.spat_flexure)
-        slitshift = objFind.slitshift #TODO: this is not correct. Find a way to propagate this information from objFind
-        scaleImg = objFind.scaleimg  # TODO: this is not correct. Find a way to propagate this information from objFind
-        # The 4 variables above are usually taken from objFind when extraction is skipped (for IFU). At this step,
-        # don't have the original objFind object. How can we propagate these information from objFind to this function?
-        # NEED to talk to Ryan!
+        waveImg = caliBrate.wv_calib.build_waveimg(tilts, slits, spat_flexure=sciImg.spat_flexure, spec_flexure=slitshift)
 
     # Apply a reference frame correction to each object and the waveimg
     vel_corr, waveImg = refframe_correct(spectrograph, par, slits, 
