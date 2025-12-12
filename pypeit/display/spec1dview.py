@@ -476,6 +476,10 @@ class Spec1dView(GingaPlugin.LocalPlugin):
 
         Simply attempt to process the latest FITS file loaded in the channel.
         """
+        viewer = self.channel.get_viewer('Ginga Plot')
+        bd = viewer.get_bindings()
+        bd.set_mode(viewer, 'spec1d', mode_type='locked')
+
         self.redo()
 
     def stop(self):

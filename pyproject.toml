@@ -166,6 +166,10 @@ pypeit_show_pixflat = "pypeit.scripts.show_pixflat:ShowPixFlat.entry_point"
 SlitWavelength = "pypeit.display:setup_SlitWavelength"
 Spec1dView = "pypeit.display:setup_Spec1dView"
 
+[project.entry-points."ginga_modes"]
+
+pypeit1d = "pypeit.display.pypeit_modes:Spec1DMode"
+
 [build-system]
 requires = [
     "setuptools",
