@@ -77,7 +77,7 @@ class WaveCalib(calibframe.CalibFrame):
                  'strpar': dict(otype=str, descr='Parameters as a string'),
                  'lamps': dict(otype=str,
                                descr='List of arc lamps used for the wavelength calibration'),
-                 'flex_shift': dict(otype=float, descr='Global spectral shift (pixels) of '
+                 'flex_shift': dict(otype=np.ndarray, atype=np.floating, descr='Global spectral shift (pixels) of '
                                                        'the wavelength array at the center of '
                                                        'the slit to correct for spectral flexure. '
                                                        'This is calculated using the sky spectrum, '
