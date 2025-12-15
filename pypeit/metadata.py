@@ -1771,6 +1771,9 @@ class PypeItMetaData:
 
             # Get the data lines
             subtbl = self.table[output_cols][in_cfg]
+
+            self.spectrograph.final_config_frametypes(setup_dict[f'Setup {setup}'], subtbl)
+
             if 'calib' in output_cols:
                 # calib can be a str with a list of values because in some cases (e.g. MOSFIRE) the same
                 # calibration files are used for different setups. Here we update calib to have only the
@@ -1967,3 +1970,26 @@ class PypeItMetaData:
         return self.calib_bitmask.flagged_bits(self['calibbit'][row])
 
 
+    def get_row_for_filename(self, filename:str) -> table.Table:
+        """Return the row of the metadata table for a filename
+
+        Parameters
+        ----------
+        filename : :obj:`str`
+            Filename for which to retrieve the table row
+
+        Returns
+        -------
+        :obj:`~astropy.table.Table`
+            A copy of the one-row table corresponding to the ``filename``
+            provided.
+        
+        Raises
+        ------
+        :class:`PypeItError`
+            If the requested filename is not in the table
+        """
+        idx = self.table['filename'] == Path(filename).name
+        if not any(idx):
+            msgs.error(f"Requested file {filename} not in the metadata table.")
+        return self.table[idx].copy()
