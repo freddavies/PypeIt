@@ -71,6 +71,7 @@ class Spec1DMode(Plot2DMode):
     * backslash : clear region
     * singlequote : (zoom) set X range to region
     * f : fit region and show result
+    * c : clear fit result
     """
 
     # Needs to be set by reference viewer (via set_shell_ref) before any
@@ -124,6 +125,7 @@ class Spec1DMode(Plot2DMode):
             kp_mark_right=['spec1d+]'],
             kp_mark_clear=['spec1d+backslash'],
             kp_fitting=['spec1d+f'],
+            kp_clear_marks=['spec1d+c'],
 
             plot_zoom_rate=1.2,
             plot_pan_pct=0.10,
@@ -197,6 +199,12 @@ class Spec1DMode(Plot2DMode):
 
         plugin = self.get_plugin()
         plugin.clear_region('mark')
+
+    def kp_clear_marks(self, viewer, event, data_x, data_y):
+        event.accept()
+
+        plugin = self.get_plugin()
+        plugin.clear_markers()
 
     def kp_fitting(self, viewer, event, data_x, data_y):
         event.accept()

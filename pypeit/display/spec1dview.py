@@ -234,11 +234,11 @@ class Spec1dView(GingaPlugin.LocalPlugin):
         tbar = Widgets.Toolbar(orientation='horizontal')
         vbox.add_widget(tbar, stretch=0)
 
-        btn = tbar.add_action("Unsmooth")
-        btn.add_callback('activated', lambda w: self.unsmooth())
+        btn = tbar.add_action("No smooth")
+        btn.add_callback('activated', lambda w: self.no_smooth())
         btn.set_enabled(self.nsmooth > 0.0)
-        self.w.unsmooth = btn
-        btn.set_tooltip("Undo all smoothing")
+        self.w.no_smooth = btn
+        btn.set_tooltip("Turn off smoothing")
         btn = tbar.add_action("Smooth-")
         btn.add_callback('activated', lambda w: self.smooth_less())
         btn.set_enabled(self.nsmooth > 0.0)
@@ -326,17 +326,17 @@ class Spec1dView(GingaPlugin.LocalPlugin):
         self.logger.debug(f"Selected masked option: {self.masked}")
         self.recalc()
 
-    def unsmooth(self):
+    def no_smooth(self):
         """Completely remove all smoothing from the plot."""
         self.nsmooth = 0.0
-        self.w.unsmooth.set_enabled(False)
+        self.w.no_smooth.set_enabled(False)
         self.w.smooth_less.set_enabled(False)
         self.recalc()
 
     def smooth_more(self):
         """Increase the level of smoothing in the plot."""
         self.nsmooth += (0.5 if self.nsmooth > 0.0 else 1.0)
-        self.w.unsmooth.set_enabled(True)
+        self.w.no_smooth.set_enabled(True)
         self.w.smooth_less.set_enabled(True)
         self.recalc()
 
@@ -344,7 +344,7 @@ class Spec1dView(GingaPlugin.LocalPlugin):
         """Decrease the level of smoothing in the plot."""
         self.nsmooth -= (0.5 if self.nsmooth > 1.0 else 1.0)
         self.nsmooth = max(self.nsmooth, 0.0)
-        self.w.unsmooth.set_enabled(self.nsmooth > 0.0)
+        self.w.no_smooth.set_enabled(self.nsmooth > 0.0)
         self.w.smooth_less.set_enabled(self.nsmooth > 0.0)
         self.recalc()
 
@@ -377,6 +377,12 @@ class Spec1dView(GingaPlugin.LocalPlugin):
     def clear_region(self, name):
         """Clear the region named `name`."""
         self.region_dct[name] = [None, None]
+
+        self.plot_lines()
+
+    def clear_markers(self):
+        """Clear all the markers."""
+        self.marker_dct = dict()
 
         self.plot_lines()
 
@@ -414,8 +420,15 @@ class Spec1dView(GingaPlugin.LocalPlugin):
             line_sigma = line.stddev.value
             line_fwhm = 2.35482 * line_sigma
             line_flux = line.amplitude.value * np.sqrt(2 * np.pi) * line_sigma
+
+            # Plot the fitted gaussian
+            # Dense grid for smooth model curve
+            x_fitted = np.linspace(self.data.wave[idx_lo],
+                                  self.data.wave[idx_hi], 100)  # 1000?
+            y_fitted = model(x_fitted)
+
             result = dict(x=line_center, sigma=line_sigma, fwhm=line_fwhm,
-                          flux=line_flux)
+                          flux=line_flux, x_fitted=x_fitted, y_fitted=y_fitted)
 
             # TODO: probably want to plot multiple unique lines and label them
             # name = str(line_center)  # ?? what is a better unique name
@@ -477,7 +490,15 @@ class Spec1dView(GingaPlugin.LocalPlugin):
             line = self.dc.Line(x, y_lo, x, y_hi, linewidth=2,
                                 linestyle='dotted', arrow='start',
                                 color='green')
-            canvas.add(line, tag=f'mark_{name}', redraw=True)
+            canvas.add(line, tag=f'mark_{name}', redraw=False)
+
+            if 'x_fitted' in dct:
+                # <-- there is a fit to be plotted
+                points = np.array((dct['x_fitted'], dct['y_fitted'])).T
+                path = self.dc.Path(points, linewidth=2, linestyle='solid',
+                                    alpha=1.0, color='green')
+                canvas.add(path, tag='mark_{name}_fit', redraw=False)
+
 
     def plot_lines(self):
         """Plot the line list + regions + markers.
