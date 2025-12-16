@@ -176,9 +176,13 @@ def findobj_on_exposure(sciImg_dict:dict, bkg_redux_sciimg_dict:dict,
 
     Returns:
         tuple:
-            - initial_sky_dict (dict): Dictionary containing the initial sky model; keys are each detector.
+            - final_sky_dict (dict): Dictionary containing the final sky model; keys are each detector.
+            - bkg_redux_final_sky_dict (dict): Dictionary containing the final bkg_redux sky model;
+              keys are each detector.
             - all_specobjs_objfind (SpecObjs): Collection of all identified spectral objects.
-            - all_silts (list): Slit objects, detector by detector
+            - all_silts (list): List of Slits objects, detector by detector
+            - sciImg_dict (dict): Dictionary containing updated sciImg objects with global spectral
+              flexure and scaleimg information.
     """
     
     # Output
@@ -248,6 +252,7 @@ def findobj_on_exposure(sciImg_dict:dict, bkg_redux_sciimg_dict:dict,
         sciImg_dict[det].rel_scaleImg = this_objfind.scaleimg
         # and the global spectral flexure shift
         sciImg_dict[det].flex_shift = this_objfind.slitshift
+        # TODO: RJC please check if slitshift here should be assigned or added to sciImg_dict[det].flex_shift
 
         # update here slits.mask since global_skysub modify reduce_bpm, and we need to propagate it into extraction
         flagged_slits = np.where(this_objfind.reduce_bpm)[0]

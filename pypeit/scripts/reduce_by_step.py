@@ -139,6 +139,7 @@ class ReducebyStep(scriptbase.ScriptBase):
         # Find Objects
         if args.step == 'findobj':
 
+            # Load intermediate frames needed for finding objects
             msgs.info(f'Loading images for detector {det}')
             sciImg = pypeitimage.PypeItImage.from_file(sci_filename)
             if bg_frames is not None and len(bg_frames) > 0:
@@ -223,7 +224,7 @@ class ReducebyStep(scriptbase.ScriptBase):
 
         # Extract?
         if args.step == 'extract':
-            # Load a lot of stuff
+            # Load intermediate frames needed for the extraction
             msgs.info(f'Loading images for detector {det}')
             sciImg = pypeitimage.PypeItImage.from_file(sci_filename)
 
