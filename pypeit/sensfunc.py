@@ -324,17 +324,28 @@ class SensFunc(datamodel.DataContainer):
                 elif hdul[1].header.get('DMODCLS') == 'OneSpec':
                     spec = OneSpec.from_file(spec1d, chk_version=self.chk_version)
                     if spec.head0['PYPELINE'] == 'Echelle':
-                        msgs.error('Standard star 1D spectrum from OneSpec class cannot be used for Echelle data.')
+                        raise PypeItError(
+                            'Standard star 1D spectrum from OneSpec class cannot be used for '
+                            'Echelle data.'
+                        )
                     if spec.fluxed:
-                        msgs.error('Standard star 1D spectrum from OneSpec class is already fluxed '
-                                   'and cannot be used to generate the sensitivity function.')
+                        raise PypeItError(
+                            'Standard star 1D spectrum from OneSpec class is already fluxed and '
+                            'cannot be used to generate the sensitivity function.'
+                        )
                     if self.par['use_flat']:
-                        msgs.error('"use_flat" set to True, but standard star 1D spectrum from OneSpec class '
-                                   'does not contain the flat spectrum. The blaze function cannot be estimated.')
+                        raise PypeItError(
+                            '"use_flat" set to True, but standard star 1D spectrum from OneSpec '
+                            'class does not contain the flat spectrum. The blaze function cannot '
+                            'be estimated.'
+                        )
                     if spec.ext_mode != self.par['extr']:
-                        msgs.warn(f'Standard star 1D spectrum from OneSpec class was obtained using the'
-                                  f' {spec.ext_mode} extraction, while the requested extraction is {self.par["extr"]}. '
-                                  f'The available {spec.ext_mode} extraction will be used instead.')
+                        log.warning(
+                            'Standard star 1D spectrum from OneSpec class was obtained using the'
+                            f' {spec.ext_mode} extraction, while the requested extraction is '
+                            f'{self.par["extr"]}.  The available {spec.ext_mode} extraction will '
+                            'be used instead.'
+                        )
                         self.extr = spec.ext_mode
 
                     # create sobjs_std
@@ -344,7 +355,9 @@ class SensFunc(datamodel.DataContainer):
                     _sobj[f'{self.extr}_MASK'] |= spec.mask.astype(bool)
                     _std_obj = specobjs.SpecObjs(specobjs=np.array([_sobj]), header=spec.head0)
                 else:
-                    msgs.error('Unrecognized class for the 1D spectrum file. Cannot read in the standard')
+                    raise PypeItError(
+                        'Unrecognized class for the 1D spectrum file. Cannot read in the standard.'
+                    )
                 # fill sobjs_std
                 if sobjs_std is None:
                     sobjs_std = _std_obj.copy()

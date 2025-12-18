@@ -10,7 +10,6 @@ from astropy.table import Table
 from astropy.coordinates import SkyCoord
 from astropy import units
 from astropy.time import Time
-from astropy.wcs import wcs
 from astropy.io import fits
 
 from pypeit import log
@@ -736,7 +735,7 @@ class GeminiGMOSSpectrograph(spectrograph.Spectrograph):
 
         # check if the mask design file exists
         if not Path(_maskfile).exists():
-            msgs.error(f'The mask design file {_maskfile} does not exist.')
+            raise PypeItError(f'The mask design file {_maskfile} does not exist.')
 
         # read the mask design file
         mask_tbl = Table.read(_maskfile, format='fits')
@@ -796,13 +795,17 @@ class GeminiGMOSSpectrograph(spectrograph.Spectrograph):
         if maskfile is None or maskdef_ids is None or nspec is None:
             # If any of these are not provided, we cannot get the maskdef spec minmax
             # and we will use the whole spectral length instead.
-            msgs.warn('maskfile, maskdef_id, and nspec must be provided to get the maskdef spec minmax. '
-                       'The whole spectral length will be used instead.')
+            log.warning(
+                'maskfile, maskdef_id, and nspec must be provided to get the maskdef spec minmax. '
+                'The whole spectral length will be used instead.'
+            )
             return None, None
 
         # check if the binning is provided, even if optional, it's needed for this spectrograph
         if binning is None:
-            msgs.error('Binning must be provided to get the slit edges from the mask definition file.')
+            raise PypeItError(
+                'Binning must be provided to get the slit edges from the mask definition file.'
+            )
 
         # Parse the binning
         bin_spec, _ = parse.parse_binning(binning)

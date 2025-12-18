@@ -837,9 +837,10 @@ class Spectrograph:
             :obj:`tuple`: A tuple of two `numpy.ndarray`_ with the spec min and max values.
             If the maskfile, maskdef_ids, or nspec are not provided, None is returned for both min and max.
         """
-
-        msgs.error('This spectrograph does not support the use of mask design to get the '
-                     'maskdef spec minmax. Set `maskdef_spec_minmax=False`')
+        raise PypeItError(
+            'This spectrograph does not support the use of mask design to get the maskdef spec '
+            'minmax. Set `maskdef_spec_minmax=False`'
+        )
 
     def configuration_keys(self):
         """
