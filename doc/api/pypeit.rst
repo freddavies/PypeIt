@@ -35,6 +35,7 @@ Submodules
    pypeit.coadd3d
    pypeit.datamodel
    pypeit.edgetrace
+   pypeit.exceptions
    pypeit.exposure
    pypeit.extraction
    pypeit.find_objects
