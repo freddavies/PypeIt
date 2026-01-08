@@ -601,17 +601,17 @@ class KeckLRISSpectrograph(spectrograph.Spectrograph):
                 # find the range of detector space occupied by the data
                 # [xmin:xmax,ymin:ymax]
                 xt = max(x2, x1)
-                xmaxs[i] += max(xt, xmax)
+                xmaxs[i] = max(xt, xmax)
                 yt = max(y2, y1)
-                ymaxs[i] += max(yt, ymax)
+                ymaxs[i] = max(yt, ymax)
 
                 # find the min size of the array
                 xt = min(x1, x2)
-                xmins[i] += min(xmin, xt)
+                xmins[i] = min(xmin, xt)
                 yt = min(y1, y2)
-                ymins[i] += min(ymin, yt)
+                ymins[i] = min(ymin, yt)
                 # Save
-                xcol[i] += xt
+                xcol[i] = xt
 
         # Deal with detectors
         if det in [1, 2]:
