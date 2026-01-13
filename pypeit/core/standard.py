@@ -272,6 +272,22 @@ class CalSpecFluxStandard(ArchivedFluxStandard):
             flux = hdu[1].data['FLUX'] * 1e17
         super().__init__(wave, flux, meta=meta)
 
+class LBTMODSFluxStandard(ArchivedFluxStandard):
+    """
+    Container class for an "lbtmods" standard star spectrum.
+    These are tabulated standard star fluxes in >=10-A bins. 
+    For MODS, use calspec, except for some cases, where the calspec spectrum does not 
+    cover the full spectral range 3200-10000 angstroms.
+    """
+    archive = 'lbtmods'
+    path = dataPaths.standards / archive
+
+    def __init__(self, file, meta=None):
+        self.file = self.path.get_file_path(file)
+        std_spec = table.Table.read(self.file, format='ascii')
+        wave = std_spec['col1']
+        flux = std_spec['col2'] * 10    # Convert from 1e-16 to 1e-17 erg/s/cm^2/Angstrom
+        super().__init__(wave, flux, meta=meta)
 
 class ESOFilFluxStandard(ArchivedFluxStandard):
     """
@@ -705,7 +721,7 @@ class PseudoStandard(ModelFluxStandard):
         return super().__init__(_wave, np.ones(_wave.shape, dtype=float), meta=self._init_meta())
 
 
-def get_archive_sets(archives=['xshooter', 'calspec', 'esofil', 'noao', 'ing']):
+def get_archive_sets(archives=['lbtmods','xshooter', 'calspec', 'esofil', 'noao', 'ing']):
     """
     Helper function to setup the prioritized list of archive sets to search
     through when matching a set of coordinates to a file containing the flux

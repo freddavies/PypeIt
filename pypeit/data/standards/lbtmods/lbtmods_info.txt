@@ -1,0 +1,7 @@
+# This directory contains the 10- and 50-A bin flux tables for the original set of 
+# MODS spectrophotometric standards
+#The flux tabluations are in units of (ergs cm-2 s-1 A-1), converted from ABmag.
+#NOTE: The wavelengths are in air.
+#https://scienceops.lbto.org/mods/instrument-calibration/spectrophotometric-standards-updated-oct2024/spectrophotometric-standards-updated-oct-2023/
+  File                Name        RA_2000    DEC_2000	 V-MAG   TYPE
+fFeige67_10a.dat     Feige67   12:41:51.79 +17:31:19.76  11.89	  sdO
