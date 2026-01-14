@@ -883,16 +883,11 @@ def main(flg):
 
     # LDSS3
     if flg & (2**35):
-        from IPython import embed
-        embed()
         iroot = 'magellan_ldss3_vphred_MasterWaveCalib.fits'
         iout = 'magellan_ldss3_vphred.fits'
         # Load
-        old_file = data.Paths.reid_arxiv / iroot
+        old_file = dataPaths.reid_arxiv.path / iroot
         par = io.fits_open(old_file)
-        pyp_spec = par[0].header['PYP_SPEC']
-        spectrograph = load_spectrograph(pyp_spec)
-
         # Do it
         all_wave = par[4].data['wave_soln'][0]  # The second slit has a smaller rms
         all_flux = par[4].data['spec'][0]
@@ -903,7 +898,7 @@ def main(flg):
         tbl['flux'] = all_flux
         tbl.meta['BINSPEC'] = 1
         # Write
-        outfile = data.Paths.reid_arxiv / iout
+        outfile = dataPaths.reid_arxiv.path / iout
         tbl.write(outfile, overwrite=True)
         print("Wrote: {}".format(outfile))
 
@@ -968,7 +963,7 @@ if __name__ == '__main__':
     #flg += 2**34
 
     # LDSS3
-    flg += 2**35
+    #flg += 2**35
 
     main(flg)
 
