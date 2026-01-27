@@ -5,30 +5,25 @@ Module for MMT/BINOSPEC specific methods.
 """
 from pathlib import Path
 
-import numpy as np
-import os
 from astropy.io import fits
 from astropy.table import Table
+from astropy.coordinates import SkyCoord
+from astropy import units
+from IPython import embed
+import matplotlib.pyplot as plt
+from matplotlib import patches
+import numpy as np
 
+from pypeit import io
 from pypeit import msgs
 from pypeit import telescopes
 from pypeit import utils
-from pypeit import io
 from pypeit.core import framematch
-from pypeit.spectrographs import spectrograph
 from pypeit.core import parse
 from pypeit.images import detector_container
 from pypeit.par import parset
-
-from astropy.io import fits
-from astropy.coordinates import SkyCoord
-from astropy import units
+from pypeit.spectrographs import spectrograph
 from pypeit.spectrographs.slitmask import SlitMask
-
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from IPython import embed
-
 
 
 class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
@@ -458,7 +453,7 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
             raise ValueError("A valid slitmask filename must be provided.")
 
         # Open the FITS file
-        hdu = fits.open(filename)
+        hdu = io.fits_open(filename)
 
         # Select appropriate extension for detector 1 or 2
         if ccdnum == 1:
@@ -647,7 +642,7 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
         Ny, Nx = rawimg.shape
 
         # Open FITS file and read mask data for the correct detector
-        hdu = fits.open(filename)
+        hdu = io.fits_open(filename)
         mask_fits = hdu[9].data[0] if ccdnum == 1 else hdu[10].data[0]
         # keep only the TARGET slits
         targ = np.where(mask_fits['TARGET_TYPE'] == 'TARGET')[0]
@@ -856,7 +851,7 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
             raise ValueError("Unable to read slitmask design info. Provide a file.")
 
         # Open FITS file and read mask data for the correct detector
-        hdu = fits.open(filename)
+        hdu = io.fits_open(filename)
         mask_fits = hdu[9].data[0] if ccdnum == 1 else hdu[10].data[0]
         numslits = len(self.slitmask.slitid)
 
@@ -968,10 +963,9 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
             raise ValueError("A valid filename must be provided.")
 
         # Build save filename from FITS header
-        hdu = fits.open(filename)
-        basename = os.path.basename(filename)
-        name = f"plot_mask_{hdu[1].header['MASK']}_{basename}"
-        save_filename = os.path.splitext(name)[0] + ".png"
+        hdu = io.fits_open(filename)
+        basename = Path(filename).name
+        save_filename = Path(f"plot_mask_{hdu[1].header['MASK']}_{basename}").with_suffix('.png')
 
         plt.rcParams.update({"font.size": 20})
 
@@ -1032,10 +1026,10 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
 
         # Save to file if directory provided
         if save_dir is not None:
-            os.makedirs(save_dir, exist_ok=True)
-            save_path = os.path.join(save_dir, save_filename)
+            _save_dir = Path(save_dir).absolute()
+            _save_dir.mkdir(parents=True, exist_ok=True)
             plt.tight_layout()
-            plt.savefig(save_path)
+            plt.savefig(_save_dir / save_filename)
             plt.close(fig)
         else:
             plt.tight_layout()
