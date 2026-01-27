@@ -191,7 +191,6 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
         par['calibrations']['wavelengths']['sigdetect'] = 5.
         par['calibrations']['wavelengths']['fwhm']= 4.0
         par['calibrations']['wavelengths']['lamps'] = ['ArI', 'ArII']
-        #par['calibrations']['wavelengths']['nonlinear_counts'] = self.detector[0]['nonlinear'] * self.detector[0]['saturation']
         par['calibrations']['wavelengths']['method'] = 'full_template'
         par['calibrations']['wavelengths']['lamps'] = ['HeI', 'NeI', 'ArI', 'ArII']
 
@@ -213,7 +212,6 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
 
         # Adjust temporarily to skip over bug in J2232p2930
         par['flexure']['spec_method'] = 'slitcen'
-        #par['flexure']['spec_method'] = 'boxcar'
 
         # cosmic ray rejection parameters for science frames
         par['scienceframe']['process']['sigclip'] = 5.0
@@ -294,10 +292,6 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
             par['calibrations']['slitedges']['sync_predict'] = 'auto'
 
             par['coadd2d']['offsets'] = 'maskdef_offsets'
-
-
-
-        print("Enter embed in config_specific_par()")
 
         return par
 
@@ -475,17 +469,6 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
         # conversion factor mm to arcsec
         mm_arcsec = mask_fits['MM_PER_ARCSEC']
 
-        # slit_width_arcsec = (mask_fits['POLY_X'][3] -  mask_fits['POLY_X'][0])[targ] / mm_arcsec
-        # slit_length_arcsec = (mask_fits['POLY_Y'][1] -  mask_fits['POLY_Y'][0])[targ] / mm_arcsec
-        # slit_length_pix = slit_length_arcsec / (platescale * binspatial)
-        #
-        # left_edges = (mask_fits['POLY_Y'][0][targ] - mask_fits['MASK_CORNERS'][1]) / mm_arcsec / (platescale * binspatial)
-        # right_edges = (mask_fits['POLY_Y'][1][targ] - mask_fits['MASK_CORNERS'][1]) / mm_arcsec / (platescale * binspatial)
-        #
-        # obj_pos_arcsec = (mask_fits['SLITY'][targ] - mask_fits['MASK_CORNERS'][1]) / mm_arcsec
-        # left_edges_arcsec = (mask_fits['POLY_Y'][0][targ] - mask_fits['MASK_CORNERS'][1]) / mm_arcsec
-        # right_edges_arcsec = (mask_fits['POLY_Y'][1][targ] - mask_fits['MASK_CORNERS'][1]) / mm_arcsec
-
         # left
         topdist = (y_targ - mask_fits['POLY_Y'][0][targ]) / mm_arcsec
         # right
@@ -520,16 +503,6 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
         slit_xoff = (xcen_slit - x_targ) / mm_arcsec  # in arcseconds
         slit_yoff = (ycen_slit - y_targ) / mm_arcsec  # in arcseconds
         slit_offset = np.sqrt(slit_xoff ** 2 + slit_yoff ** 2)
-        # slit = (x_targ - xcen_slit) / mm_arcsec  # in arcseconds
-        # delta_y = (y_targ - ycen_slit) / mm_arcsec  # in arcseconds
-        # offsets = np.sqrt(delta_x ** 2 + delta_y ** 2)
-        #
-        #
-        # slit_length_half = mask_fits['SLIT_LENGTH'][targ] / 2.
-        #
-        # # Calculate projected distances to top/bottom edges of slits
-        # topdist = np.round(slit_length_half - delta_y, 3)
-        # botdist = np.round(slit_length_half + delta_y, 3)
 
         # Compute slit center RA/Dec via spherical offset from target position
         obj_coord = SkyCoord(ra=obj_ra, dec=obj_dec, unit='deg')
@@ -647,13 +620,6 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
         # keep only the TARGET slits
         targ = np.where(mask_fits['TARGET_TYPE'] == 'TARGET')[0]
 
-        # # Parse the binning
-        # _, bin_spat = parse.parse_binning(binning)
-        # # get the platescale
-        # pscale = self.get_detector_par(det=ccdnum)['platescale']
-        # # conversion mm to arcsec
-        # mm_arcsec = mask_fits['MM_PER_ARCSEC']
-
         # Define det buffer and mm/pixel scale factor
         # NOTE: these are hard-coded and not sure if there is a more robust way to determine them
         # slitmask offset from the detector edge in pixels
@@ -668,16 +634,6 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
         if ccdnum == 2:
             # flip and reverse for detector 2
             left_edges, right_edges = Nx - right_edges, Nx - left_edges
-
-        # # Compute slit regions and associated slitmask using mask design info
-        # region, slitmask = self.bino_get_slit_region(filename, ccdnum)
-        #
-        # # region contains: [slit_x_range, slit_y_range, x_slitobj_pix, y_slitobj_pix]
-        # slit_x_range, slit_y_range, x_slitobj_pix, y_slitobj_pix = region
-        #
-        # # Extract lower and upper slit edges from the y-range boundaries
-        # bot_edges = slit_y_range[:, 0]  # Lower edge (minimum y-value)
-        # top_edges = slit_y_range[:, 1]  # Upper edge (maximum y-value)
 
         # Sort slits by their bottom edge position in ascending y-coordinate
         sortindx = np.argsort(left_edges)
@@ -740,9 +696,6 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
         # determine the output array size...
         nx = (x2 - x1 + 1) * int(numamp/2) + nxb * int(numamp/2)
         ny = (y2 - y1 + 1) * int(numamp/2)
-
-        #datasize = head1['DETSIZE']
-        #_, nx, _, ny = np.array(parse.load_sections(datasize, fmt_iraf=False)).flatten()
 
         # allocate output array...
         array = np.zeros((nx, ny))
@@ -1043,141 +996,6 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
         elif ccdnum == 2:
             return region_2
 
-    # NOT USED ANYWHERE
-    # def radec_pixel_offset(self, ra1, dec1, ra2, dec2, filename, ccdnum, Nx=4096, Ny=4112):
-    #     """
-    #     Compute the pixel offset between two sky positions on the Binospec detector.
-    #
-    #     Parameters
-    #     ----------
-    #     ra1, dec1 : float
-    #         First coordinate in degrees.
-    #     ra2, dec2 : float
-    #         Second coordinate in degrees.
-    #     filename : str
-    #         Path to slitmask FITS file.
-    #     ccdnum : int
-    #         Detector number (1 or 2).
-    #     Nx, Ny : int
-    #         Detector dimensions (default Binospec size).
-    #
-    #     Returns
-    #     -------
-    #     dx_pix, dy_pix : float
-    #         Offset in X and Y (pixels) from (ra1, dec1) to (ra2, dec2)
-    #     dr_pix : float
-    #         Euclidean distance in pixels
-    #     """
-    #
-    #     # Constants (from your bino_get_slit_region)
-    #     dy0 = -200.0
-    #     y_scl = 24.555832 if ccdnum == 1 else 24.548194  # arcsec to pixels
-    #
-    #     # Read slitmask FITS
-    #     hdu = fits.open(filename)
-    #     mask_fits = hdu[9].data[0] if ccdnum == 1 else hdu[10].data[0]
-    #
-    #     # Mask center (used as origin in slitmask coordinates)
-    #     mask_center = SkyCoord(mask_fits['CENTERRA'], mask_fits['CENTERDEC'], unit=('hourangle', 'deg'))
-    #
-    #     # Position angle of +x detector axis (spatial direction)
-    #     posx_pa = hdu[1].header['POSANG'] - 180.
-    #     if posx_pa < 0:
-    #         posx_pa += 360.
-    #
-    #     # Create SkyCoord objects for each position
-    #     coord1 = SkyCoord(ra1, dec1, unit='deg')
-    #     coord2 = SkyCoord(ra2, dec2, unit='deg')
-    #
-    #     # Project both coordinates into the slitmask pixel frame
-    #     offset1 = mask_center.spherical_offsets_to(coord1)
-    #     offset2 = mask_center.spherical_offsets_to(coord2)
-    #
-    #     # Each offset is (dRA, dDec) in arcsec. Rotate using POSANG to detector frame
-    #     # Convert to arcsec offsets along detector x and y axes
-    #     def project_to_detector_frame(ra_offset, dec_offset, posang):
-    #         theta = np.deg2rad(posang)
-    #         dx = ra_offset * np.cos(theta) + dec_offset * np.sin(theta)
-    #         dy = -ra_offset * np.sin(theta) + dec_offset * np.cos(theta)
-    #         return dx, dy
-    #
-    #     dx1, dy1 = project_to_detector_frame(offset1[0].arcsec, offset1[1].arcsec, posx_pa)
-    #     dx2, dy2 = project_to_detector_frame(offset2[0].arcsec, offset2[1].arcsec, posx_pa)
-    #
-    #     # Convert to pixel coordinates (centered on Nx/2, Ny-1 with dy0 shift)
-    #     x1_pix = dx1 * y_scl + Nx / 2.0
-    #     x2_pix = dx2 * y_scl + Nx / 2.0
-    #
-    #     y1_pix = Ny - 1 - (dy1 * y_scl) + dy0
-    #     y2_pix = Ny - 1 - (dy2 * y_scl) + dy0
-    #
-    #     # Compute pixel offsets
-    #     dx_pix = x2_pix - x1_pix
-    #     dy_pix = y2_pix - y1_pix
-    #     dr_pix = np.sqrt(dx_pix ** 2 + dy_pix ** 2)
-    #
-    #     return dx_pix, dy_pix, dr_pix
-    #
-    # def extract_y_slit_info(self, filename, ccdnum, slit_index=0):
-    #     """
-    #     Extracts arcsec positions of top/bottom slit corners and mask center Y value
-    #     from a Binospec slitmask FITS file for computing y-pixel edges.
-    #
-    #     This version does NOT filter slits based on target offset.
-    #
-    #     Parameters
-    #     ----------
-    #     filename : str
-    #         Path to the slitmask FITS file.
-    #     ccdnum : int
-    #         Detector number (1 or 2).
-    #     slit_index : int
-    #         Index of the slit among all TARGET-type entries (no offset filtering).
-    #
-    #     Returns
-    #     -------
-    #     dict
-    #         Dictionary containing:
-    #         - 'y_top_arcsec' : float
-    #         - 'y_bot_arcsec' : float
-    #         - 'mask_y_arcsec' : float
-    #         - 'y_scl' : float
-    #     """
-    #
-    #     if filename is None or ccdnum not in [1, 2]:
-    #         raise ValueError("Must provide valid filename and CCD number")
-    #
-    #     hdu = fits.open(filename)
-    #     mask_fits = hdu[9].data[0] if ccdnum == 1 else hdu[10].data[0]
-    #
-    #     # Identify TARGET-type slits
-    #     target_type = mask_fits['TARGET_TYPE']
-    #     targ = np.where(target_type == 'TARGET')[0]
-    #
-    #     if slit_index >= len(targ):
-    #         raise IndexError(f"slit_index={slit_index} exceeds number of TARGET slits ({len(targ)})")
-    #
-    #     i = targ[slit_index]  # raw index into full slit list
-    #
-    #     # POLY_Y: shape (4, N), each column is a slit
-    #     poly_y = np.squeeze(mask_fits['POLY_Y'].T)  # shape (N, 4)
-    #     corners_y = poly_y[targ]  # only TARGET-type
-    #     corners_y = corners_y[:, [3, 0, 1, 2]]  # reorder to clockwise
-    #
-    #     y_top_arcsec = -corners_y[slit_index, 0]
-    #     y_bot_arcsec = -corners_y[slit_index, 2]
-    #
-    #     mask_y_arcsec = mask_fits['MASK_CORNERS'][1]
-    #     y_scl = 24.555832 if ccdnum == 1 else 24.548194
-    #
-    #     return {
-    #         'poly_y': mask_fits['POLY_Y'].T[slit_index],
-    #         'y_top_arcsec': y_top_arcsec,
-    #         'y_bot_arcsec': y_bot_arcsec,
-    #         'mask_y_arcsec': mask_y_arcsec,
-    #         'y_scl': y_scl
-    #     }
-
 
 def binospec_read_amp(inp, ext):
     """
@@ -1224,7 +1042,8 @@ def binospec_read_amp(inp, ext):
     xdata1, xdata2, ydata1, ydata2 = np.array(parse.load_sections(datasec, fmt_iraf=False)).flatten()
     datasec = '[{:}:{:},{:}:{:}]'.format(xdata1 - 1, xdata2, ydata1-1, ydata2)
 
-    #TODO: Since pypeit can only subtract overscan along one axis, I'm subtract the overscan here using median method.
+    # TODO: Since pypeit can only subtract overscan along one axis, I'm subtract
+    # the overscan here using median method.
     # Overscan X-axis
     if xdata1 > 1:
         overscanx = temp[2:xdata1-1, :]
@@ -1243,7 +1062,6 @@ def binospec_read_amp(inp, ext):
     biassec = '[0:{:},{:}:{:}]'.format(xdata1-1, ydata1-1, ydata2)
     xos1, xos2, yos1, yos2 = np.array(parse.load_sections(biassec, fmt_iraf=False)).flatten()
     overscan = np.zeros_like(temp[xos1:xos2, yos1:yos2]) # Give a zero fake overscan at the edge of each amplifiers
-    #overscan = temp[xos1:xos2,yos1:yos2]
 
     return data, overscan, datasec, biassec
 
