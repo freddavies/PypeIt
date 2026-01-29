@@ -4,9 +4,9 @@
 
 """
 import pathlib
+import json
 
 import astropy.table
-import linetools.utils
 import numpy as np
 
 from pypeit import msgs
@@ -33,8 +33,9 @@ def load_wavelength_calibration(filename: pathlib.Path) -> dict:
     if not filename.is_file():
         msgs.error(f"File does not exist: {filename}")
 
-    # Force any possible pathlib.Path object to string before `loadjson`
-    wv_calib = linetools.utils.loadjson(str(filename))
+    # Load JSON file
+    with open(filename, 'r') as f:
+        wv_calib = json.load(f)
 
     # Recast a few items as arrays
     for key in wv_calib.keys():

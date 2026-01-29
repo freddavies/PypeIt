@@ -43,10 +43,6 @@ class Show1DSpec(scriptbase.ScriptBase):
         import pathlib
         import numpy as np
 
-        from qtpy.QtWidgets import QApplication
-
-        from linetools.guis.xspecgui import XSpecGui
-
         from pypeit import specobjs
         from pypeit import msgs
         from pypeit.display.display import show_1dspec

@@ -4,6 +4,7 @@
 """
 import copy
 import itertools
+import json
 
 import astropy.stats
 import astropy.table
@@ -11,8 +12,6 @@ import numpy as np
 import scipy.interpolate
 import scipy.ndimage
 import scipy.spatial
-
-from linetools import utils as ltu
 
 from IPython import embed
 
@@ -3190,7 +3189,8 @@ class HolyGrail:
                 # Write IDs
                 out_dict = dict(pix=use_tcent, IDs=self._all_patt_dict[str(slit)]['IDs'])
                 jdict = utils.jsonify(out_dict)
-                ltu.savejson(self._outroot + slittxt + '.json', jdict, easy_to_read=True, overwrite=True)
+                with open(self._outroot + slittxt + '.json', 'w') as f:
+                    json.dump(jdict, f, indent=4)
                 msgs.info("Wrote: {:s}".format(self._outroot + slittxt + '.json'))
 
                 # Plot

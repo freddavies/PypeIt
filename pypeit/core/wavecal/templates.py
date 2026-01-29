@@ -11,6 +11,7 @@ be distributed as part of the code base.
 
 import os
 import pathlib
+import json
 
 import numpy as np
 from IPython import embed
@@ -22,8 +23,6 @@ from scipy.interpolate import interp1d
 
 from astropy.table import Table
 from astropy import units
-
-import linetools.utils
 
 from pypeit import msgs
 from pypeit import utils
@@ -260,8 +259,9 @@ def pypeit_arcspec(in_file, slit, binspec, binning=None):
     in_file = str(in_file)
 
     if '.json' in in_file:
-        # Force any possible pathlib.Path object to string before `loadjson`
-        wv_dict = linetools.utils.loadjson(in_file)
+        # Load JSON file
+        with open(in_file, 'r') as f:
+            wv_dict = json.load(f)
         iwv_calib = wv_dict[str(slit)]
         pypeitFitting = fitting.PypeItFit(fitc=np.array(iwv_calib['fitc']),
                                           func=iwv_calib['function'],
