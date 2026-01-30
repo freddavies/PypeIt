@@ -29,8 +29,6 @@ class Show1DSpec(scriptbase.ScriptBase):
 #        parser.add_argument('--jdaviz', default=False, action='store_true',
 #                            help='Open the spectrum in jdaviz (requires specutils and jdaviz '
 #                                 'to be installed)')
-        parser.add_argument('--ginga', default=False, action='store_true',
-                            help='Open the spectrum in ginga')
         return parser
 
     @classmethod
@@ -109,7 +107,7 @@ class Show1DSpec(scriptbase.ScriptBase):
         if args.obj is not None:
             exten = np.where(sobjs.NAME == args.obj)[0][0]
             if exten < 0:
-                raise PypeItError("Bad input object name: {:s}".format(args.obj))
+                raise PypeItError(f"Bad input object name: {args.obj}")
         else:
             exten = args.exten-1 # 1-index in FITS file
 

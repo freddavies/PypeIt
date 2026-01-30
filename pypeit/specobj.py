@@ -16,7 +16,6 @@ from pypeit import PypeItError
 from pypeit.core import flexure
 from pypeit.core import flux_calib
 from pypeit.core import parse
-from pypeit import utils
 from pypeit import datamodel
 from pypeit import onespec
 from pypeit.images.detector_container import DetectorContainer
@@ -518,11 +517,11 @@ class SpecObj(datamodel.DataContainer):
         Args:
             shift (float):
                 additive spectral flexure in pixels
-            sky_spec (`pypeit.onespec.OneSpec`_):
+            sky_spec (:class:`~pypeit.onespec.OneSpec`):
                 Sky Spectrum
 
         Returns:
-            onespec.OneSpec:
+            :class:`~pypeit.onespec.OneSpec`:
                 New sky spectrum with the flexure applied  
                 mainly for QA
         """

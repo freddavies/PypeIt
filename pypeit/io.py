@@ -993,7 +993,7 @@ def load_sky_spectrum(sky_file: str) -> "onespec.OneSpec":
             The filename (NO PATH) of the sky file to use.
 
     Returns:
-        `onespec.OneSpec`_: Sky spectrum
+        :class:`~pypeit.onespec.OneSpec`: Sky spectrum
     """
     from pypeit import onespec
 

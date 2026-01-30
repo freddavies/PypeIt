@@ -291,14 +291,14 @@ def spec_flex_shift(obj_skyspec, sky_file=None, arx_skyspec=None, arx_fwhm_pix=N
     """ Calculate shift between object sky spectrum and archive sky spectrum
 
     Args:
-        obj_skyspec (`onespec.OneSpec`_):
+        obj_skyspec (:class:`~pypeit.onespec.OneSpec`):
             Spectrum of the sky related to our object
         sky_file (:obj:`str`, optional):
             Name of the archival sky file. If equal to 'model', instead,
             a model sky spectrum will be generated using :func:`~pypeit.wavemodel.nearIR_modelsky`
             and the spectral resolution of obj_skyspec. If None, arx_skyspec and arx_fwhm_pix
             must be provided.
-        arx_skyspec (`onespec.OneSpec`_, optional):
+        arx_skyspec (:class:`~pypeit.onespec.OneSpec`, optional):
             Archived sky spectrum. If None, it will be loaded from the sky_file
             (sky_file must be provided).
         arx_fwhm_pix (:obj:`float`, optional):
@@ -542,9 +542,9 @@ def get_fwhm_gauss_smooth(arx_skyspec, obj_skyspec, arx_fwhm_pix, spec_fwhm_pix=
     """
 
     Args:
-        arx_skyspec (`onespec.OneSpec`_):
+        arx_skyspec (:class:`~pypeit.onespec.OneSpec`):
             Archived sky spectrum.
-        obj_skyspec (`onespec.OneSpec`_):
+        obj_skyspec (:class:`~pypeit.onespec.OneSpec`):
             Sky spectrum associated with the science target.
         arx_fwhm_pix (:obj:`float`):
             Spectral FWHM (in pixels) of the archived sky spectrum.
@@ -858,9 +858,9 @@ def spec_flexure_slit(slits, slitord, slit_bpm, sky_file, method="boxcar", speco
         specobjs (:class:`~pypeit.specobjs.SpecObjs`, optional):
             Spectral extractions
         slit_specs (:obj:`list`, optional):
-            A list of `onespec.OneSpec`, one for each slit. The spectra stored in
-            this list are sky spectra, extracted from the center of each slit.
-            This is only used if ``method='slitcen'``.
+            A list of :class:`~pypeit.onespec.OneSpec`, one for each slit. The
+            spectra stored in this list are sky spectra, extracted from the
+            center of each slit.  This is only used if ``method='slitcen'``.
         wv_calib (:class:`pypeit.wavecalib.WaveCalib`):
             Wavelength calibration object
         mxshft (:obj:`int`, optional):
@@ -1077,7 +1077,7 @@ def get_archive_spectrum(sky_file, obj_skyspec=None, spec_fwhm_pix=None):
         spectrum will be generated using
         :func:`~pypeit.wavemodel.nearIR_modelsky` and the spectral resolution of
         obj_skyspec. If obj_skyspec is None, then sky_file cannot be 'model'.
-    obj_skyspec : `onespec.OneSpec`_, optional
+    obj_skyspec : :class:`~pypeit.onespec.OneSpec`, optional
         Sky spectrum associated with the science target. This must be provided
         if sky_file is 'model'.
     spec_fwhm_pix : :obj:`float`, optional
@@ -1157,7 +1157,7 @@ def get_sky_spectrum(sciimg, ivar, waveimg, thismask, global_sky, box_radius, sl
             extracted.  For example, DET01.
 
     Returns:
-        'onespec.OneSpec`: The boxcar-extracted sky spectrum.
+        :class:`~pypeit.onespec.OneSpec`: The boxcar-extracted sky spectrum.
     """
     spec = specobj.SpecObj(PYPELINE=pypeline, SLITID=-1, DET=str(det))
     spec.trace_spec = np.arange(slits.nspec)
