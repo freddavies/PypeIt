@@ -1067,22 +1067,28 @@ def spec_flexure_slit_global(sciImg, waveimg, global_sky, par, slits, slitmask,
 
 
 def get_archive_spectrum(sky_file, obj_skyspec=None, spec_fwhm_pix=None):
-    """ Load an archival sky spectrum
+    """
+    Load an archival sky spectrum
 
-    Args:
-        sky_file (:obj:`str`):
-            Name of the archival sky file. If equal to 'model', instead,
-            a model sky spectrum will be generated using :func:`~pypeit.wavemodel.nearIR_modelsky`
-            and the spectral resolution of obj_skyspec. If obj_skyspec is None, then
-            sky_file cannot be 'model'.
-        obj_skyspec (`onespec.OneSpec`_, optional):
-            Sky spectrum associated with the science target. This must be provided if sky_file is 'model'.
-        spec_fwhm_pix (:obj:`float`, optional):
-            Spectral FWHM (in pixels) of the sky spectrum related to our object.
+    Parameters
+    ----------
+    sky_file : :obj:`str`
+        Name of the archival sky file. If equal to 'model', instead, a model sky
+        spectrum will be generated using
+        :func:`~pypeit.wavemodel.nearIR_modelsky` and the spectral resolution of
+        obj_skyspec. If obj_skyspec is None, then sky_file cannot be 'model'.
+    obj_skyspec : `onespec.OneSpec`_, optional
+        Sky spectrum associated with the science target. This must be provided
+        if sky_file is 'model'.
+    spec_fwhm_pix : :obj:`float`, optional
+        Spectral FWHM (in pixels) of the sky spectrum related to our object.
 
-    Returns:
-        tuple: The sky spectrum (`linetools.spectra.xspectrum1d.XSpectrum1D`_)
-        and the FWHM (float) of the sky lines in pixels.
+    Returns
+    -------
+    sky_spectrum : :class:`~pypeit.onespec.OneSpec`
+        The sky spectrum
+    arx_fwhm_pix : :obj:`float`
+        The FWHM of the sky lines in pixels.
     """
     if sky_file != 'model':
         # Load Archive. Save the fwhm to avoid the performance hit from calling it on the archive sky spectrum
@@ -1114,12 +1120,10 @@ def get_archive_spectrum(sky_file, obj_skyspec=None, spec_fwhm_pix=None):
                                                        (obj_skyspec.wave.min() / 10000.,
                                                         obj_skyspec.wave.max() / 10000.),
                                                        dlam=obj_disp / 10000., flgd=False)
-        #sky_spectrum = xspectrum1d.XSpectrum1D.from_tuple((wave_sky, flux_sky))
         sky_spectrum = onespec.OneSpec(wave_sky, None, flux_sky, fluxed=False)
         arx_fwhm_pix = spec_fwhm_pix
     else:
         raise PypeItError('Archived sky spectrum cannot be loaded. ')
-
 
     return sky_spectrum, arx_fwhm_pix
 

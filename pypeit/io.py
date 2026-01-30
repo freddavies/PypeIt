@@ -33,8 +33,6 @@ import sklearn
 import pypeit
 import time
 
-#from linetools.spectra import xspectrum1d
-
 from pypeit import log
 from pypeit import PypeItError
 from pypeit import dataPaths

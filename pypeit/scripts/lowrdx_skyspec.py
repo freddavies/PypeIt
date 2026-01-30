@@ -24,16 +24,12 @@ class LowRDXSkySpec(scriptbase.ScriptBase):
     def main(cls, args):
         from scipy.io.idl import readsav
         from astropy.io import fits
-        #from linetools.spectra.xspectrum1d import XSpectrum1D
 
         # Initialize the log
         cls.init_log(args)
 
         # Read
         lrdx_sky = readsav(args.lowrdx_sky)
-        # Generate
-        #xspec = XSpectrum1D.from_tuple((lrdx_sky['wave_calib'], lrdx_sky['sky_calib']))
-
         wave = lrdx_sky['wave_calib']
         sky = lrdx_sky['sky_calib']
 

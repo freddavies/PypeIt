@@ -1458,7 +1458,7 @@ def yamlify(obj, debug=False):
 
     Recursively process an object so it can be serialised for yaml.
 
-    Based on jsonify in `linetools`_.
+    Based on jsonify in `linetools <https://linetools.readthedocs.io/en/latest/>`__.
 
     Also found in desiutils
 
@@ -1533,8 +1533,9 @@ def yamlify(obj, debug=False):
     return obj
 
 def jsonify(obj, debug=False):
-    """ Recursively process an object so it can be serialised in json
-    format. Taken from linetools.
+    """
+    Recursively process an object so it can be serialised in json format. Taken
+    from `linetools <https://linetools.readthedocs.io/en/latest/>`__.
 
     WARNING - the input object may be modified if it's a dictionary or
     list!
@@ -2101,14 +2102,12 @@ def get_line_list_names():
              for fname in line_list_files]
     return names
 
-# linetools routines
-
-
-
 def radec_to_coord(radec, gal=False):
-    """ Converts one of many of Celestial Coordinates
-    `radec` formats to an astropy SkyCoord object. Assumes
-    J2000 equinox.
+    """
+    Converts one of many of Celestial Coordinates `radec` formats to an astropy
+    SkyCoord object. Assumes J2000 equinox.
+
+    Taken from `linetools <https://linetools.readthedocs.io/en/latest/>`__.
 
     Parameters
     ----------
@@ -2182,6 +2181,7 @@ def radec_to_coord(radec, gal=False):
         raise IOError("Bad input type for radec")
     # Return
     return coord
+
 
 def loadjson(filename):
     """

@@ -416,18 +416,13 @@ You can plot the spectrum using :ref:`pypeit_show_1dspec`:
     pypeit_show_1dspec Science/spec1d_s190519_0059-GD153_NIRES_20190519T083811.995.fits --exten 5
 
 The ``--exten 5`` argument specifies to use the fifth extension in the fits file, which selects the reddest (order=3) spectrum.
-This uses the `XSpecGUI`_ from the `linetools`_ package, and the result looks like this:
 
 .. figure:: ../figures/nires_standard_kspec.png
    :width: 50%
 
-   `XSpecGUI`_ produced by calling :ref:`pypeit_show_1dspec` for the order=3
-   spectrum.  The black line is the flux and the red line is the estimated
-   error.
+**THIS IMAGE IS CURRENTLY OUT OF DATE.**
 
-In the window, press ``?`` to open a webpage with the `XSpecGUI keystrokes`_
-that help you navigate through the spectrum.  See :doc:`../out_spec1D` for
-further details.
+See :doc:`../out_spec1D` for further details.
 
 ----
 

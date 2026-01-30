@@ -1,5 +1,5 @@
 """
-Wrapper to the linetools XSpecGUI
+Wrapper for 1D spectrum viewer in ginga.
 
 .. include common links, assuming primary doc root is up one directory
 .. include:: ../include/links.rst

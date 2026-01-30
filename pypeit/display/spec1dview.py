@@ -793,15 +793,17 @@ class Spec1dView(GingaPlugin.LocalPlugin):
         # necessary to identify the plugin and provide correct operation in Ginga
         return 'spec1dview'
 
-# Used verbatim from linetools.spectra.convolve
-#
+
 def convolve_psf(array, fwhm, boundary='fill', fill_value=0.0,
                  normalize_kernel=True):
-    """ Convolve an array with a gaussian kernel.
+    """
+    Convolve an array with a gaussian kernel.
 
     Given an array of values `a` and a gaussian full width at half
     maximum `fwhm` in pixel units, returns the convolution of the
     array with the gaussian kernel.
+
+    Taken from `linetools <https://linetools.readthedocs.io/en/latest/>`__.
 
     Parameters
     ----------
