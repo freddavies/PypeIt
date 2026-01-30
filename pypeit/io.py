@@ -10,13 +10,11 @@ Provides a set of I/O routines.
 import os
 from pathlib import Path
 import importlib
-import glob
 import sys
 import warnings
 import gzip
 import shutil
 from packaging import version
-from typing import TYPE_CHECKING
 
 from IPython import embed
 
@@ -37,10 +35,6 @@ from pypeit import log
 from pypeit import PypeItError
 from pypeit import dataPaths
 from pypeit import __version__
-
-# Avoid circular import: datamodel -> io -> onespec -> spectrographs -> detector_container -> datamodel
-if TYPE_CHECKING:
-    from pypeit import onespec
 
 # TODO -- Move this module to core/
 
@@ -977,28 +971,4 @@ def load_thar_spec():
         `astropy.io.fits.HDUList`_: ThAr Spectrum FITS HDU list
     """
     return fits_open(dataPaths.arclines.get_file_path('thar_spec_MM201006.fits'))
-
-
-def load_sky_spectrum(sky_file: str) -> "onespec.OneSpec":
-    """
-    Load a sky spectrum from the PypeIt data directory into an XSpectrum1D
-    object.
-
-    .. todo::
-
-        Try to eliminate the XSpectrum1D dependancy
-
-    Args:
-        sky_file (:obj:`str`):
-            The filename (NO PATH) of the sky file to use.
-
-    Returns:
-        :class:`~pypeit.onespec.OneSpec`: Sky spectrum
-    """
-    from pypeit import onespec
-
-    path = dataPaths.sky_spec.get_file_path(sky_file)
-
-    return onespec.OneSpec.from_xspec_file(path)
-
 

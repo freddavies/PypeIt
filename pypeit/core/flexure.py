@@ -21,7 +21,6 @@ from scipy import optimize
 from scipy import signal
 
 from pypeit import dataPaths
-from pypeit import io
 from pypeit import log
 from pypeit import onespec
 from pypeit import PypeItError
@@ -33,6 +32,7 @@ from pypeit.core import extract
 from pypeit.core import fitting
 from pypeit.core import parse
 from pypeit.core import qa
+from pypeit.core import skyspec
 from pypeit.core import trace
 from pypeit.core.wavecal import autoid
 from pypeit.datamodel import DataContainer
@@ -1093,7 +1093,7 @@ def get_archive_spectrum(sky_file, obj_skyspec=None, spec_fwhm_pix=None):
     if sky_file != 'model':
         # Load Archive. Save the fwhm to avoid the performance hit from calling it on the archive sky spectrum
         # multiple times
-        sky_spectrum = io.load_sky_spectrum(sky_file)
+        sky_spectrum = skyspec.load_sky_spectrum(sky_file)
         # get arxiv sky spectrum resolution (FWHM in pixels)
         arx_fwhm_pix = autoid.measure_fwhm(sky_spectrum.flux, sigdetect=4., fwhm=4.)
         if arx_fwhm_pix is None:

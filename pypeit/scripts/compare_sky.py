@@ -36,8 +36,8 @@ class CompareSky(scriptbase.ScriptBase):
 
         import matplotlib.pyplot as plt
 
-        from pypeit import io
         from pypeit import specobjs
+        from pypeit.core import skyspec
 
         # Initialize the log
         cls.init_log(args)
@@ -50,7 +50,7 @@ class CompareSky(scriptbase.ScriptBase):
         user_sobj = user_sobjs[exten-1]
 
         # Load sky spec
-        arx_sky = io.load_sky_spectrum(args.skyfile)
+        arx_sky = skyspec.load_sky_spectrum(args.skyfile)
 
         # Plot
         plt.clf()
