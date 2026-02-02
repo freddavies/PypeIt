@@ -535,7 +535,6 @@ class SpecObj(datamodel.DataContainer):
                 self[attr+'_WAVE'] = flexure.flexure_interp(shift, self[attr+'_WAVE']).copy()
         # Shift sky spec too
         twave = flexure.flexure_interp(shift, sky_spec.wave)
-        #new_sky = xspectrum1d.XSpectrum1D.from_tuple((twave, sky_spec.flux))
         new_sky = onespec.OneSpec(twave, None, sky_spec.flux)
         # Save - since flexure may have been applied/calculated twice, this needs to be additive
         self.update_flex_shift(shift, flex_type='local')
