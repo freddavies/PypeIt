@@ -211,8 +211,7 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
         ## Do not perform global sky subtraction for standard stars
         par['reduce']['skysub']['global_sky_std']  = False
 
-        # Adjust temporarily to skip over bug in J2232p2930
-        par['flexure']['spec_method'] = 'slitcen'
+        par['flexure']['spec_method'] = 'boxcar'
 
         # cosmic ray rejection parameters for science frames
         par['scienceframe']['process']['sigclip'] = 5.0
