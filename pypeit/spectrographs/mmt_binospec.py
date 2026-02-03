@@ -267,31 +267,34 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
             case 'x1000':
                 par['calibrations']['wavelengths']['reid_arxiv'] = 'mmt_binospec_1000.fits'
 
-        # slitmask design specific parameters
-        if 'Longslit' not in decker:
-            # Turn on the use of mask design
-            par['calibrations']['slitedges']['use_maskdesign'] = True
-            # Since we use the slitmask info to find the alignment boxes, I don't need `minimum_slit_length_sci`
-            par['calibrations']['slitedges']['minimum_slit_length_sci'] = None
-            # Sometime the added missing slits at the edge of the detector are to small to be useful.
-            par['calibrations']['slitedges']['minimum_slit_length'] = 3.
-            # Since we use the slitmask info to add and remove traces, 'minimum_slit_gap' may undo the matching effort.
-            par['calibrations']['slitedges']['minimum_slit_gap'] = 0.
-            # Lower edge_thresh works better
-            par['calibrations']['slitedges']['edge_thresh'] = 10.
-            # Assign RA, DEC, OBJNAME to detected objects
-            par['reduce']['slitmask']['assign_obj'] = True
-            # force extraction of undetected objects
-            par['reduce']['slitmask']['extract_missing_objs'] = True
-            # Adjust sky subtraction parameters
+        if 'Longslit' in decker:
+            # Observations use a longslit so we skip the parameters primarily
+            # used for multislit data
+            return par
 
-            # lower tilts spat_order and higher spec_order for multislits (i.e., generally not very long slits)
-            par['calibrations']['tilts']['spat_order'] = 2  # Default: 3
-            par['calibrations']['tilts']['spec_order'] = 5  # Default: 4
-            # pca
-            par['calibrations']['slitedges']['sync_predict'] = 'auto'
+        # Turn on the use of mask design
+        par['calibrations']['slitedges']['use_maskdesign'] = True
+        # Since we use the slitmask info to find the alignment boxes, I don't need `minimum_slit_length_sci`
+        par['calibrations']['slitedges']['minimum_slit_length_sci'] = None
+        # Sometime the added missing slits at the edge of the detector are to small to be useful.
+        par['calibrations']['slitedges']['minimum_slit_length'] = 3.
+        # Since we use the slitmask info to add and remove traces, 'minimum_slit_gap' may undo the matching effort.
+        par['calibrations']['slitedges']['minimum_slit_gap'] = 0.
+        # Lower edge_thresh works better
+        par['calibrations']['slitedges']['edge_thresh'] = 10.
+        # Assign RA, DEC, OBJNAME to detected objects
+        par['reduce']['slitmask']['assign_obj'] = True
+        # force extraction of undetected objects
+        par['reduce']['slitmask']['extract_missing_objs'] = True
+        # Adjust sky subtraction parameters
 
-            par['coadd2d']['offsets'] = 'maskdef_offsets'
+        # lower tilts spat_order and higher spec_order for multislits (i.e., generally not very long slits)
+        par['calibrations']['tilts']['spat_order'] = 2  # Default: 3
+        par['calibrations']['tilts']['spec_order'] = 5  # Default: 4
+        # pca
+        par['calibrations']['slitedges']['sync_predict'] = 'auto'
+
+        par['coadd2d']['offsets'] = 'maskdef_offsets'
 
         return par
 
@@ -413,154 +416,110 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
         log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
-    def get_slitmask(self, filename, ccdnum=None):
+    def get_slitmask(self, filename:str, det:int=1):
         """
-        Parse Binospec slitmask file and construct a SlitMask object with target and slit metadata.
-
-        This function reads a FITS file describing a multi-slit mask for a specified Binospec
-        detector, extracts geometric and target information, computes relevant positional offsets,
-        and constructs a `SlitMask` object used for downstream processing and plotting.
+        Parse the slitmask data from a raw file into :attr:`slitmask`, a
+        :class:`~pypeit.spectrographs.slitmask.SlitMask` object.
 
         Parameters
         ----------
         filename : :obj:`str`
-            Path to the slitmask FITS file.
-        ccdnum : :obj:`int`
-            Detector number (1 or 2).
+            Name of the file to read.
+        det : :obj:`int`, optional
+            1-indexed detector number to read the slitmask for.  Must be either
+            1 or 2 for MMT/Binospec.
 
         Returns
         -------
-        slitmask : :class:`SlitMask`
-            An object containing geometry, target positions, and metadata for each slit, defined
-            in PypeIt/pypeit/spectrographs/slitmask.py
+        :class:`~pypeit.spectrographs.slitmask.SlitMask`
+            The slitmask data read from the file. The returned object is the
+            same as :attr:`slitmask`.
 
         Notes
         -----
         - Target-slit alignment is characterized via distances from slit edges.
         - Slit corners and on-sky positions are stored for each target.
         """
+        slit_id, slit_width, slit_x, slit_y, poly_x, poly_y, \
+            obj_id, obj_name, obj_ra, obj_dec, obj_mag, \
+            mm_arcsec, rac, decc, posx_pa \
+            = self._parse_slitmask_data(filename, det)
+        
+        # Number of slits
+        numslits = slit_id.size
 
-        if ccdnum is None:
-            raise ValueError("A valid detector number must be provided.")
+        # The polygon coordinates have a shape that is (Nslits,4), their order
+        # is: [0]: bottom left, [1]: top left, [2]: top right, [3]: bottom right
+        # TODO: I assume the focal plane is flipped wrt the coordinates
+        # provided, which is why the code is as given below.
 
-        if filename is None:
-            raise ValueError("A valid slitmask filename must be provided.")
-
-        # Open the FITS file
-        hdu = io.fits_open(filename)
-
-        # Select appropriate extension for detector 1 or 2
-        if ccdnum == 1:
-            mask_fits = hdu[9].data[0]
-        elif ccdnum == 2:
-            mask_fits = hdu[10].data[0]
-        else:
-            raise ValueError("Not a valid detector number. Try 1 or 2.")
-
-        def _parse_mask_hdu(mask_hdu):
-
-            targ = mask_hdu['TARGET_TYPE'] == 'TARGET'
-            numslits = mask_hdu['NTARGETS']
-
-            x_targ = np.atleast_1d(mask_hdu['SLITX'])[targ]
-            y_targ = np.atleast_1d(mask_hdu['SLITY'])[targ]
-            y_poly = np.atleast_2d(mask_hdu['POLY_Y']).T[targ]
-            x_poly = np.atleast_2d(mask_hdu['POLY_X']).T[targ]
-            slitid = np.atleast_1d(mask_hdu['SLIT_ID'])[targ]
-            mag = np.atleast_1d(mask_hdu['MAG'])[targ]
-            obj_ra = np.atleast_1d(mask_hdu['RA'])[targ]
-            obj_dec = np.atleast_1d(mask_hdu['DEC'])[targ]
-            objname = np.atleast_1d(mask_hdu['TARGET_NAME'])[targ]
-            objid = np.atleast_1d(mask_hdu['TARGET_ID'])[targ]
-
-
-        # Identify TARGET objects and number of slits
-        targ = mask_fits['TARGET_TYPE'] == 'TARGET'
-        numslits = mask_fits['NTARGETS']
-
-        # Target positions in mm
-        x_targ = mask_fits['SLITX'][targ]
-        y_targ = mask_fits['SLITY'][targ]
-        # conversion factor mm to arcsec
-        mm_arcsec = mask_fits['MM_PER_ARCSEC']
-
+        # Compute projected distances from target to slit edges in arcseconds
         # left
-        topdist = (y_targ - mask_fits['POLY_Y'][0][targ]) / mm_arcsec
+        topdist = (slit_y - poly_y[:,0]) / mm_arcsec
         # right
-        botdist = (mask_fits['POLY_Y'][1][targ] - y_targ) / mm_arcsec
-        if ccdnum == 2:
+        botdist = (poly_y[:,1] - slit_y) / mm_arcsec
+        if det == 2:
             # flip for detector 2
             topdist, botdist = botdist, topdist
-
         slit_length_arcsec = topdist + botdist
 
-        # Read basic object metadata
-        obj_ra = mask_fits['RA'][targ]
-        obj_dec = mask_fits['DEC'][targ]
-        objname = mask_fits['TARGET_NAME'][targ]
-        objid = mask_fits['TARGET_ID'][targ]
-
         # Assemble object array: [slit_id, id, ra, dec, name, mag, mag_band, top, bot]
+        # TODO: I don't know why we need to use round
         objects = np.array([
-            np.asarray(mask_fits['SLIT_ID'][targ], dtype=int),
-            objid,
+            slit_id,
+            obj_id,
             obj_ra,
             obj_dec,
-            objname,
-            np.asarray(mask_fits['MAG'][targ], dtype=float),
-            ['None'] * mask_fits['SLIT_ID'][targ].size,
-            np.round(topdist.astype(float),2),
-            np.round(botdist.astype(float),2)
+            obj_name,
+            obj_mag,
+            ['None'] * numslits,
+            np.round(topdist,2),
+            np.round(botdist,2)
         ], dtype=object).T
 
         # Compute slit centers offsets from object positions
-        xcen_slit = (mask_fits['POLY_X'][0][targ] + mask_fits['POLY_X'][3][targ]) / 2.
-        ycen_slit = (mask_fits['POLY_Y'][0][targ] + mask_fits['POLY_Y'][1][targ]) / 2.
-        slit_xoff = (xcen_slit - x_targ) / mm_arcsec  # in arcseconds
-        slit_yoff = (ycen_slit - y_targ) / mm_arcsec  # in arcseconds
+        xcen_slit = (poly_x[:,0] + poly_x[:,3]) / 2.
+        ycen_slit = (poly_y[:,0] + poly_y[:,1]) / 2.
+        slit_xoff = (xcen_slit - slit_x) / mm_arcsec  # in arcseconds
+        slit_yoff = (ycen_slit - slit_y) / mm_arcsec  # in arcseconds
         slit_offset = np.sqrt(slit_xoff ** 2 + slit_yoff ** 2)
 
         # Compute slit center RA/Dec via spherical offset from target position
         obj_coord = SkyCoord(ra=obj_ra, dec=obj_dec, unit='deg')
 
-        # Position angle corresponding to detector +x axis (spatial direction)
-        posx_pa = hdu[1].header['POSANG'] - 180
-        if posx_pa < 0:
-            posx_pa += 360.
-
         # Slit position angles and sign of offset (accounting for up/down location)
-        slit_pas = posx_pa + np.zeros(numslits)
+        slit_pas = np.full(numslits, posx_pa, dtype=float)
         off_signs = np.ones_like(slit_pas)
         negy = slit_yoff < 0.
         off_signs[negy] = -1.
 
         # Compute slit center RA/Dec
-        slit_ra, slit_dec = [], []
-        for slit_off, obj_coo, slit_pa, off_sign in zip(slit_offset, obj_coord, slit_pas, off_signs):
+        slit_ra = np.empty(numslits, dtype=float)
+        slit_dec = np.empty(numslits, dtype=float)
+        for i, (slit_off, obj_coo, slit_pa, off_sign) in enumerate(zip(
+            slit_offset, obj_coord, slit_pas, off_signs
+        )):
             slit_coord = obj_coo.directional_offset_by(
-                slit_pa * units.deg, off_sign * slit_off * units.arcsec)
-            slit_ra.append(slit_coord.ra.deg)
-            slit_dec.append(slit_coord.dec.deg)
-        #
-        # Extract slit corner coordinates
-        poly_x_T = np.squeeze(mask_fits['POLY_X'].T)[targ]
-        poly_y_T = np.squeeze(mask_fits['POLY_Y'].T)[targ]
+                slit_pa * units.deg, off_sign * slit_off * units.arcsec
+            )
+            slit_ra[i] = slit_coord.ra.deg
+            slit_dec[i] = slit_coord.dec.deg
 
-        corners = np.stack((poly_x_T, poly_y_T), axis=-1)
+        # TODO: This ordering doesn't seem to match the documentation for
+        # SlitMask, but there may be a reflection involved.
+        corners = np.stack((poly_x, poly_y), axis=-1)
         corners = corners[:, [3, 0, 1, 2], :]
 
         # Slitmask pointing coordinates (mask center RA/Dec)
-        mask_coord = SkyCoord(mask_fits['CENTERRA'], mask_fits['CENTERDEC'], unit=('hourangle', 'deg'))
+        mask_coord = SkyCoord(rac, decc, unit=('hourangle', 'deg'))
 
         # Construct and return the slitmask object
         self.slitmask = SlitMask(
-            np.asarray(corners),
-            slitid=np.asarray(mask_fits['SLIT_ID'][targ], dtype=int),
+            corners,
+            slitid=slit_id,
             onsky=np.asarray([
-                np.asarray(slit_ra), np.asarray(slit_dec),
-                np.round(slit_length_arcsec.astype(float),2),
-                np.asarray(mask_fits['SLIT_WIDTH'][targ], dtype=float),
-                slit_pas
+                slit_ra, slit_dec, np.round(slit_length_arcsec, 2),
+                slit_width, slit_pas
             ]).T,
             objects=objects,
             mask_radec=(mask_coord.ra.deg, mask_coord.dec.deg),
@@ -569,47 +528,112 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
 
         return self.slitmask
 
-    def get_maskdef_slitedges(self, ccdnum=None, filename=None, debug=None,
-                              trc_path=None, binning=None):
-        """
-        Determine the slit edges from a Binospec mask design file.
+    @staticmethod
+    def _parse_slitmask_data(filename, det):
 
-        This function reads the slitmask design for a specified detector, converts
-        slit and object positions to pixel coordinates, and determines the top and
-        bottom edges (y-direction boundaries) for each slit on the detector. It also
-        returns the slitmask object with associated metadata.
+        # Open the FITS file
+        hdu = io.fits_open(filename)
+
+        # Position angle corresponding to detector +x axis (spatial direction)
+        posx_pa = float(hdu[1].header['POSANG']) - 180
+        if posx_pa < 0:
+            posx_pa += 360.
+
+        # Select appropriate extension for detector 1 or 2
+        match det:
+            case 1:
+                mask_hdu = hdu[9].data[0]
+            case 2:
+                mask_hdu = hdu[10].data[0]
+            case _:
+                raise PypeItError(f'Detector number must be 1 or 2 for MMT/Binospec, not {det}.')
+
+        targ = mask_hdu['TARGET_TYPE'] == 'TARGET'
+        numslits = mask_hdu['NTARGETS']
+
+        if np.sum(targ) != numslits:
+            raise PypeItError(
+                f'Expected {numslits} TARGET slits but found {np.sum(targ)} in mask design file.'
+            )
+        
+        # NOTE: The use of np.atleast_* here is to handle the case when there is
+        # only one target.
+
+        # Slit properties
+        slit_id = np.atleast_1d(mask_hdu['SLIT_ID'])[targ]          # ID number
+        slit_width = np.atleast_1d(mask_hdu['SLIT_WIDTH'])[targ]    # in arcsec
+        # Target positions in mm
+        slit_x = np.atleast_1d(mask_hdu['SLITX'])[targ]
+        slit_y = np.atleast_1d(mask_hdu['SLITY'])[targ]
+        # Slit polygon coordinates in mm
+        poly_x = np.atleast_2d(mask_hdu['POLY_X']).T[targ]
+        poly_y = np.atleast_2d(mask_hdu['POLY_Y']).T[targ]
+
+        # Target properties
+        obj_id = np.atleast_1d(mask_hdu['TARGET_ID'])[targ]
+        obj_name = np.atleast_1d(mask_hdu['TARGET_NAME'])[targ]
+        obj_ra = np.atleast_1d(mask_hdu['RA'])[targ]
+        obj_dec = np.atleast_1d(mask_hdu['DEC'])[targ]
+        obj_mag = np.atleast_1d(mask_hdu['MAG'])[targ]
+
+        # Scalars with the platescale and center coordinates of the slit mask
+        mm_arcsec = mask_hdu['MM_PER_ARCSEC']
+        rac = mask_hdu['CENTERRA']      # in hours
+        decc = mask_hdu['CENTERDEC']    # in degrees
+
+        hdu.close()
+
+        return (
+            slit_id, slit_width, slit_x, slit_y, poly_x, poly_y,
+            obj_id, obj_name, obj_ra, obj_dec, obj_mag,
+            mm_arcsec, rac, decc, posx_pa
+        )
+
+
+    def get_maskdef_slitedges(self, filename:str=None, det:1=None, debug:bool=None, 
+                              binning:str=None, trc_path:str=None):
+        """
+        Provides the slit edges positions predicted by the slitmask design.
+
+        This method is not defined for all spectrographs. This base-class
+        method raises an exception. This may be because ``use_maskdesign``
+        has been set to True for a spectrograph that does not support it.
 
         Parameters
-        ----------
-        ccdnum : :obj:`int`
-            Detector number (1 or 2). Must be specified.
-        filename : :obj:`str`
-            Path to the slitmask FITS file containing mask design information.
+        ---------- 
+        filename : :obj:`str`, :obj:`list`, optional:
+            Name of the file holding the mask design info or the maskfile and
+            wcs_file in that order
+        det : :obj:`int`, optional
+            Detector number
         debug : :obj:`bool`, optional
-            Flag for enabling debug-level output (default: None).
-        trc_path : :obj:`str`, optional
-            Path to trace files (not used in this function, included for compatibility).
-        binning : :obj:`str`, optional
-            Detector binning information (not used in this function, included for compatibility).
+            Flag to run in debugging mode
+        trc_path : str, optional
+            Path to the first trace file used to generate the trace flat
+        binning : str, optional
+            String with the comma-separated number of pixels binned in each
+            dimension of the flat-field image.  Order must be spectral then
+            spatial.
 
         Returns
         -------
         top_edges : :class:`numpy.ndarray`
-            Array of y-pixel positions for the upper edge of each slit.
+            Predicted locations of the top edges of the slits in spatial pixel
+            coordinates.
         bot_edges : :class:`numpy.ndarray`
-            Array of y-pixel positions for the lower edge of each slit.
+            Predicted locations of the bottom edges of the slits in spatial pixel
+            coordinates.
         sortindx : :class:`numpy.ndarray`
-            Indices that sort the slits by their bottom edge position.
-        slitmask : :class:`SlitMask`
-            The `SlitMask` object containing slit geometry and metadata.
+            Indices of the slits in the provided ``slitmask`` object that orders
+            the slits from left to right, in the PypeIt orientation.
+        slitmask : :class:`~pypeit.spectrographs.slitmask.SlitMask`
+            Slit mask metadata read from the provided input file(s).
 
         Notes
         -----
-        - The function relies on `bino_get_slit_region()` to compute slit pixel positions.
         - Edges are sorted by bottom edge y-coordinate to order slits spatially.
         """
-
-        if ccdnum is None:
+        if det is None:
             raise ValueError("A valid detector number must be provided.")
 
         if filename is None:
@@ -623,14 +647,14 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
             raise PypeItError(f'The mask design file {_maskfile} does not exist.')
 
         # Load slitmask information if a file is provided
-        self.get_slitmask(_maskfile, ccdnum)
+        self.get_slitmask(_maskfile, det=det)
 
         if self.slitmask is None:
             raise ValueError("Unable to read slitmask design info. Provide a file.")
 
         # Open FITS file and read mask data for the correct detector
         hdu = io.fits_open(filename)
-        mask_fits = hdu[9].data[0] if ccdnum == 1 else hdu[10].data[0]
+        mask_fits = hdu[9].data[0] if det == 1 else hdu[10].data[0]
         # keep only the TARGET slits
         targ = mask_fits['TARGET_TYPE'] == 'TARGET'
 
@@ -641,13 +665,13 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
         # scale factor to convert mm to pixel. The value should be equal to
         # 1/mask_fits['MM_PER_ARCSEC']/(platescale * bin_spat), but for some reason it's not,
         # and it's also different for the two detectors
-        mm_pixel = 24.555832 if ccdnum == 1 else 24.548194
+        mm_pixel = 24.555832 if det == 1 else 24.548194
 
         left_edges = (mask_fits['POLY_Y'][0][targ] - mask_fits['MASK_CORNERS'][1])*mm_pixel + mask_edge_off
         right_edges = (mask_fits['POLY_Y'][1][targ] - mask_fits['MASK_CORNERS'][1])*mm_pixel + mask_edge_off
-        if ccdnum == 2:
+        if det == 2:
             # flip and reverse for detector 2
-            Nx = self.get_rawimage(filename, ccdnum)[1].shape[1]
+            Nx = self.get_rawimage(filename, det)[1].shape[1]
             left_edges = Nx - right_edges
             right_edges = Nx - left_edges
 
@@ -766,7 +790,7 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
         return detector_par, np.fliplr(np.flipud(array)), hdu, exptime, np.fliplr(np.flipud(rawdatasec_img)), \
                np.fliplr(np.flipud(oscansec_img))
 
-    def bino_get_slit_region(self, filename, ccdnum=None, Nx=4096, Ny=4112, pady=0):
+    def bino_get_slit_region(self, filename, det=None, Nx=4096, Ny=4112, pady=0):
         """
         Compute the pixel-space rectangular regions for each slit in a Binospec mask.
 
@@ -780,7 +804,7 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
         filename : :obj:`str`
             Path to the slitmask FITS file. Must be provided unless the slitmask
             is already loaded via `self.get_slitmask`.
-        ccdnum : :obj:`int`, optional
+        det : :obj:`int`, optional
             Detector number (1 or 2). Must be specified.
         Nx : :obj:`int`, optional
             Detector size in the x-direction (default: 4096 pixels).
@@ -807,20 +831,20 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
         - Slit boundaries are clipped to remain within detector dimensions.
         """
 
-        if ccdnum is None:
+        if det is None:
             raise ValueError("A valid detector number must be provided.")
 
         # Load slitmask information if a file is provided
         if filename is None:
             raise ValueError("The name of a science file should be provided")
-        self.get_slitmask(filename, ccdnum)
+        self.get_slitmask(filename, det=det)
 
         if self.slitmask is None:
             raise ValueError("Unable to read slitmask design info. Provide a file.")
 
         # Open FITS file and read mask data for the correct detector
         hdu = io.fits_open(filename)
-        mask_fits = hdu[9].data[0] if ccdnum == 1 else hdu[10].data[0]
+        mask_fits = hdu[9].data[0] if det == 1 else hdu[10].data[0]
         numslits = len(self.slitmask.slitid)
 
         # Initialize arrays to hold slit x/y boundaries
@@ -850,7 +874,7 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
 
         # Define scale factor and detector offsets
         dy0 = -200.0
-        y_scl = 24.555832 if ccdnum == 1 else 24.548194
+        y_scl = 24.555832 if det == 1 else 24.548194
 
         # Extract mask corner reference point
         mask_corners = np.asarray(mask_fits['MASK_CORNERS'])
@@ -882,7 +906,7 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
             res_y[1, i] = min(Ny - 1, ymax)
 
         # Handle detector 2: reverse slit order and flip vertically
-        if ccdnum == 2:
+        if det == 2:
             res_y = res_y[:, ::-1]
 
             # Apply vertical flip relative to detector height (Ny) and offset
@@ -898,7 +922,7 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
         return region, self.slitmask
 
 
-    def plot_mask(self, filename, ccdnum=None, save_dir=None):
+    def plot_mask(self, filename, det=None, save_dir=None):
         """
         Plot the slit mask layout and target positions for one or both detectors.
 
@@ -924,7 +948,7 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
             Slit region and target position data for detector 2, if requested.
         """
 
-        if ccdnum is None:
+        if det is None:
             raise ValueError("A valid detector number must be provided: 1, 2, or 'both'")
 
         if filename is None:
@@ -938,29 +962,29 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
         plt.rcParams.update({"font.size": 20})
 
         # Load slit regions depending on the selected detector(s)
-        if ccdnum == 'both':
+        if det == 'both':
             fig, (axA, axB) = plt.subplots(ncols=2, figsize=(16, 16))
-            region_1 = self.bino_get_slit_region(filename, 1)[0]
-            region_2 = self.bino_get_slit_region(filename, 2)[0]
+            region_1 = self.bino_get_slit_region(filename, det=1)[0]
+            region_2 = self.bino_get_slit_region(filename, det=2)[0]
 
-        elif ccdnum == 1:
+        elif det == 1:
             fig, axA = plt.subplots(figsize=(8, 8))
-            region_1 = self.bino_get_slit_region(filename, 1)[0]
+            region_1 = self.bino_get_slit_region(filename, det=1)[0]
 
-        elif ccdnum == 2:
+        elif det == 2:
             fig, axB = plt.subplots(figsize=(8, 8))
-            region_2 = self.bino_get_slit_region(filename, 2)[0]
+            region_2 = self.bino_get_slit_region(filename, det=2)[0]
 
         else:
             raise ValueError("det must be 1, 2, or 'both'.")
 
         # Plot based on detector selection
-        if ccdnum == 'both':
+        if det == 'both':
             _plot_region(axA, region_1, color="red", side_label="1")
             _plot_region(axB, region_2, color="green", side_label="2")
-        elif ccdnum == 1:
+        elif det == 1:
             _plot_region(axA, region_1, color="red", side_label="1")
-        elif ccdnum == 2:
+        elif det == 2:
             _plot_region(axB, region_2, color="green", side_label="2")
 
         # Save to file if directory provided
@@ -975,11 +999,11 @@ class MMTBINOSPECSpectrograph(spectrograph.Spectrograph):
             plt.show()
 
         # Return the plotted region data
-        if ccdnum == 'both':
+        if det == 'both':
             return region_1, region_2
-        elif ccdnum == 1:
+        elif det == 1:
             return region_1
-        elif ccdnum == 2:
+        elif det == 2:
             return region_2
 
 
@@ -1019,26 +1043,21 @@ def binospec_read_amp(inp, ext):
 
     Parameters
     ----------
-    inp: tuple
-      (str,int) filename, extension
-      (hdu,int) FITS hdu, extension
+    inp : str, :class:`astropy.io.fits.HDUList`
+        The input FITS file name or already opened HDU list.
+    ext : :obj:`int`
+        FITS extension to read
 
     Returns
     -------
-    data
-    predata
-    postdata
-    x1
-    y1
-
-    ;------------------------------------------------------------------------
-    function lris_read_amp, filename, ext, $
-      linebias=linebias, nobias=nobias, $
-      predata=predata, postdata=postdata, header=header, $
-      x1=x1, x2=x2, y1=y1, y2=y2, GAINDATA=gaindata
-    ;------------------------------------------------------------------------
-    ; Read one amp from LRIS mHDU image
-    ;------------------------------------------------------------------------
+    data : :class:`numpy.ndarray`
+        Array with data from the data section of the image.    
+    overscan : :class:`numpy.ndarray`
+        Array with the overscan section of the image.
+    datasec : :obj:`str`
+        String with the data section in IRAF format, e.g. '[x1:x2,y1:y2]'.
+    biassec : :obj:`str`
+        String with the bias section in IRAF format, e.g. '[x1:x2,y1:y2]'.
     """
     # Parse input
     if isinstance(inp, str):
