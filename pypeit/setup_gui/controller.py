@@ -12,6 +12,8 @@ import io
 from pathlib import Path
 from functools import partial
 from contextlib import contextmanager
+import signal
+
 from qtpy.QtCore import QCoreApplication, Signal, QMutex, QTimer
 from qtpy.QtGui import QIcon
 
@@ -38,7 +40,7 @@ def lock_qt_mutex(mutex):
     finally:
         mutex.unlock()
 
-class OpCanceledError(Exception):
+class OpCanceledError(BaseException):
     pass
 
 class OperationThread(QThread):
@@ -186,6 +188,7 @@ class MetadataOperation(QObject):
             display_error(self._main_window, f"Failed to {self.name.lower()} {exc_info[0]}: {exc_info[1]}")
             self._model.reset()
         elif canceled:
+            log.info("f{self.name} Canceled")
             self._model.reset()
 
     def run(self):
@@ -688,6 +691,16 @@ class SetupGUIController(QObject):
         # calls the PypeIt CTRL+C handler, we set a timer to run every 500ms in the
         # python interpreter, which will allow the python signal handling
         # code to it.
+        def signal_handler(signalnum, handler):
+            """
+            Handle signals sent by the keyboard during code execution
+            """
+            if signalnum == 2:
+                log.info('Ctrl+C was pressed. Ending processes...')
+                sys.exit()
+
+        signal.signal(signal.SIGINT, signal_handler)
+
             
         # This trck was brought to you by this stack exchange thread:
         # https://stackoverflow.com/questions/4938723/what-is-the-correct-way-to-make-my-pyqt-application-quit-when-killed-from-the-co
