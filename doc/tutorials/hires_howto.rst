@@ -375,7 +375,7 @@ which plots the spectrum in a tab of the `ginga`_ viewer and allows you to
 select the different order spectra using a drop down menu, in addition to
 selecting other properties of the spectrum. Here is an example:
 
-.. figure:: ../figures/hires_spec1d_ginga.png
+.. figure:: ../figures/hires_spec1d.png
 
 
 Fluxing and co-adding
