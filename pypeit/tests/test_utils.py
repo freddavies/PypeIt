@@ -11,10 +11,11 @@ import pytest
 import yaml
 import numpy as np
 
-from pypeit import utils
-from pypeit import log
-from pypeit.tests.tstutils import data_output_path
 from pypeit import io
+from pypeit import log
+from pypeit import PypeItError
+from pypeit import utils
+from pypeit.tests.tstutils import data_output_path
 
 
 # Move this to tstutils?
@@ -161,7 +162,7 @@ def test_get_func_kwargs():
         return a + b + c
 
     kwargs = utils.get_func_kwargs(func)
-    assert sorted(kwargs) == ['b', 'c'], 'Did not get expected keywords'
+    assert sorted(kwargs.keys()) == ['b', 'c'], 'Did not get expected keywords'
 
 
 def test_extract_func_kwargs():
