@@ -10,6 +10,9 @@ from pypeit import inputfiles
 from pypeit.tests import tstutils
 
 
+# NOTE: Tests specifically for pypeit files are in test_pypeitfile.py
+
+
 def test_grab_rawfiles():
 
     tst_file = Path(tstutils.data_output_path('test.rawfiles')).absolute()

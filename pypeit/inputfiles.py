@@ -91,13 +91,15 @@ class InputFile:
     Sets whether or not the setup block is required.
     """
 
-    def __init__(self, 
-                 config=None, 
-                 file_paths:list=None,
-                 data_table:Table=None,
-                 setup:dict=None,
-                 vet:bool=True,
-                 preserve_comments:bool=False):
+    def __init__(
+        self, 
+        config=None, 
+        file_paths:list=None,
+        data_table:Table=None,
+        setup:dict=None,
+        vet:bool=True,
+        preserve_comments:bool=False
+    ):
         # Load up
         self.data = data_table
         self.file_paths = (
@@ -860,6 +862,7 @@ class FluxFile(InputFile):
         # Return
         return sens_files
 
+
 class Coadd1DFile(InputFile):
     """Child class for coaddition in 1D
     """
@@ -921,9 +924,6 @@ class Coadd1DFile(InputFile):
             sid = sid * len(self.data)
         # Return
         return sid
-
-
-
 
 
 class Coadd2DFile(InputFile):
@@ -1128,6 +1128,7 @@ class FlexureFile(InputFile):
         # Done
         log.info('.flex file successfully vetted.')
 
+
 class Collate1DFile(InputFile):
     """Child class for collate 1D script
     """
@@ -1157,6 +1158,7 @@ class Collate1DFile(InputFile):
 
         # Return
         return all_files
+
 
 class RawFiles(InputFile):
     """Child class for a list of raw files
