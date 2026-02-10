@@ -3,10 +3,8 @@
 .. include:: ../include/links.rst
 """
 import datetime
-import glob
 import io
 from pathlib import Path
-import os
 import warnings
 
 from astropy.table import Table, column
@@ -36,31 +34,62 @@ class InputFile:
     We currently support comments in the configuration section, and commented
     out data lines in the data sections. Other comments are not preserved.
 
-    Args:
-        config (:obj:`dict` or :obj:`list`):
-            Configuration dict or list of config lines
-            Converted to a ConfigObj
-        file_paths (list):
-            List of file paths for the data files
-        data_table (`astropy.table.Table`_):
-            Data block
-        setup (:obj:`dict`):
-            dict defining the Setup
-            The first key contains the name
-        vet (bool,Optional):
-            Whether or not to vet the file after iniitialization. Defaults to True.
-            The vet() method can be called after initialization if needed.
-        preserve_comments (bool, Optional):
-            Whether or not to preserve comments in the input file
-    """
-    flavor = 'Generic' # Type of InputFile
+    Parameters
+    ----------
+    config : :obj:`dict`, :obj:`list`, optional
+        Configuration dictionary or list of config lines.  This is converted to
+        a `ConfigObj`_ instance.
+    file_paths : list, optional
+        List of string or `Path`_ objects with the file paths for the data files
+    data_table : `astropy.table.Table`_, optional
+        Data block
+    setup : :obj:`dict`, optional
+        Dictionary with the instrument setup/configuration.  The first key
+        contains the setup name.
+    vet : bool, optional
+        If True, vet the file after iniitialization.  The :func:`vet` method can
+        be called after initialization, if needed.
+    preserve_comments : bool, optional
+        If True, (try to) preserve the comments in the input file.
 
-    # Data block items
+    Attributes
+    ----------
+    data : `astropy.table.Table`_
+        Table with the data in the data block
+    file_paths : list
+        List of `Path` objects with the directory paths for data files
+    setup : dict
+        Dictionary with the instrument setup/configuration.
+    preserve_comments : bool
+        Flag to preserve comments in the input file.
+    config : `ConfigObj`_
+        Parameters parsed from the configuration block of the input file.
+    """
+
+    flavor = 'Generic'
+    """
+    Defines the type of the input file.
+    """
+
     required_columns = []
-    data_block = None  # Defines naming of data block
-    datablock_required = False # Denotes whether the data block is required
+    """
+    Sets the required columns in the data table.
+    """
+
+    data_block = None
+    """
+    Defines the name of data block.
+    """
+
+    datablock_required = False
+    """
+    Sets whether or not the data block is required.
+    """
     
-    setup_required = False # Denotes whether the setup block is required
+    setup_required = False
+    """
+    Sets whether or not the setup block is required.
+    """
 
     def __init__(self, 
                  config=None, 
@@ -71,7 +100,9 @@ class InputFile:
                  preserve_comments:bool=False):
         # Load up
         self.data = data_table
-        self.file_paths = file_paths
+        self.file_paths = (
+            None if file_paths is None else [Path(fp).absolute() for fp in file_paths]
+        )
         self.setup = setup
         self.preserve_comments = preserve_comments
         self.config = None if config is None else configobj.ConfigObj(config)
@@ -107,11 +138,12 @@ class InputFile:
             `numpy.ndarray`_: Returns a list of the valid lines in the files.
         """
         # Check the files
-        if not os.path.isfile(ifile):
-            raise PypeItError('The filename does not exist -\n' + ifile)
+        _ifile = Path(ifile).absolute()
+        if not _ifile.is_file():
+            raise FileNotFoundError(f'Input file {ifile} does not exist!')
 
         # Read the input lines and replace special characters
-        with open(ifile, 'r') as f:
+        with open(_ifile, 'r') as f:
             return np.array([l.replace('\t', ' ').rstrip()  for l in f.readlines()])
         
     @classmethod
@@ -214,12 +246,14 @@ class InputFile:
         log.info(f'{cls.flavor} input file loaded successfully.')
 
         # Instantiate
-        return cls(config=list(lines[is_config]), 
-                  file_paths=paths, 
-                  data_table=usrtbl, 
-                  setup=sdict,
-                  vet=vet,
-                  preserve_comments=preserve_comments)
+        return cls(
+            config=list(lines[is_config]), 
+            file_paths=paths, 
+            data_table=usrtbl, 
+            setup=sdict,
+            vet=vet,
+            preserve_comments=preserve_comments
+        )
 
     def vet(self):
         """ Check for required bits and pieces of the Input file
@@ -272,7 +306,7 @@ class InputFile:
             or there is no data table!
         """
         # Return
-        return self.path_and_files('filename',include_commented_out=self.preserve_comments)
+        return self.path_and_files('filename', include_commented_out=self.preserve_comments)
 
     @staticmethod
     def _parse_setup_lines(lines):
@@ -442,30 +476,38 @@ class InputFile:
                 break
         return start, end
 
-    def path_and_files(self, key:str, skip_blank=False, include_commented_out=False, check_exists=True) -> list[str]:
-        """Generate a list of the filenames with 
-        the full path from the column of the data `astropy.table.Table`_
-        specified by `key`.  The files must exist and be 
-        within one of the paths for this to succeed.
+    def path_and_files(
+            self, key:str, skip_blank=False, include_commented_out=False, check_exists=True
+    ) -> list[str]:
+        """
+        Generate a list of the filenames with the full path from the column of
+        the data `astropy.table.Table`_ specified by ``key``.  The files must
+        exist and be within one of the paths for this to succeed.
 
-        Args:
-            key (str): Column of self.data with the filenames of interest
-            skip_blank (bool, optional): If True, ignore any
-                entry that is '', 'none' or 'None'. Defaults to False.
-            check_exists (bool, optional):If False, PypeIt will not
-                check if 'key' exists as a file. Defaults to True.
-            include_commented_out (bool,Optional): If False, commented out files will not be included. If True, they
-                are included, without the "#" character.
+        Parameters
+        ----------
+        key : str
+            Column in :attr:`data` with the filenames of interest
+        skip_blank : bool, optional
+            If True, ignore any entry that is '', 'none' or 'None'.
+        check_exists : bool, optional
+            If False, PypeIt will not check if the files exist.
+        include_commented_out : bool, optional
+            If False, commented out files will not be included. If True, they
+            are included, without the "#" character.
 
-        Returns:
-            list: List of the full paths to each data file
-            or None if `filename` is not part of the data table
-            or there is no data table!
+        Returns
+        -------
+        list
 
-        Raises:
-            PypeItError:
-                Raised if the path+file does not exist
-
+            List of strings, where each string provides the full path to each
+            data file.  None is returned if :attr:`data` is not defined or if
+            ``key`` is not one of its columns.
+              
+        Raises
+        ------
+        FileNotFoundError:
+            Raised if ``check_exists`` is True and any of the files do not exist.
         """
         if self.data is None or key not in self.data.keys():
             return None
@@ -491,16 +533,19 @@ class InputFile:
             # Searching..
             if len(self.file_paths) > 0:
                 for p in self.file_paths:
-                    filename = os.path.join(p,name)
-                    if os.path.isfile(filename):
+                    filename = p / name
+                    if filename.is_file():
                         break
             else:
-                filename = row[key]
+                filename = Path(name).absolute()
 
             # Check we got a good hit
-            if check_exists and not os.path.isfile(filename):
-                raise PypeItError(f"{name} does not exist in one of the provided paths.  Modify your input {self.flavor} file")
-            data_files.append(filename)
+            if check_exists and not filename.is_file():
+                raise FileNotFoundError(
+                    f'{name} does not exist in one of the provided paths.  Modify your input '
+                    f'{self.flavor} file.'
+                )
+            data_files.append(str(filename))
 
         # Return
         return data_files
@@ -578,7 +623,7 @@ class InputFile:
                     # paths and Setupfiles
                     if self.file_paths is not None:
                         for path in self.file_paths:
-                            f.write(' path '+path+'\n')
+                            f.write(f' path {path}\n')
                     if self.data is not None:
                         with io.StringIO() as ff:
                             self.data.write(ff, format='ascii.fixed_width',
@@ -1096,7 +1141,7 @@ class Collate1DFile(InputFile):
     def filenames(self):
         """ List of path + filename's
 
-        Allows for wildcads
+        Allows for wildcards
 
         Returns:
             list or None: List of the full paths to each data file
@@ -1104,11 +1149,11 @@ class Collate1DFile(InputFile):
             or there is no data table!
         """
         all_files = []
-        paths = [os.getcwd()] if len(self.file_paths) == 0 else self.file_paths
+        paths = [Path().absolute()] if len(self.file_paths) == 0 else self.file_paths
         # Paths?
         for p in paths:
             for row in self.data['filename']:
-                all_files += glob.glob(os.path.join(p, row))
+                all_files += sorted(p.glob(row))
 
         # Return
         return all_files
@@ -1132,8 +1177,6 @@ class RawFiles(InputFile):
         log.info('.rawfiles file successfully vetted.')
 
 
-# NOTE: I originally had this in pypeit/io.py, but I think it was causing a
-# circular import.  Moving it here solved the issue.
 def grab_rawfiles(file_of_files:str=None, list_of_files:list=None, raw_paths:list=None, 
                   extension:str='.fits'):
     """
@@ -1175,6 +1218,6 @@ def grab_rawfiles(file_of_files:str=None, list_of_files:list=None, raw_paths:lis
         # An actual list
         return [str(p / f) for p in _raw_paths for f in list_of_files if (p / f).exists()]
 
-    # Find all files that have the correct extension
-    return files_from_extension(_raw_paths, extension=extension)
-
+    # Find all files that have the correct extension.  Force the returned list
+    # to contain strings, not Path objects.
+    return [str(f) for f in files_from_extension(_raw_paths, extension=extension)]
