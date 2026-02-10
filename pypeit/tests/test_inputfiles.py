@@ -505,3 +505,94 @@ def test_write_preserve_comments_true_and_cfg_lines():
         )
         assert pfile2.cfg_lines is None, 'cfg_lines should be None when no config provided'
         assert pfile2.setup_name == 'B', 'setup_name should return the setup letter'
+
+
+def test_sensfile_basic():
+    root = Path(tstutils.data_output_path('')).absolute()
+    sfile = inputfiles.SensFile(config={'rdx': {}}, file_paths=[str(root)], data_table=None, setup=None, vet=False)
+    sfile.vet()
+
+
+def test_extractfile_basic():
+    root = Path(tstutils.data_output_path('')).absolute()
+    efile = inputfiles.ExtractFile(config={'rdx': {}}, file_paths=[str(root)], data_table=None, setup=None, vet=False)
+    efile.vet()
+
+
+def test_fluxfile_basic():
+    root = Path(tstutils.data_output_path('')).absolute()
+    tbl = Table()
+    tbl['filename'] = ['f1.fits']
+    tbl['frametype'] = ['science']
+    ffile = inputfiles.FluxFile(config={'rdx': {}}, file_paths=[str(root)], data_table=tbl, setup={'Setup A': ' '}, vet=False)
+    ffile.vet()
+    assert 'sensfile' in ffile.data.colnames and all(v == '' for v in ffile.data['sensfile']), \
+        'FluxFile.vet should add an empty sensfile column when not provided'
+
+
+def test_coadd1dfile_basic():
+    root = Path(tstutils.data_output_path('')).absolute()
+    tbl2 = Table()
+    tbl2['filename'] = ['a.fits']
+    with pytest.raises(PypeItError):
+        inputfiles.Coadd1DFile(config={'rdx': {}}, file_paths=[str(root)], data_table=tbl2, setup=None, vet=True)
+    tbl2['obj_id'] = [1]
+    c1 = inputfiles.Coadd1DFile(config={'rdx': {}}, file_paths=[str(root)], data_table=tbl2, setup=None, vet=False)
+    c1.vet()
+
+
+def test_coadd2d_basic():
+    root = Path(tstutils.data_output_path('')).absolute()
+    tbl3 = Table()
+    tbl3['filename'] = ['b.fits']
+    with pytest.raises(PypeItError):
+        inputfiles.Coadd2DFile(config={'rdx': {}}, file_paths=[str(root)], data_table=tbl3, setup=None, vet=True)
+    c2 = inputfiles.Coadd2DFile(config={'rdx': {'spectrograph': 'keck_hires'}}, file_paths=[str(root)], data_table=tbl3, setup=None, vet=False)
+    c2.vet()
+
+
+def test_coadd3d_basic():
+    root = Path(tstutils.data_output_path('')).absolute()
+    tbl3 = Table()
+    tbl3['filename'] = ['b.fits']
+    with pytest.raises(PypeItError):
+        inputfiles.Coadd3DFile(config={'rdx': {}}, file_paths=[str(root)], data_table=tbl3, setup=None, vet=True)
+    c3 = inputfiles.Coadd3DFile(config={'rdx': {'spectrograph': 'keck_hires'}}, file_paths=[str(root)], data_table=tbl3, setup=None, vet=False)
+    c3.vet()
+
+
+def test_telluric_basic():
+    root = Path(tstutils.data_output_path('')).absolute()
+    tfile = inputfiles.TelluricFile(config={'rdx': {}}, file_paths=[str(root)], data_table=None, setup=None, vet=False)
+    tfile.vet()
+
+
+def test_flexure_basic():
+    root = Path(tstutils.data_output_path('')).absolute()
+    tbl3 = Table()
+    tbl3['filename'] = ['b.fits']
+    with pytest.raises(PypeItError):
+        inputfiles.FlexureFile(config={'rdx': {}}, file_paths=[str(root)], data_table=tbl3, setup=None, vet=True)
+    flex = inputfiles.FlexureFile(config={'rdx': {'spectrograph': 'keck_hires'}}, file_paths=[str(root)], data_table=tbl3, setup=None, vet=False)
+    flex.vet()
+
+
+def test_collate1d_basic():
+    root = Path(tstutils.data_output_path('')).absolute()
+    with pytest.raises(PypeItError):
+        inputfiles.Collate1DFile(config={'rdx': {}}, file_paths=[str(root)], data_table=Table(), setup=None, vet=True)
+    rtbl = Table()
+    rtbl['filename'] = ['r1.fits']
+    coll = inputfiles.Collate1DFile(config={'rdx': {}}, file_paths=[str(root)], data_table=rtbl, setup=None, vet=False)
+    coll.vet()
+
+
+def test_rawfiles_basic():
+    root = Path(tstutils.data_output_path('')).absolute()
+    with pytest.raises(PypeItError):
+        inputfiles.RawFiles(config={'rdx': {}}, file_paths=[str(root)], data_table=Table(), setup=None, vet=True)
+    rtbl = Table()
+    rtbl['filename'] = ['r1.fits']
+    raw = inputfiles.RawFiles(config={'rdx': {}}, file_paths=[str(root)], data_table=rtbl, setup=None, vet=False)
+    raw.vet()
+
