@@ -61,7 +61,7 @@ def test_grab_rawfiles():
     tst_file.unlink()
 
 
-def test_instantiate():
+def test_instantiate_pypeitfile():
     # Test of instantiation
     confdict, data, file_paths, setup_dict = _pypeitfile_components()
     pypeItFile = inputfiles.PypeItFile(confdict, file_paths, data, setup_dict)
@@ -77,21 +77,21 @@ def test_instantiate():
     assert pypeItFile.setup_name == 'A'
 
 
-def test_read_pypeit_file():
+def test_read_pypeitfile():
     # Read the PypeIt file (backwards compatibility)
     ifile = dataPaths.tests.get_file_path('example_pypeit_file.pypeit')
     pypeItFile = inputfiles.PypeItFile.from_file(ifile)
     assert isinstance(pypeItFile.config, dict)
 
 
-def test_read_backwards_pypeit_file():
+def test_read_backwards_pypeitfile():
     # Read the PypeIt file (backwards compatibility)
     ifile = dataPaths.tests.get_file_path('example_pypeit_file_backwards.pypeit')
     pypeItFile = inputfiles.PypeItFile.from_file(ifile)
     assert isinstance(pypeItFile.config, dict)
 
 
-def test_write_pypeit_file():
+def test_write_pypeitfile():
     # Test writing a PypeIt file
     outfile = Path(tstutils.data_output_path('tmp_file.pypeit')).absolute()
     if outfile.is_file():

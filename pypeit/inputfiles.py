@@ -5,22 +5,21 @@
 import datetime
 import io
 from pathlib import Path
-import warnings
 
 from astropy.table import Table, column
 from astropy.io import ascii
 import configobj
+from IPython import embed
 import numpy as np
 import yaml
 
-from pypeit import utils
-from pypeit.io import files_from_extension
-from pypeit import log, __version__
+from pypeit import log
 from pypeit import PypeItError
-from pypeit.spectrographs.util import load_spectrograph
+from pypeit import utils
+from pypeit import __version__
+from pypeit.io import files_from_extension
 from pypeit.par.pypeitpar import PypeItPar
-
-from IPython import embed
+from pypeit.spectrographs.util import load_spectrograph
 
 
 class InputFile:
@@ -399,10 +398,11 @@ class InputFile:
 
         # Backwards compatability (i.e. the leading |)
         if list(tbl.keys())[0] == 'col0':
-            message = 'Your PypeIt file has leading | characters in the data table, which is the old '\
-                'format.  Please update your file to remove leading and trailing | characters '\
+            log.warning(
+                'Your PypeIt file has leading | characters in the data table, which is the old '
+                'format.  Please update your file to remove leading and trailing | characters '
                 'because their inclusion will be deprecated.'
-            warnings.warn(message, DeprecationWarning)
+            )
             tbl.remove_column('col0')
             tbl.remove_column('_1')
 
