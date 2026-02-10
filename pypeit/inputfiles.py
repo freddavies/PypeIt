@@ -118,7 +118,7 @@ class InputFile:
         lines = lines[np.array([ len(l.strip()) > 0 and l.strip()[0] != '#' for l in lines ])]
 
         # Remove appended comments and return
-        return np.array([ l.split('#')[0].strip() for l in lines ])
+        return np.array([l.split('#')[0].strip() for l in lines])
         
     @staticmethod
     def readlines(ifile:str):
@@ -533,7 +533,7 @@ class InputFile:
                 name = row[key]
 
             # Searching..
-            if len(self.file_paths) > 0:
+            if self.file_paths is not None and len(self.file_paths) > 0:
                 for p in self.file_paths:
                     filename = p / name
                     if filename.is_file():
@@ -791,6 +791,9 @@ class PypeItFile(InputFile):
         # Send the Row of the metadata table corresponding to the file
         csf_idx = self.data['filename'] == Path(config_specific_file).name
         data_row = self.data[csf_idx].copy()
+        embed()
+        exit()
+
         # Use the full path to the ``config_specific_file`` for insurance
         data_row['filename'] = config_specific_file
         spec_par = spec.default_pypeit_par() if config_specific_file is None \
@@ -1150,7 +1153,11 @@ class Collate1DFile(InputFile):
             or there is no data table!
         """
         all_files = []
-        paths = [Path().absolute()] if len(self.file_paths) == 0 else self.file_paths
+        paths = (
+            [Path().absolute()]
+            if self.file_paths is not None and len(self.file_paths) == 0
+            else self.file_paths
+        )
         # Paths?
         for p in paths:
             for row in self.data['filename']:
