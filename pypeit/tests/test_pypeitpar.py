@@ -318,3 +318,20 @@ def test_func_par():
                         tol=tol_input)
     assert p.default['tol'] == 0.01, 'Default value for tol changed.'
     assert p['tol'] == tol_input, 'Provided value for tol not set correctly!'
+
+
+class DEPar(funcpar.FuncPar):
+    omitted_keys = ['args']
+    def __init__(self, restrict_to=None, **kwargs):
+        super().__init__(differential_evolution, restrict_to=restrict_to, **kwargs)
+
+
+def test_func_par_subclass():
+    # Basic functionality, uses scipy.optimize.differential_evolution as a test
+    # case
+    p = DEPar(popsize=10)
+
+    assert p.default['popsize'] == 15, 'Default value for popsize changed.'
+    assert p['popsize'] == 10, 'Provided value for popsize not set correctly!'
+    assert p.npar == 19, 'The number of parameters changed.'
+    assert 'args' not in p.keys(), 'args should have been omitted from the parameter list!'
