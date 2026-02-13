@@ -473,10 +473,9 @@ class TraceSet(object):
         :func:`tuple` of array-like
             The x, y positions.
         """
-        #from .misc import djs_laxisgen
         do_jump = self.has_jump and (not ignore_jump)
         if xpos is None:
-            xpos = djs_laxisgen([self.nTrace, self.nx], iaxis=1) + self.xmin
+            xpos = arange_ndim([self.nTrace, self.nx], axis=1) + self.xmin
         ypos = np.zeros(xpos.shape, dtype=xpos.dtype)
         for iTrace in range(self.nTrace):
             xvec = self.xnorm(xpos[iTrace, :], do_jump)
@@ -903,14 +902,21 @@ def djs_reject(data, model, outmask=None, inmask=None,
     # Set qdone if the input outmask is identical to the output outmask.
     #
     qdone = bool(np.all(newmask == outmask))
-    # JFH This needs to be a python (rather than a numpy) boolean to avoid painful problems when comparing
-    # to python True and False booleans
+
+    # JFH This needs to be a python (rather than a numpy) boolean to avoid
+    # painful problems when comparing to python True and False booleans
+
+    # KBW: We should not be comparing booleans to True or False; instead use the
+    # booleans directly.  I.e., instead of "if qdone is True" or "if qdone is
+    # False", use "if qdone" or "if not qdone", which works with both native
+    # python booleans and numpy booleans.
 
     outmask = newmask
     return outmask, qdone
 
 
-
+# TODO: I don't understand the use case for this function.  I.e., why do we need
+# something that is exactly the same as arange_ndim except when dims is 1D?
 def djs_laxisnum(dims, iaxis=0):
     """Returns an integer array where each element of the array is set equal
     to its index number in the specified axis.
@@ -936,51 +942,43 @@ def djs_laxisnum(dims, iaxis=0):
     Notes
     -----
     For two or more dimensions, there is no difference between this routine
-    and :func:`~pydl.pydlutils.misc.djs_laxisgen`.
+    and :func:`~pypeit.core.pydl.djs_laxisgen`.
 
     Examples
     --------
-    >>> from pydl.pydlutils.misc import djs_laxisnum
-    >>> print(djs_laxisnum([4,4]))
-    [[0 0 0 0]
-     [1 1 1 1]
-     [2 2 2 2]
-     [3 3 3 3]]
+    >>> from pypeit.core.pydl import djs_laxisnum
+    >>> print(djs_laxisnum((5,1), iaxis=0))
+    [[0]
+     [1]
+     [2]
+     [3]
+     [4]]
+    >>> print(djs_laxisnum(5))
+    [0 0 0 0 0]
+    >>> print(djs_laxisnum((5,1), iaxis=1))
+    [[0]
+     [0]
+     [0]
+     [0]
+     [0]]
+    >>> print(djs_laxisnum((1,5), iaxis=1))
+    [[0 1 2 3 4]]
+    >>> print(djs_laxisnum((4,3)))
+    [[0 0 0]
+     [1 1 1]
+     [2 2 2]
+     [3 3 3]]
     """
-    ndimen = len(dims)
-    result = np.zeros(dims, dtype='i4')
-    if ndimen == 1:
-        pass
-    elif ndimen == 2:
-        if iaxis == 0:
-            for k in range(dims[0]):
-                result[k, :] = k
-        elif iaxis == 1:
-            for k in range(dims[1]):
-                result[:, k] = k
-        else:
-            raise ValueError("Bad value for iaxis: {0:d}".format(iaxis))
-    elif ndimen == 3:
-        if iaxis == 0:
-            for k in range(dims[0]):
-                result[k, :, :] = k
-        elif iaxis == 1:
-            for k in range(dims[1]):
-                result[:, k, :] = k
-        elif iaxis == 2:
-            for k in range(dims[2]):
-                result[:, :, k] = k
-        else:
-            raise ValueError("Bad value for iaxis: {0:d}".format(iaxis))
-    else:
-        raise ValueError("{0:d} dimensions not supported.".format(ndimen))
-    return result
+    _dims = tuple(np.atleast_1d(dims).tolist())
+    if len(_dims) == 1:
+        return np.zeros(dims, dtype=int)
+    return arange_ndim(dims, axis=iaxis)
 
 
 def arange_ndim(dims, axis=0):
     """
     Create an array where the values of the array are the index of the element
-    along a given axis.
+    along the selected axis.
 
     Parameters
     ----------
@@ -1001,64 +999,36 @@ def arange_ndim(dims, axis=0):
     ------
     ValueError
         Raised if ``axis`` is out of range for the provided ``dims``.
+
+    Examples
+    --------
+    >>> from pypeit.core.pydl import arange_ndim
+    >>> print(arange_ndim((4,3)))
+    [[0 0 0]
+     [1 1 1]
+     [2 2 2]
+     [3 3 3]]
+    >>> print(arange_ndim((4,3), axis=1))
+    [[0 1 2]
+     [0 1 2]
+     [0 1 2]
+     [0 1 2]]
     """
     _dims = tuple(np.atleast_1d(dims).tolist())
     ndim = len(_dims)
     if axis < 0 or axis >= ndim:
         raise ValueError(f'Axis {axis} not valid for dimensions {_dims}.')
 
-    # Build the index array
-    indx = np.arange(_dims[axis], dtype=int)
+    # Make the index array that will be tiled along multiple dimensions
+    base = np.arange(_dims[axis], dtype=int)
     if ndim == 1:
         # Done for 1D
-        return indx
+        return base
 
     # Expand the index array to include the needed dimensions
     base = np.expand_dims(base, tuple(range(axis)) + tuple(range(axis+1,ndim)))
     # Return the tiled index array
     return np.tile(base, _dims[:axis] + (1,) + _dims[axis+1:])
-
-
-def djs_laxisgen(dims, iaxis=0):
-    """Returns an integer array where each element of the array is set
-    equal to its index number along the specified axis.
-
-    Parameters
-    ----------
-    dims : :class:`list`
-        Dimensions of the array to return.
-    iaxis : :class:`int`, optional
-        Index along this dimension.
-
-    Returns
-    -------
-    :class:`numpy.ndarray`
-        An array of indexes with ``dtype=int32``.
-
-    Raises
-    ------
-    ValueError
-        If `iaxis` is greater than or equal to the number of dimensions.
-
-    Notes
-    -----
-    For two or more dimensions, there is no difference between this routine
-    and :func:`~pydl.pydlutils.misc.djs_laxisnum`.
-
-    Examples
-    --------
-    >>> from pydl.pydlutils.misc import djs_laxisgen
-    >>> print(djs_laxisgen([4,4]))
-    [[0 0 0 0]
-     [1 1 1 1]
-     [2 2 2 2]
-     [3 3 3 3]]
-    """
-    ndimen = len(dims)
-    if ndimen == 1:
-        return np.arange(dims[0], dtype='i4')
-    return djs_laxisnum(dims, iaxis)
-
 
 
 ### Following part are imported from pydl spheregroup

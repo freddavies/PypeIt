@@ -6,8 +6,7 @@ import pytest
 from pypeit.core import pydl
 
 
-# NOTE: KBW: I had to hand hold it a lot, but I used AI to generate most of
-# these tests.
+# NOTE: Most of the tests in this module were written with the help of AI.
 
 def make_test_arrays(n=1000, seed=99):
     """
@@ -197,59 +196,46 @@ def test_inmask_propagation():
         'Expected inmask=False to propagate into outmask and mark pixel rejected'
 
 
-def test_djs_laxisnum_numpy_matches_original():
-    # Compare 1D, 2D, 3D outputs between original and numpy implementations
-    cases = {
-        1: (5,),
-        2: (4, 3),
-        3: (3, 4, 2),
-    }
-    for nd, dims in cases.items():
-        for iaxis in range(nd):
-            a1 = pydl.djs_laxisnum(list(dims), iaxis=iaxis)
-            a2 = pydl.djs_laxisnum_numpy(list(dims), axis=iaxis)
-            assert a1.shape == a2.shape, (
-                f'Shape mismatch for dims={dims} iaxis={iaxis}'
-            )
-            assert np.array_equal(a1, a2), (
-                f'djs_laxisnum and djs_laxisnum_numpy differ for dims={dims} '
-                f'iaxis={iaxis}'
-            )
+# NOTE: Used to confirm consistency between old and new versions.  Test is now
+# obsolete, but I've kept it here as a historical record.
+#def test_djs_laxisgen_numpy_matches_original():
+#    # Compare 1D, 2D, 3D outputs between original and numpy implementations
+#    cases = {
+#        1: (5,),
+#        2: (4, 3),
+#        3: (3, 4, 2),
+#    }
+#    for nd, dims in cases.items():
+#        for iaxis in range(nd):
+#            a1 = pydl.djs_laxisgen(list(dims), iaxis=iaxis)
+#            a2 = pydl.arange_ndim(list(dims), axis=iaxis)
+#            assert a1.shape == a2.shape, (
+#                f'Shape mismatch for dims={dims} iaxis={iaxis}'
+#            )
+#            assert np.array_equal(a1, a2), (
+#                f'djs_laxisgen and arange_ndim differ for dims={dims} '
+#                f'iaxis={iaxis}'
+#            )
 
 
-def test_laxisnum():
+def test_arange_ndim():
     n = 4
-    arr = pydl.djs_laxisnum_numpy(n)
+    arr = pydl.arange_ndim(n)
     assert np.array_equal(arr, np.arange(n, dtype=int)), '1D output should be the same as arange'
     dims = (4,)
-    _arr = pydl.djs_laxisnum_numpy(dims)
+    _arr = pydl.arange_ndim(dims)
     assert np.array_equal(arr, _arr), 'Output for an int and a 1-tuple should be the same'
 
     dims = (4,3,2)
-    arr = pydl.djs_laxisnum_numpy(dims, axis=2)
-
-    embed()
-    exit()
-
-
-
-    # Verify djs_laxisnum_numpy produces expected index-grid for 4 dimensions
-    dims = (2, 3, 4, 5)
-    nd = 4
-    for iaxis in range(nd):
-        arr = pydl.djs_laxisnum_numpy(list(dims), iaxis=iaxis)
-        assert arr.shape == dims, 'Unexpected shape for 4-D output'
-        assert arr.dtype == np.dtype('i4'), 'Expected dtype i4'
-        # Each slice along iaxis should equal the slice index
-        for k in range(dims[iaxis]):
-            slicer = [slice(None)] * nd
-            slicer[iaxis] = k
-            sl = arr[tuple(slicer)]
-            assert np.all(sl == k), (
-                f'Elements along axis {iaxis} at index {k} are not equal to {k}'
+    for axis in range(len(dims)):
+        arr = pydl.arange_ndim(dims, axis=axis)
+        for i in np.arange(dims[axis]):
+            slc = [slice(None)] * len(dims)
+            slc[axis] = i
+            assert np.all(arr[tuple(slc)] == i), (
+                 f'All elements at axis={axis} index={i} should be equal to {i}'
             )
 
-test_laxisnum()
 
 def test_maxdev_lower_upper_interplay():
     # Use a small array for clarity
