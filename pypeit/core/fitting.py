@@ -127,7 +127,8 @@ class PypeItFitCollection:
             # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # TODO: The use of xnorm below IS A BUG!!  However, this reproduces
             # the behavior of the old TraceSet class.  We need to fix this, but
-            # it may cause havoc with out tests.
+            # it will likely cause havoc with our tests, and the default order
+            # we use for edge tracing.
             # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             self.pypeitFits[i] = robust_fit(
                 self.xnorm[i], self.ypos[i], self.order,
