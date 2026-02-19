@@ -1,3 +1,7 @@
+.. include:: ../include/links.rst
+
+.. _gemini_gmos:
+
 ***********
 Gemini GMOS
 ***********
