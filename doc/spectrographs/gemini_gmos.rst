@@ -56,7 +56,6 @@ which will show different levels of debugging output at each
 step of the tracing process (beware it may show a *lot* of plots).
 
 2.
-
 The code may fault and say there were no valid traces.  This happens for some
 long-slit data where the slit edges are, in fact, beyond the edges of the detector.
 It returns an error:
