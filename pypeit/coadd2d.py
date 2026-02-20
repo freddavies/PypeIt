@@ -781,8 +781,11 @@ class CoAdd2D:
         # NOTE: inmask is a gpm
         sciImage = pypeitimage.PypeItImage(pseudo_dict['imgminsky'], ivar=pseudo_dict['sciivar'],
                                            bpm=np.logical_not(pseudo_dict['inmask']))
-        sciImage.detector = self.stack_dict['detectors'][0]
-        #
+        sciImage.detector = self.stack_dict['detectors'][0].copy()
+        # update platescale in the detector object to reflect the resampling done in coadd2d.
+        # This is done to be able to propagate the correct spatial sampling to FindObjects and Extract
+        sciImage.detector.platescale *= self.par['coadd2d']['spat_samp_fact']
+
         slitmask_pseudo = pseudo_dict['slits'].slit_img()
         sciImage.build_mask(slitmask=slitmask_pseudo)
 
@@ -813,7 +816,7 @@ class CoAdd2D:
         # maskdef stuff
         if parcopy['reduce']['slitmask']['assign_obj'] and slits.maskdef_designtab is not None:
             # Get pixel scale, binned and resampled (if requested), i.e., pixel scale of the pseudo image
-            resampled_pixscale = parse.parse_binning(sciImage.detector.binning)[1]*sciImage.detector.platescale*self.par['coadd2d']['spat_samp_fact']
+            resampled_pixscale = parse.parse_binning(sciImage.detector.binning)[1]*sciImage.detector.platescale
 
             # Assign slitmask design information to detected objects
             slits.assign_maskinfo(sobjs_obj, resampled_pixscale, None, TOLER=parcopy['reduce']['slitmask']['obj_toler'])
