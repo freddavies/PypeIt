@@ -785,6 +785,10 @@ class CoAdd2D:
         # update platescale in the detector object to reflect the resampling done in coadd2d.
         # This is done to be able to propagate the correct spatial sampling to FindObjects and Extract
         sciImage.detector.platescale *= self.par['coadd2d']['spat_samp_fact']
+        # if this is a mosaic, we need to update the detector object of each detector in the mosaic
+        if "detectors" in sciImage.detector.keys():
+            for det in sciImage.detector['detectors']:
+                det.platescale *= self.par['coadd2d']['spat_samp_fact']
 
         slitmask_pseudo = pseudo_dict['slits'].slit_img()
         sciImage.build_mask(slitmask=slitmask_pseudo)
