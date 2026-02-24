@@ -18,7 +18,7 @@ from pypeit import PypeItError
 from pypeit import utils
 from pypeit import __version__
 from pypeit.io import files_from_extension
-from pypeit.par.pypeitpar import PypeItPar
+from pypeit.par import pypeitpar
 from pypeit.spectrographs.util import load_spectrograph
 
 
@@ -733,8 +733,9 @@ class InputFile:
         # Get the configuration-specific parameters based on the file
         spec_par = spec.default_pypeit_par() if config_specific_file is None \
                     else spec.config_specific_par(config_specific_file)
-        par = PypeItPar.from_cfg_lines(cfg_lines=spec_par.to_config(),
-                                       merge_with=(self.cfg_lines,))
+        par = pypeitpar.PypeItPar.from_cfg_lines(
+            cfg_lines=spec_par.to_config(), merge_with=(self.cfg_lines,)
+        )
         return spec, par, config_specific_file
 
 
