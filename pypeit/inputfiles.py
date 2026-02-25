@@ -1291,28 +1291,32 @@ class Collate1DFile(InputFile):
         # TODO: Raise an exception if 'filename' is not a valid column in
         # self.data?
 
-        # Instantiate all_files
+        # Instantiate lists
+        paths = []
+        files = []
         all_files = []
 
         if self.file_paths is not None and len(self.file_paths) > 0:
             # File paths are defined so use them
-            for p in self.file_paths:
-                for f in self.data['filename']:
-                    all_files += sorted(map(lambda x : str(x), p.glob(f)))
-            return all_files
+            paths = self.file_paths
+            files = self.data['filename']
 
         # The file paths are not defined, but the path may be defined by the
-        # entries in the data table.  Build the list of paths:
-        paths = []
-        files = []
-        for f in self.data['filename']:
-            try:
-                p = Path(f)
-            except:
-                continue
-            if p.parent.is_dir():
-                paths += [p.parent]
-                files += [p.name]
+        # entries in the data table.  Build the list of paths and files from the
+        # filename column of the data table.
+        # NOTE: If the filename column doesn't give a path, this approach will
+        # also lead to the current working directory being added to the list of
+        # paths.  That is, calling Path(f).parent will yield the current working
+        # directory if `f` is a filename, even if `f` is not a valid file!
+        if len(paths) == 0:
+            for f in self.data['filename']:
+                try:
+                    p = Path(f)
+                except:
+                    continue
+                if p.parent.is_dir():
+                    paths += [p.parent]
+                    files += [p.name]
 
         # If the paths are still empty, just use the current directory and copy
         # the filenames
