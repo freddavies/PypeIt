@@ -3,14 +3,14 @@ A temporary module to deal with organization of high-level functions that lead
 to circular imports.
 """
 
-from astropy.io import fits
 from astropy.table import Table
 from astropy import units
 import numpy as np
 
-from pypeit.core import wave
+from pypeit import io
 from pypeit import specobj, specobjs
 from pypeit import utils
+from pypeit.core import wave
 
 
 def load_wmko_std_spectrum(fits_file:str, outfile=None, pad = False, split=True):
@@ -31,7 +31,7 @@ def load_wmko_std_spectrum(fits_file:str, outfile=None, pad = False, split=True)
     """
 
     # Open up
-    hdul = fits.open(fits_file)
+    hdul = io.fits_open(fits_file)
     meta = Table(hdul[1].data)
     idl_spec = Table(hdul[2].data)
 
