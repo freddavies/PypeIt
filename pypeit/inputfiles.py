@@ -1287,18 +1287,43 @@ class Collate1DFile(InputFile):
             or None if `filename` is not part of the data table
             or there is no data table!
         """
-        all_files = []
-        paths = (
-            [Path().absolute()]
-            if self.file_paths is None or len(self.file_paths) == 0
-            else self.file_paths
-        )
-        # Paths?
-        for p in paths:
-            for row in self.data['filename']:
-                all_files += sorted(p.glob(row))
 
-        # Return
+        # TODO: Raise an exception if 'filename' is not a valid column in
+        # self.data?
+
+        # Instantiate all_files
+        all_files = []
+
+        if self.file_paths is not None and len(self.file_paths) > 0:
+            # File paths are defined so use them
+            for p in self.file_paths:
+                for f in self.data['filename']:
+                    all_files += sorted(map(lambda x : str(x), p.glob(f)))
+            return all_files
+
+        # The file paths are not defined, but the path may be defined by the
+        # entries in the data table.  Build the list of paths:
+        paths = []
+        files = []
+        for f in self.data['filename']:
+            try:
+                p = Path(f)
+            except:
+                continue
+            if p.parent.is_dir():
+                paths += [p.parent]
+                files += [p.name]
+
+        # If the paths are still empty, just use the current directory and copy
+        # the filenames
+        if len(paths) == 0:
+            paths = [Path().absolute()]
+            files = self.data['filename']
+
+        # Populate the list of files, allowing for wildcards in the file name
+        for p in paths:
+            for f in files:
+                all_files += sorted(map(lambda x : str(x), p.glob(f)))
         return all_files
 
 
