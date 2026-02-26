@@ -24,7 +24,7 @@ from pypeit import dataPaths
 from pypeit import log
 from pypeit import onespec
 from pypeit import PypeItError
-from pypeit import specobj
+#from pypeit import specobj
 from pypeit import specobjs
 from pypeit import wavemodel
 from pypeit.core import arc
@@ -756,6 +756,7 @@ def spec_flex_shift_local(slits, slitord, specobjs, islit, sky_file, empty_flex_
 
     # get objects in this slit
     i_slitord = slitord[islit]
+    # NOTE: specobjs here is *not* the pypeit module
     indx = specobjs.slitorder_indices(i_slitord)
     this_specobjs = specobjs[indx]
 
@@ -886,6 +887,7 @@ def spec_flexure_slit(slits, slitord, slit_bpm, sky_file, method="boxcar", speco
     log.debug("Consider doing 2 passes in flexure as in LowRedux")
 
     # Determine the method
+    # NOTE: specobjs here is *not* the pypeit module
     slit_cen = True if (specobjs is None) or (method == "slitcen") else False
 
     # Initialise the flexure list for each slit
@@ -931,6 +933,7 @@ def spec_flexure_slit(slits, slitord, slit_bpm, sky_file, method="boxcar", speco
                                                minwave=minwave, maxwave=maxwave)
         else:
             # local flexure
+            # NOTE: specobjs here is *not* the pypeit module
             flex_list = spec_flex_shift_local(slits, slitord, specobjs, islit, sky_file,
                                               empty_flex_dict, return_later_slits, flex_list, keys_to_update,
                                               spec_fwhm_pix=spec_fwhm_pix, mxshft=mxshft, excess_shft=excess_shft,
@@ -989,6 +992,7 @@ def spec_flexure_slit(slits, slitord, slit_bpm, sky_file, method="boxcar", speco
                 for sidx in return_later_slits:
                     # get objects in this slit
                     i_slitord = slitord[sidx]
+                    # NOTE: specobjs here is *not* the pypeit module
                     indx = specobjs.slitorder_indices(i_slitord)
 
                     for i in range(len(specobjs[indx])):
@@ -1164,15 +1168,21 @@ def get_sky_spectrum(sciimg, ivar, waveimg, thismask, global_sky, box_radius, sl
     Returns:
         :class:`~pypeit.onespec.OneSpec`: The boxcar-extracted sky spectrum.
     """
-    spec = specobj.SpecObj(PYPELINE=pypeline, SLITID=-1, DET=str(det))
-    spec.trace_spec = np.arange(slits.nspec)
-    spec.TRACE_SPAT = trace_spat
-    spec.BOX_R_PIX = box_radius
-    # Extract
-    extract.extract_boxcar(sciimg, ivar, thismask, waveimg, global_sky, spec)
-    slit_wave, slit_sky = spec.BOX_WAVE[spec.BOX_MASK], spec.BOX_COUNTS_SKY[spec.BOX_MASK]
-    # OneSpec
-    return onespec.OneSpec(slit_wave, None, slit_sky, fluxed=False)
+#    # NOTE: specobj here *is* the pypeit module
+#    spec = specobj.SpecObj(PYPELINE=pypeline, SLITID=-1, DET=str(det))
+#    spec.trace_spec = np.arange(slits.nspec)
+#    spec.TRACE_SPAT = trace_spat
+#    spec.BOX_R_PIX = box_radius
+#    # Extract
+#    extract.extract_boxcar(sciimg, ivar, thismask, waveimg, global_sky, spec)
+#    slit_wave, slit_sky = spec.BOX_WAVE[spec.BOX_MASK], spec.BOX_COUNTS_SKY[spec.BOX_MASK]
+#    # OneSpec
+#    return onespec.OneSpec(slit_wave, None, slit_sky, fluxed=False)
+    wave, _, _, _, _, mask, _, _, counts_sky, _, _ = extract.extract_boxcar(
+        box_radius, trace_spat, sciimg, ivar, thismask, waveimg, global_sky,
+        trace_spec=np.arange(slits.nspec)
+    )
+    return onespec.OneSpec(wave[mask], None, counts_sky[mask], fluxed=False)
 
 
 def spec_flexure_corrQA(ax:plt.Axes, this_flex_dict:dict, cntr:int, name:str):
@@ -1254,6 +1264,7 @@ def spec_flexure_qa(slitords:np.ndarray, bpm:np.ndarray, basename:str,
     plt.rcParams['font.family'] = 'serif'
 
     # What type of QA are we doing
+    # NOTE: specobjs here is *not* the pypeit module
     slit_cen = specobjs is None
 
     # Grab the named of the method
@@ -1278,6 +1289,7 @@ def spec_flexure_qa(slitords:np.ndarray, bpm:np.ndarray, basename:str,
             nobj = 1
             ncol = 1
         else:
+            # NOTE: specobjs here is *not* the pypeit module
             indx = specobjs.slitorder_indices(slitord)
             this_specobjs = specobjs[indx]
             nobj = np.sum(indx)
@@ -1299,6 +1311,7 @@ def spec_flexure_qa(slitords:np.ndarray, bpm:np.ndarray, basename:str,
             spec_flexure_corrQA(ax, this_flex_dict, 0, 'Slit Center')
         else:
             iplt = 0
+            # NOTE: specobj here is *not* the pypeit module
             for ss, specobj in enumerate(this_specobjs):
                 if specobj is None or (specobj.BOX_WAVE is None and specobj.OPT_WAVE is None):
                     continue
@@ -1316,6 +1329,7 @@ def spec_flexure_qa(slitords:np.ndarray, bpm:np.ndarray, basename:str,
         else:
             # only show the first object in this slit that does not have None shift
             iobj = np.where([ss is not None for ss in this_flex_dict['shift']])[0][0]
+            # NOTE: specobj here is *not* the pypeit module
             specobj = this_specobjs[iobj]
 
         # Repackage
@@ -1351,6 +1365,7 @@ def spec_flexure_qa(slitords:np.ndarray, bpm:np.ndarray, basename:str,
         if slit_cen:
             plt.suptitle('Sky Comparison for Slit Center', y=0.99)
         else:
+            # NOTE: specobj here is *not* the pypeit module
             plt.suptitle('Sky Comparison for {:s}'.format(specobj.NAME), y=0.99)
 
         for ii, igdsky in enumerate(gdsky):
@@ -1685,6 +1700,7 @@ class MultiSlitFlexure(DataContainer):
         super().__init__(d=_d)
 
         # Load up specobjs
+        # NOTE: specobjs here *is* the pypeit module
         self.specobjs = specobjs.SpecObjs.from_fitsfile(self.s1dfile, chk_version=False) 
         #  Sky lines -- This one is ASCII, so don't use load_sky_spectrum()
         sky_file = 'sky_single_mg.dat'
