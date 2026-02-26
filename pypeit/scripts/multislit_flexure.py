@@ -43,7 +43,7 @@ class MultiSlitFlexure(scriptbase.ScriptBase):
         from pypeit import inputfiles
         from pypeit.spectrographs.util import load_spectrograph
         from pypeit.par import pypeitpar
-        from pypeit.core import flexure
+        from pypeit import multislit_flexure
 
         # Initialize the log
         cls.init_log(args)
@@ -64,7 +64,7 @@ class MultiSlitFlexure(scriptbase.ScriptBase):
         # Loop to my loop
         for filename in flexFile.filenames:
             # Instantiate
-            mdFlex = flexure.MultiSlitFlexure(s1dfile=filename)
+            mdFlex = multislit_flexure.MultiSlitFlexure(s1dfile=filename)
             # Initalize 
             log.info("Setup")
             mdFlex.init(spectrograph, par['flexure'])

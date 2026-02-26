@@ -79,7 +79,7 @@ if __name__ == '__main__':
     from pypeit.bspline import bspline
     from pypeit.coadd3d import DataCube
     from pypeit.core.fitting import PypeItFit
-    from pypeit.core.flexure import MultiSlitFlexure
+    from pypeit.multislit_flexure import MultiSlitFlexure
     from pypeit.core.telluric import Telluric
     from pypeit.core.wavecal.wv_fitting import WaveFit
     from pypeit.images.detector_container import DetectorContainer

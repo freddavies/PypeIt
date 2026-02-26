@@ -889,8 +889,8 @@ def local_skysub_extract(sciimg, sciivar, tilts, waveimg, global_sky, thismask, 
                         sobjs[iobj].BOX_NPIX
                     ) = extract.extract_boxcar(
                         sobjs[iobj].BOX_R_PIX, sobjs[iobj].TRACE_SPAT, sciimg-skyimage, modelivar,
-                        outmask, waveimg, skyimage, sobjs[iobj], fwhmimg=fwhmimg,
-                        base_var=base_var, count_scale=count_scale, noise_floor=adderr,
+                        outmask, waveimg, skyimage, fwhmimg=fwhmimg, base_var=base_var,
+                        count_scale=count_scale, noise_floor=adderr,
                         trace_spec=sobjs[iobj].trace_spec
                     )
 
