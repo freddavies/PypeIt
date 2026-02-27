@@ -34,7 +34,7 @@ __all__ = [
     'not_alfosc',
     'ntt_efosc2',
     'p200_dbsp',
-    'p200_ngps ',
+    'p200_ngps',
     'p200_tspec',
     'shane_kast',
     'soar_goodman',
