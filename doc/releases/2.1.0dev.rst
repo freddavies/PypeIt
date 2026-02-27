@@ -32,6 +32,7 @@ Testing
 -------
 
 - Add new tests for :mod:`~pypeit.core.pydl`
+- Added new tests for :class:`~pypeit.inputfiles.InputFile` objects.
 
 
 Under-the-hood Improvements
