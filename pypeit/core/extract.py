@@ -25,10 +25,9 @@ def extract_optimal(
     <https://ui.adsabs.harvard.edu/abs/1986PASP...98..609H/abstract>`__.
 
     When necessary, the function will fall back to a boxcar extraction algorithm
-    for setting the wavelength of a fully masked extraction in any given
-    channel.  If this happens, the ``box_radius``, ``trace_spat``, and
-    ``trace_spec`` parameters *must* be provided; an exception is raised
-    otherwise.
+    for setting the wavelength for a wavelength channel that is fully masked.
+    If this happens, the ``box_radius``, ``trace_spat``, and ``trace_spec``
+    parameters *must* be provided; an exception is raised otherwise.
 
     Parameters
     ----------
@@ -99,6 +98,39 @@ def extract_optimal(
     trace_spat : :class:`numpy.ndarray`, optional
         When necessary, use these spatial trace positions to determine the
         wavelength of a fully masked spectral channel.
+
+    Returns
+    -------
+    wave : :class:`numpy.ndarray`
+        Wavelength vector
+    counts : :class:`numpy.ndarray`
+        Extracted counts
+    counts_ivar : :class:`numpy.ndarray`
+        Inverse variance in the extracted counts
+    counts_sig : :class:`numpy.ndarray`
+        1-sigma uncertainties in the extracted counts
+    counts_nivar : :class:`numpy.ndarray`
+        Same as ``counts_nivar``, but excludes shot-noise contributions from the
+        extracted object.
+    gpm : :class:`numpy.ndarray`
+        Good-pixel mask selected valid data in the extracted spectrum.
+    fwhm : :class:`numpy.ndarray`
+        Estimated FWHM of the wavelength-dependent spectral resolution element.
+        This will be None if ``fwhmimg`` is not provided.
+    flat : :class:`numpy.ndarray`
+        Spectrum extracted from the normalized flat-field image at the same
+        location as the object spectrum.  This will be None if ``flatimg`` is
+        not provided.
+    counts_sky : :class:`numpy.ndarray`
+        Sky-only spectrum extraced from the sky image (``skyimg``).
+    counts_sig_det : :class:`numpy.ndarray`
+        Same as ``counts_sig`` but only includes uncertainties introduced by the
+        detector.
+    frac_use : :class:`numpy.ndarray`
+        Wavelength-dependent fraction of pixels in the object profile subimage
+        used for the extraction.
+    chi2 : :class:`numpy.ndarray`
+        Wavelength-dependent reduced chi-square of the model fit.
     """
     # TODO This makes no sense for difference imaging? Not sure we need NIVAR anyway
     var_no = None if base_var is None \
@@ -378,6 +410,37 @@ def extract_boxcar(
         aperture defined by ``trace_spat``.  If provided, the shape must match
         ``trace_spat``.  If None, the code assumes ``trace_spat`` covers the
         full image and runs from 0 to the number of spectral pixels.
+
+    Returns
+    -------
+    wave : :class:`numpy.ndarray`
+        Wavelength vector
+    counts : :class:`numpy.ndarray`
+        Extracted counts
+    counts_ivar : :class:`numpy.ndarray`
+        Inverse variance in the extracted counts
+    counts_sig : :class:`numpy.ndarray`
+        1-sigma uncertainties in the extracted counts
+    counts_nivar : :class:`numpy.ndarray`
+        Same as ``counts_nivar``, but excludes shot-noise contributions from the
+        extracted object.
+    gpm : :class:`numpy.ndarray`
+        Good-pixel mask selected valid data in the extracted spectrum.
+    fwhm : :class:`numpy.ndarray`
+        Estimated FWHM of the wavelength-dependent spectral resolution element.
+        This will be None if ``fwhmimg`` is not provided.
+    flat : :class:`numpy.ndarray`
+        Spectrum extracted from the normalized flat-field image at the same
+        location as the object spectrum.  This will be None if ``flatimg`` is
+        not provided.
+    counts_sky : :class:`numpy.ndarray`
+        Sky-only spectrum extraced from the sky image (``skyimg``).
+    counts_sig_det : :class:`numpy.ndarray`
+        Same as ``counts_sig`` but only includes uncertainties introduced by the
+        detector.
+    npix : :class:`numpy.ndarray`
+        Wavelength-dependent (fractional) number of valid pixels included in the
+        extraction.
     """
     if trace_spec is None:
         trace_spec = np.arange(imgminsky.shape[0])

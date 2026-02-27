@@ -866,19 +866,6 @@ def local_skysub_extract(sciimg, sciivar, tilts, waveimg, global_sky, thismask, 
                     log.info("At x = {:5.2f}".format(sobjs[iobj].SPAT_PIXPOS) + " on slit # {:}".format(sobjs[iobj].slit_order))
                     log.info("------------------------------------------------------------------------------------------------------------")
 
-                    # TODO -- Use extract_specobj_boxcar to avoid code duplication
-
-                    if sobjs[iobj].NAME == 'SPAT0714-SLIT0715-DET01':
-                        ofile = f'{sobjs[iobj].NAME}_before_boxcar_{iiter}.fits'
-                        if not Path(ofile).is_file():
-                            sobjs[iobj].to_file(ofile)
-#                            ofile_inputs = f'{sobjs[iobj].NAME}_boxcar_inputs_{iiter}.npz'
-#                            np.savez_compressed(ofile_inputs,
-#                                sciimg=sciimg, modelivar=modelivar, outmask=outmask,
-#                                waveimg=waveimg, skyimage=skyimage, fwhmimg=fwhmimg,
-#                                base_var=base_var, count_scale=count_scale, noise_floor=adderr
-#                            )
-
                     if sobjs[iobj].trace_spec is None:
                         sobjs[iobj].trace_spec = np.arange(sciimg.shape[0])
                     (
@@ -894,11 +881,6 @@ def local_skysub_extract(sciimg, sciivar, tilts, waveimg, global_sky, thismask, 
                         trace_spec=sobjs[iobj].trace_spec
                     )
 
-                    if sobjs[iobj].NAME == 'SPAT0714-SLIT0715-DET01':
-                        ofile = f'{sobjs[iobj].NAME}_after_boxcar_{iiter}.fits'
-                        if not Path(ofile).is_file():
-                            sobjs[iobj].to_file(ofile)
-
                     flux = sobjs[iobj].BOX_COUNTS
                     fluxivar = sobjs[iobj].BOX_COUNTS_IVAR * sobjs[iobj].BOX_MASK
                     wave = sobjs[iobj].BOX_WAVE
@@ -908,19 +890,6 @@ def local_skysub_extract(sciimg, sciivar, tilts, waveimg, global_sky, thismask, 
                     trace = sobjs[iobj].TRACE_SPAT[:, None]
                     objmask = ((spat_img >= (trace - 2.0 * sobjs[iobj].BOX_R_PIX)) & (spat_img <= (trace + 2.0 * sobjs[iobj].BOX_R_PIX)))
                     # Boxcar
-
-                    if sobjs[iobj].NAME == 'SPAT0714-SLIT0715-DET01':
-                        ofile = f'{sobjs[iobj].NAME}_before_boxcar_{iiter}.fits'
-                        if not Path(ofile).is_file():
-                            sobjs[iobj].to_file(ofile)
-#                            ofile_inputs = f'{sobjs[iobj].NAME}_boxcar_inputs_{iiter}.npz'
-#                            np.savez_compressed(ofile_inputs,
-#                                sciimg=sciimg, modelivar=modelivar, outmask=outmask & objmask,
-#                                waveimg=waveimg, skyimage=skyimage, fwhmimg=fwhmimg,
-#                                flatimg=flatimg, base_var=base_var, count_scale=count_scale,
-#                                noise_floor=adderr
-#                            )
-
                     (
                         sobjs[iobj].BOX_WAVE, sobjs[iobj].BOX_COUNTS, sobjs[iobj].BOX_COUNTS_IVAR,
                         sobjs[iobj].BOX_COUNTS_SIG, sobjs[iobj].BOX_COUNTS_NIVAR,
@@ -933,19 +902,6 @@ def local_skysub_extract(sciimg, sciivar, tilts, waveimg, global_sky, thismask, 
                         base_var=base_var, count_scale=count_scale, noise_floor=adderr,
                         trace_spec=sobjs[iobj].trace_spec
                     )
-
-                    if sobjs[iobj].NAME == 'SPAT0714-SLIT0715-DET01':
-                        ofile = f'{sobjs[iobj].NAME}_after_boxcar_{iiter}.fits'
-                        if not Path(ofile).is_file():
-                            sobjs[iobj].to_file(ofile)
-#                            ofile_inputs = f'{sobjs[iobj].NAME}_optimal_inputs_{iiter}.npz'
-#                            np.savez_compressed(ofile_inputs,
-#                                sciimg=sciimg, modelivar=modelivar, outmask=outmask & objmask,
-#                                waveimg=waveimg, skyimage=skyimage, thismask=thismask,
-#                                last_profile=last_profile, min_frac_use=min_frac_use,
-#                                fwhmimg=fwhmimg, flatimg=flatimg, base_var=base_var,
-#                                count_scale=count_scale, noise_floor=adderr
-#                            )
 
                     # Optimal
                     (
@@ -962,11 +918,6 @@ def local_skysub_extract(sciimg, sciivar, tilts, waveimg, global_sky, thismask, 
                         trace_spec=sobjs[iobj].trace_spec, trace_spat=sobjs[iobj].TRACE_SPAT
                     )
                     
-                    if sobjs[iobj].NAME == 'SPAT0714-SLIT0715-DET01':
-                        ofile = f'{sobjs[iobj].NAME}_after_optimal_{iiter}.fits'
-                        if not Path(ofile).is_file():
-                            sobjs[iobj].to_file(ofile)
-
                     # If the extraction is bad do not update
                     if sobjs[iobj].OPT_MASK is not None:
                         # if there is only one good pixel `spatialprofile.fit_profile` fails
