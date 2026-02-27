@@ -18,7 +18,7 @@ it's only purpose is to generate a KD Tree with the desired patterns.
 
 # TODO: We should not be using pickle.  Consider using the KDTree generator in
 # scikit-learn and a skops.io serialization that allows users to validate the
-# contents of the file.
+# contents of the file.  See: https://scikit-learn.org/stable/model_persistence.html
 import pickle
 
 from astropy.table import vstack
