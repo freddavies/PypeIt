@@ -16,8 +16,9 @@ it's only purpose is to generate a KD Tree with the desired patterns.
 # See benchmarks here:
 #   https://jakevdp.github.io/blog/2013/04/29/benchmarking-nearest-neighbor-searches-in-python/
 
-# TODO: We should not be using pickle.  We need a different way of saving and
-# reloading the KDTree.
+# TODO: We should not be using pickle.  Consider using the KDTree generator in
+# scikit-learn and a skops.io serialization that allows users to validate the
+# contents of the file.
 import pickle
 
 from astropy.table import vstack
