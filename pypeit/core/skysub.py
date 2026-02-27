@@ -3,8 +3,6 @@
 .. include common links, assuming primary doc root is up one directory
 .. include:: ../include/links.rst
 """
-from pathlib import Path
-
 from IPython import embed
 import numpy as np
 import matplotlib.pyplot as plt
