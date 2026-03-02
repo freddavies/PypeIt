@@ -6,7 +6,7 @@ from pathlib import Path
 from IPython import embed
 
 from pypeit import log
-from pypeit.pkginit.logger import clear_text_color
+from pypeit.pkg.logger import clear_text_color
 
 # TODO:  It's difficult to test if the PypeItLogger is capturing warnings and
 # exceptions because pytest overrides them as well.  To test these, we would
