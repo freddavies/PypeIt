@@ -9,7 +9,7 @@ from pypeit import dataPaths
 from pypeit.scripts import install_telluric
 from pypeit.scripts import install_extinctfile
 from pypeit.scripts import install_linelist
-from pypeit import cache
+from pypeit.pkg import cache
 
 
 def run_install_telluric():

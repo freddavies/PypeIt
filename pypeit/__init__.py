@@ -22,7 +22,7 @@ log = get_logger(level=logging.DEBUG)
 # Import and instantiate the data path parser
 # NOTE: This *MUST* come after log and __version__ are defined above
 #from pypeit import pypeitdata
-from .pkg import cache
+#from .pkg import cache
 from .pkg.pypeitdata import PypeItDataPaths
 #from .pkg.cache import PypeItDataPaths
 dataPaths = PypeItDataPaths()

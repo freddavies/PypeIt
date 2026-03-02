@@ -52,8 +52,8 @@ class CacheGithubData(scriptbase.ScriptBase):
         import github
 
         from pypeit import log
-        from pypeit import cache
-        from pypeit.pypeitdata import PypeItDataPath
+        from pypeit.pkg import cache
+        from pypeit.pkg.pypeitdata import PypeItDataPath
 
         # Initialize the log
         cls.init_log(args)
