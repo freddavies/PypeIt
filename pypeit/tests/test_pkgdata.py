@@ -13,7 +13,7 @@ import pytest
 import github
 
 from pypeit import PypeItPathError
-from pypeit.pypeitdata import PypeItDataPath
+from pypeit.pkginit.pypeitdata import PypeItDataPath
 from pypeit import dataPaths
 from pypeit import cache
 from pypeit.core import skyspec
