@@ -44,6 +44,9 @@ Under-the-hood Improvements
 Bug Fixes
 ---------
 
+- Avoid a circular import by moving
+  :func:`~pypeit.core.wavecal.autoid.arc_fit_qa` out of
+  :mod:`~pypeit.core.wavecal.wv_fitting`.
 - Avoid a circular import by (1) removing the use of the
   :class:`~pypeit.specobj.SpecObj` object in the :mod:`~pypeit.core.extract`
   functions and (2) pulling :class:`~pypeit.multislit_flexure.MultiSlitFlexure`
