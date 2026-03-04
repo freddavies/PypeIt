@@ -42,5 +42,9 @@ Bug Fixes
 ---------
 
 - Avoid a circular import by moving
+  :func:`~pypeit.core.wavecal.autoid.arc_fit_qa` out of
+  :mod:`~pypeit.core.wavecal.wv_fitting`.
+- Avoid a circular import by moving
   :func:`~pypeit.core.wavecal.waveio.load_tree` into
   :func:`~pypeit.core.wavecal.kdtree_generator`.
+
