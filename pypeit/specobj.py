@@ -841,6 +841,30 @@ class SpecObj(datamodel.DataContainer):
         self, imgminsky, ivar, mask, waveimg, skyimg, thismask, oprof, min_frac_use=0.9,
         fwhmimg=None, flatimg=None, base_var=None, count_scale=None, noise_floor=None
     ):
+        """
+        Perform an optimal extraction on the provided image.
+
+        This is a simple wrapper for 
+        :func:`~pypeit.core.extract.extract_optimal` that saves the results to
+        attributes of this object; see
+        :func:`~pypeit.core.extract.extract_optimal` for descriptions of the
+        function arguments.
+
+        If :attr:`trace_spec` is currently None, this sets it to an index array
+        that matches the length of the first (spectral) axis of the provided
+        image; e.g., ``trace_spec = [0 ... imgminsky.shape[0]-1]``.
+
+        The function uses :attr:`BOX_R_PIX` and :attr:`TRACE_SPAT` to set the
+        box width and center as a function of spectral pixel; these are only
+        used to set the wavelength of an extracted pixel in the case when the
+        optimal extraction leads to a fully masked pixel.
+
+        This fills the following properties: :attr:`OPT_WAVE`,
+        :attr:`OPT_COUNTS`, :attr:`OPT_COUNTS_IVAR`, :attr:`OPT_COUNTS_SIG`,
+        :attr:`OPT_COUNTS_NIVAR`, :attr:`OPT_MASK`, :attr:`OPT_FWHM`,
+        :attr:`OPT_FLAT`, :attr:`OPT_COUNTS_SKY`, :attr:`OPT_COUNTS_SIG_DET`,
+        :attr:`OPT_FRAC_USE`, and :attr:`OPT_CHI2`.
+        """
         if self.trace_spec is None:
             self.trace_spec = np.arange(imgminsky.shape[0])
         (
@@ -858,6 +882,28 @@ class SpecObj(datamodel.DataContainer):
         self, imgminsky, ivar, mask, waveimg, skyimg, fwhmimg=None, flatimg=None, base_var=None,
         count_scale=None, noise_floor=None,
     ):
+        """
+        Perform a boxcar extraction on the provided image.
+
+        This is a simple wrapper for 
+        :func:`~pypeit.core.extract.extract_boxcar` that saves the results to
+        attributes of this object; see
+        :func:`~pypeit.core.extract.extract_boxcar` for descriptions of the
+        function arguments.
+
+        If :attr:`trace_spec` is currently None, this sets it to an index array
+        that matches the length of the first (spectral) axis of the provided
+        image; e.g., ``trace_spec = [0 ... imgminsky.shape[0]-1]``.
+
+        The function uses :attr:`BOX_R_PIX` and :attr:`TRACE_SPAT` to set the
+        box width and center as a function of spectral pixel.
+
+        This fills the following properties: :attr:`BOX_WAVE`,
+        :attr:`BOX_COUNTS`, :attr:`BOX_COUNTS_IVAR`, :attr:`BOX_COUNTS_SIG`,
+        :attr:`BOX_COUNTS_NIVAR`, :attr:`BOX_MASK`, :attr:`BOX_FWHM`,
+        :attr:`BOX_FLAT`, :attr:`BOX_COUNTS_SKY`, :attr:`BOX_COUNTS_SIG_DET`,
+        and :attr:`BOX_NPIX`.
+        """
         if self.trace_spec is None:
             self.trace_spec = np.arange(imgminsky.shape[0])
         (

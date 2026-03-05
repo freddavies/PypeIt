@@ -399,17 +399,6 @@ def extract_point_source(wave, flxcube, ivarcube, bpmcube, wcscube, exptime,
         flxcube2d, ivarcube2d, gpmcube2d, waveimg, skyimg, thismask, oprof,
         min_frac_use=min_frac_use
     )
-#    if sobj.trace_spec is None:
-#        sobj.trace_spec = np.arange(flxcube2d.shape[0])
-#    (
-#        sobj.OPT_WAVE, sobj.OPT_COUNTS, sobj.OPT_COUNTS_IVAR, sobj.OPT_COUNTS_SIG,
-#        sobj.OPT_COUNTS_NIVAR, sobj.OPT_MASK, sobj.OPT_FWHM, sobj.OPT_FLAT, sobj.OPT_COUNTS_SKY,
-#        sobj.OPT_COUNTS_SIG_DET, sobj.OPT_FRAC_USE, sobj.OPT_CHI2
-#    ) = extract.extract_optimal(
-#        flxcube2d, ivarcube2d, gpmcube2d, waveimg, skyimg, thismask, oprof,
-#        min_frac_use=min_frac_use, box_radius=sobj.BOX_R_PIX, trace_spec=sobj.trace_spec,
-#        trace_spat=sobj.TRACE_SPAT
-#    )
 
     # TODO :: The optimal extraction may suffer from residual DAR correction issues. This is because the
     #      :: object profile assumes that the white light image represents the true spatial profile of the
