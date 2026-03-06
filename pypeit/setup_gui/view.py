@@ -1449,6 +1449,8 @@ class SetupGUIMainWindow(QMainWindow):
         controller (:class:`pypeit.setup_gui.controller.SetupGUIController`): The controller for the PypeitSetupGUI.
     """
 
+    helpURL = QUrl("https://pypeit.readthedocs.io/en/latest/tutorials/setup_gui.html")
+
     def __init__(self, model, controller):
         super().__init__(parent=None)
 
@@ -1475,7 +1477,7 @@ class SetupGUIMainWindow(QMainWindow):
         # Monitor the current tab
         self._current_tab = self._obs_log_tab
 
-        self._tool_bar = self.addToolBar("Where is my title showed?")
+        self._tool_bar = self.addToolBar("")
         self._tool_bar.setFloatable(False)
         self._tool_bar.setAllowedAreas(Qt.TopToolBarArea | Qt.BottomToolBarArea)
         self._populate_toolbar_and_menu()
@@ -1598,11 +1600,11 @@ class SetupGUIMainWindow(QMainWindow):
     def _helpButton(self):
         """Signal handler that responds to the help button being pressed."""
 
-        result = QDesktopServices.openUrl(QUrl("https://pypeit.readthedocs.io/en/latest/"))
+        result = QDesktopServices.openUrl(self.helpURL)
         if result:
             log.info("Opened PypeIT docs.")
         else:
-            log.warning("Failed to open PypeIt docs at 'https://pypeit.readthedocs.io/en/latest/'")
+            log.warning(f"Failed to open PypeIt docs at '{self.helpURL}'")
 
     def _populate_toolbar_and_menu(self):
         """Populate the tool bar and menu bar by creating actions for the functionality accessible from the main window."""

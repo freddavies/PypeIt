@@ -41,6 +41,10 @@ def lock_qt_mutex(mutex):
         mutex.unlock()
 
 class OpCanceledError(BaseException):
+    """Exception thrown to cancel a background operation.
+    This inherits from BaseException instead of Exception so that it isn't caught by
+    the python logging framework.
+    """
     pass
 
 class OperationThread(QThread):
@@ -158,9 +162,11 @@ class MetadataOperation(QObject):
 
     def preRun(self):
         """
-        Perform setup required before running the operation. This involves watching the log
-        for files being added to the metadata.
+        Perform setup required before running the operation. 
         """
+        # Setup our _background_progress callback to called for every log message.
+        # We use this to hook into the background thread without having to change
+        # any pre-existing PypeIt code.
         self._model.log_buffer.watch("background_progress", None, self._background_progress)
         self._model.closeAllFiles()
         return True
@@ -687,10 +693,9 @@ class SetupGUIController(QObject):
 
         # QT runs it's event loop in C, so the python signal handling mechanism
         # is never called, or it's only called after you give focus to the
-        # window. To make Ctrl+C handling work immediately in a way that still 
-        # calls the PypeIt CTRL+C handler, we set a timer to run every 500ms in the
-        # python interpreter, which will allow the python signal handling
-        # code to it.
+        # window. To make Ctrl+C handling work immediately we set a timer to run 
+        # every 500ms in the python interpreter, which will allow the python 
+        # signal handling to call the below signal handler.
         def signal_handler(signalnum, handler):
             """
             Handle signals sent by the keyboard during code execution
