@@ -21,7 +21,7 @@ Functionality/Performance Improvements and Additions
 ----------------------------------------------------
 - Setup GUI now uses a standard button bar that can be moved. 
 - Re-enabled the Cancel button on the Setup GUI progress dialog.
-- Increased default size for Setup GUI.
+- Increased default font size for Setup GUI.
 
 Instrument-specific Updates
 ---------------------------
