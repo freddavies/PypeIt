@@ -358,7 +358,7 @@ class SpecObjs:
                 for cnts, ivar in zip(self.BOX_COUNTS, self.BOX_COUNTS_IVAR)
             ]
         if all(_snr is None for _snr in SNR):
-            # They're still not valid so return.
+            # They are still not valid so return.
             log.warning('There are no valid extractions in this spec1d file.')
             return None
 
@@ -378,13 +378,6 @@ class SpecObjs:
 
         # Is this MultiSlit or Echelle
         if pypeline in ['MultiSlit', 'SlicerIFU']:
-#            # Have to do a loop to extract the counts for all objects
-#            if self.OPT_COUNTS[0] is not None:
-#                SNR = np.median(self.OPT_COUNTS * np.sqrt(self.OPT_COUNTS_IVAR), axis=1)
-#            elif self.BOX_COUNTS[0] is not None:
-#                SNR = np.median(self.BOX_COUNTS * np.sqrt(self.BOX_COUNTS_IVAR), axis=1)
-#            else:
-#                return None
             # initialize sobjs_std
             sobjs_std = SpecObjs(header=self.header)
             # For multiple detectors grab the requested detectors
@@ -430,20 +423,12 @@ class SpecObjs:
             uni_order = np.unique(self.ECH_ORDER)
             nobj = len(uni_objid)
             norders = len(uni_order)
-            # Build up S/N
+            # Build up S/N matrix
             _snr = np.zeros((norders, nobj))
             for iobj in range(nobj):
                 for iord in range(norders):
                     ind = (self.ECH_FRACPOS == uni_objid[iobj]) & (self.ECH_ORDER == uni_order[iord])
                     _snr[iord,iobj] = SNR[ind][0]
-#                    spec = self[ind]
-#                    # Grab SNR
-#                    if spec[0].OPT_COUNTS is not None:
-#                        SNR[iord, iobj] = np.median(spec[0].OPT_COUNTS*np.sqrt(spec[0].OPT_COUNTS_IVAR))
-#                    elif spec[0].BOX_COUNTS is not None:
-#                        SNR[iord, iobj] = np.median(spec[0].BOX_COUNTS * np.sqrt(spec[0].BOX_COUNTS_IVAR))
-#                    else:
-#                        return None
             # Maximize S/N
             SNR_all = np.sqrt(np.sum(_snr**2,axis=0))
             objid_std = uni_objid[SNR_all.argmax()]
@@ -454,7 +439,8 @@ class SpecObjs:
             sobjs_std.header = self.header
             return sobjs_std
         else:
-            # SHOULD NOT GET HERE!!
+            # SHOULD NOT GET HERE!!  The check at the beginning of the function
+            # should catch this.
             raise PypeItError('Unknown pypeline')
 
     def append_neg(self, sobjs_neg):
