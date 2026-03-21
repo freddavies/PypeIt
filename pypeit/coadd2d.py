@@ -1448,8 +1448,11 @@ class MultiSlitCoAdd2D(CoAdd2D):
         if self.obj_id_bri is None or self.par['coadd2d']['offsets'] != 'auto':
             return
 
-        # Compute offsets using the bright object
-        if self.par['coadd2d']['user_obj_ids'] is not None:
+        # Set boolean
+        use_obj_ids = self.par['coadd2d']['user_obj_ids'] is not None
+
+        # Compute offsets using the bright object / user-supplied object IDs
+        if use_obj_ids:
             offsets_method = f'user object on slitid = {self.spatid_bri}'
         else:
             offsets_method = f'brightest object found on slit: {self.spatid_bri} with avg SNR={np.mean(self.snr_bar_bri):5.2f}'
@@ -1470,8 +1473,9 @@ class MultiSlitCoAdd2D(CoAdd2D):
 
         sci_list = [[sciimg - skymodel for sciimg, skymodel in zip(self.coadd2d_stack.sciimg_stack, self.coadd2d_stack.skymodel_stack)]]
         var_list = [[utils.inverse(sciivar) for sciivar in self.coadd2d_stack.sciivar_stack]]
-        if self.par['coadd2d']['user_obj_ids'] is not None:
-            obj_list = [[(spat,spec) for spat, spec in self.get_usr_obj_coord_list()]]
+        if use_obj_ids:
+            ny, _ = self.coadd2d_stack.sciimg_stack[0].shape
+            obj_list = [[(spat, ny/2) for spat in self.spat_pixpos_bri]]
         else:
             obj_list = None
 
@@ -1488,7 +1492,6 @@ class MultiSlitCoAdd2D(CoAdd2D):
             var_list, 
             obj_list,
         )
-        log.test(f"Original locations: {obj_list}   Rebinned locations: {obj_list_rebin}")
 
         # Build up the masks
         thismask = np.ones_like(sci_list_rebin[0][0,:,:],dtype=bool)
@@ -1500,12 +1503,23 @@ class MultiSlitCoAdd2D(CoAdd2D):
         user_obj_dspats = []
 
 
-        # TODO: Need two branches here!  If no "user_obj_ids", then find
-        #       objects in the slit.  Otherwise perform a manual extraction
-        #       at the rebinned location of the object.
-
-
+        # Loop over exposures
         for iexp in range(self.nexp):
+
+            if use_obj_ids:
+                spat, spec = obj_list_rebin[0][iexp]
+                detnum = self.coadd2d_stack.detectors[iexp].det
+                # Treat the object finding as a manual process
+                manual_obj = ManualExtractionObj.by_fitstbl_input(
+                    self.spec2d[iexp],
+                    f"{detnum}:{spat}:{spec}:{self.par['reduce']['findobj']['find_fwhm']}",
+                    self.spectrograph)
+                manual_extract_dict = manual_obj.dict_for_objfind(self.spectrograph.get_det_name(detnum))
+            else:
+                # Otherwise, indicate auto-find
+                manual_extract_dict = None
+
+            # Perform the extraction
             sobjs_exp = findobj_skymask.objs_in_slit(
                 sci_list_rebin[0][iexp,:,:], 
                 utils.inverse(var_list_rebin[0][iexp,:,:]), 
@@ -1523,15 +1537,20 @@ class MultiSlitCoAdd2D(CoAdd2D):
                 nperslit=1 if self.par['coadd2d']['user_obj_ids'] is None else None, 
                 find_min_max=self.par['reduce']['findobj']['find_min_max'],
                 spec_min_max=self.par['reduce']['findobj']['trace_min_max'],
+                hand_extract_dict=manual_extract_dict,
                 show_trace=self.debug_offsets, 
                 show_peaks=self.debug_offsets)
+
+            # Perform QA on the extracted objects
             if len(sobjs_exp) == 0:
                 raise PypeItError(
                     f'No objects found in the rebinned image for file {iexp} (used to compute '
                     'the offsets).  Check `FindObjPar` parameters and try to adjust '
                     '`snr_thresh`.'
                 )
-            if self.par['coadd2d']['user_obj_ids'] is not None:
+
+            # Add the rectified traces to the stack
+            if use_obj_ids:
                 # find the spectrum of the user object and the corresponding trace
                 idx_orig = self.coadd2d_stack.specobjs_list[iexp].slitorder_uniq_id_indices(
                     self.par['coadd2d']['user_obj_ids'][iexp])
@@ -1557,23 +1576,23 @@ class MultiSlitCoAdd2D(CoAdd2D):
             else: 
                 traces_rect[:, iexp] = sobjs_exp.TRACE_SPAT
 
-        if self.par['coadd2d']['user_obj_ids'] is not None:
+        # After looping through all exposures, announce the offsets for user-specified objects
+        if use_obj_ids:
             log.info(f'The median distance between the original traces and those in the '
                         f'rebinned image for the user_obj_ids is {np.median(user_obj_dspats):.2f} pixels')
 
         # Now deterimine the offsets. Arbitrarily set the zeroth trace to the reference
         med_traces_rect = np.median(traces_rect,axis=0)
-        offsets = med_traces_rect[0] - med_traces_rect
+        self.offsets = med_traces_rect[0] - med_traces_rect
         # TODO create a QA with this
         if self.debug_offsets:
             for iexp in range(self.nexp):
                 plt.plot(traces_rect[:, iexp], linestyle='--', label='original trace')
-                plt.plot(traces_rect[:, iexp] + offsets[iexp], label='shifted traces')
+                plt.plot(traces_rect[:, iexp] + self.offsets[iexp], label='shifted traces')
                 plt.legend()
             plt.show()
 
-        self.offsets = offsets
-        # binned pixel scale of the frames to be coadded
+        # Binned pixel scale of the frames to be coadded
         pixscale = parse.parse_binning(self.coadd2d_stack.detectors[0].binning)[1]*self.coadd2d_stack.detectors[0].platescale
         self.offsets_report(self.offsets, pixscale, offsets_method)
 
@@ -1843,18 +1862,6 @@ class MultiSlitCoAdd2D(CoAdd2D):
         """
         return self.par['coadd2d']['wave_method'] if self.par['coadd2d']['wave_method'] is not None else 'linear'
 
-    def get_usr_obj_coord_list(self) -> list:
-        """Compute the list of coordinate tuples for user-defined objects
-
-        _extended_summary_
-
-        Returns
-        -------
-        :obj:`list`
-           List of (SPAT, SPEC) coordinates for the user-defined objects
-        """
-        ny, _ = self.coadd2d_stack.sciimg_stack[0].shape
-        return [(spat, ny//2) for spat in self.par['coadd2d']['user_obj_ids']]
 
 
 class EchelleCoAdd2D(CoAdd2D):

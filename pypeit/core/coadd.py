@@ -3156,9 +3156,9 @@ def compute_coadd2d(ref_trace_stack, sciimg_stack, sciivar_stack, skymodel_stack
     var_list = [[utils.inverse(sciivar) for sciivar in sciivar_stack]]
 
 
-    sci_list_rebin, var_list_rebin, norm_rebin_stack, nsmp_rebin_stack, obj_location \
+    sci_list_rebin, var_list_rebin, norm_rebin_stack, nsmp_rebin_stack, obj_list_rebin \
             = rebin2d(wave_bins, dspat_bins, waveimg_stack, dspat_stack, thismask_stack,
-                      inmask_stack, sci_list, var_list, obj_coord=None)
+                      inmask_stack, sci_list, var_list, obj_list=None)
     # Now compute the final stack with sigma clipping
     sigrej = 3.0
     maxiters = 10
@@ -3305,7 +3305,7 @@ def rebin2d(spec_bins, spat_bins, waveimg_stack, spatimg_stack,
         as it represents the number of times each pixel in the rebin image was
         populated taking only the "geometry" of the rebinning into account (i.e.
         the thismask_stack), but not the masking (inmask_stack).
-    rebin_coords : :obj:`list`
+    obj_list_rebin : :obj:`~numpy.ndarray`
         The list of (SPAT,SPEC) pixel position in the rebinned image of `obj_coord`.
     """
 
@@ -3323,8 +3323,9 @@ def rebin2d(spec_bins, spat_bins, waveimg_stack, spatimg_stack,
     for jj in range(len(var_list)):
         var_list_out.append(np.zeros(shape_out))
     obj_list_out = []
-    for kk in range(len(obj_list)):
-        obj_list_out.append(np.zeros((nimgs, 2)))
+    if obj_list is not None:
+        for kk in range(len(obj_list)):
+            obj_list_out.append(np.zeros((nimgs, 2)))
 
     for img, (waveimg, spatimg, thismask, inmask) in enumerate(zip(waveimg_stack, spatimg_stack, thismask_stack, inmask_stack)):
 
@@ -3357,21 +3358,23 @@ def rebin2d(spec_bins, spat_bins, waveimg_stack, spatimg_stack,
                                                                weights=var[img][finmask])
             var_list_out[indx][img, :, :] = (norm_img > 0.0)*weigh_var/(norm_img + (norm_img == 0.0))**2
         
-        for indx, obj_coord in enumerate(obj_list):
-            rebin_coords = _map_pixel_rebin(obj_coord[img], spatimg, waveimg, spat_bins, spec_bins)
-            obj_list_out[indx][img, :] = rebin_coords
+        # If passed in, rebin the user_obj_ids
+        if obj_list is not None:
+            for indx, obj_coord in enumerate(obj_list):
+                rebin_coords = _map_pixel_rebin(obj_coord[img], spatimg, waveimg, spat_bins, spec_bins)
+                obj_list_out[indx][img, :] = rebin_coords
 
     return sci_list_out, var_list_out, norm_rebin_stack.astype(int), nsmp_rebin_stack.astype(int), obj_list_out
 
 
 def _map_pixel_rebin(
-        obj_coord:tuple[int,int] | None,
-        spatimg:np.ndarray,
-        waveimg:np.ndarray,
-        spat_bins:np.ndarray,
-        spec_bins:np.ndarray,
-    ) -> tuple[int,int] | None:
-    """Map pixel location through rebinning
+        obj_coord: tuple[float, float] | None,
+        spatimg: np.ndarray,
+        waveimg: np.ndarray,
+        spat_bins: np.ndarray,
+        spec_bins: np.ndarray,
+    ) -> tuple[float, float] | None:
+    """Map a fractional pixel location through rebinning.
 
     .. note::
 
@@ -3381,11 +3384,12 @@ def _map_pixel_rebin(
     Parameters
     ----------
     obj_coord : :obj:`tuple`
-        The [SPAT,SPEC] coordinates in the original image
+        The [SPAT, SPEC] coordinates in the original image. Fractional values
+        are allowed.
     spatimg : :obj:`~numpy.ndarray`
-        Spatial Direction Image
+        Spatial direction image
     waveimg : :obj:`~numpy.ndarray`
-        Wavelenbgth Direction Image
+        Wavelength direction image
     spec_bins : :obj:`~numpy.ndarray`
         Rebinning array in the spectral direction
     spat_bins : :obj:`~numpy.ndarray`
@@ -3394,9 +3398,17 @@ def _map_pixel_rebin(
     Returns
     -------
     :obj:`tuple`
-       The resulting [SPAT,SPEC] coordinates of `obj_coord` in the rebinned image
+        The resulting fractional [SPAT, SPEC] coordinates of `obj_coord` in the
+        rebinned image, or None if the mapped position falls outside the rebinned
+        grid.
+
+    Raises
+    ------
+    TypeError
+        If `obj_coord` is not a tuple.
+    ValueError
+        If `obj_coord` is not length 2.
     """
-    # Input cleaning
     if obj_coord is None:
         return None
     if not isinstance(obj_coord, tuple):
@@ -3404,12 +3416,67 @@ def _map_pixel_rebin(
     if (input_len := len(obj_coord)) != 2:
         raise ValueError(f"Input `obj_coord` must be a 2-tuple, not length {input_len}")
 
-    # Do the mapping
+    # obj_coord is [SPAT, SPEC] = [col, row]
     j, i = obj_coord
-    spec_val = waveimg[i, j]
-    spat_val = spatimg[i, j]
 
+    nspec, nspat = waveimg.shape
+    if spatimg.shape != (nspec, nspat):
+        raise ValueError("`spatimg` and `waveimg` must have the same shape")
+
+    # Outside the input image entirely
+    if not (0.0 <= i <= nspec - 1 and 0.0 <= j <= nspat - 1):
+        return None
+
+    i0 = int(np.floor(i))
+    j0 = int(np.floor(j))
+
+    # Use bilinear interpolation only when the full 2x2 stencil exists.
+    if i0 < nspec - 1 and j0 < nspat - 1:
+        # Fractional offsets within the cell
+        f = np.array([i - i0, j - j0])   # [fi, fj]
+
+        # 1D interpolation weights
+        wi = np.array([1.0 - f[0], f[0]])   # along rows (SPEC)
+        wj = np.array([1.0 - f[1], f[1]])   # along cols (SPAT)
+
+        # 2x2 patches
+        patch_wave = waveimg[i0:i0+2, j0:j0+2]
+        patch_spat = spatimg[i0:i0+2, j0:j0+2]
+
+        # Bilinear interpolation (matrix form)
+        spec_val = wi @ patch_wave @ wj
+        spat_val = wi @ patch_spat @ wj
+
+    else:
+        # Fall back to nearest-neighbor if the 2x2 stencil would go out of bounds
+        ii, jj = np.clip(
+            np.floor([i, j] + 0.5).astype(int),
+            [0, 0],
+            [nspec - 1, nspat - 1],
+        )
+
+        spec_val = waveimg[ii, jj]
+        spat_val = spatimg[ii, jj]
+
+    # Locate enclosing output bins
     ispec = np.searchsorted(spec_bins, spec_val, side='right') - 1
     ispat = np.searchsorted(spat_bins, spat_val, side='right') - 1
 
-    return ispat, ispec
+    # Check if the rebinned value is off the image
+    if not (0 <= ispec < spec_bins.size - 1 and 0 <= ispat < spat_bins.size - 1):
+        return None
+
+    # Fractional position within the output bin
+    dspec = spec_bins[ispec + 1] - spec_bins[ispec]
+    dspat = spat_bins[ispat + 1] - spat_bins[ispat]
+
+    # Error checking
+    if dspec <= 0.0 or dspat <= 0.0:
+        raise ValueError("Bin edges must be strictly increasing")
+
+    # Fractional pixel within the output bin
+    fspec = (spec_val - spec_bins[ispec]) / dspec
+    fspat = (spat_val - spat_bins[ispat]) / dspat
+
+    # Return the fractional location
+    return ispat + fspat, ispec + fspec
