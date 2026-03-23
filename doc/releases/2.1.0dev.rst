@@ -29,7 +29,7 @@ Instrument-specific Updates
 
 Script Changes
 --------------
-
+- Removed -G/--gui option from pypeit_obslog.
 
 Testing
 -------
