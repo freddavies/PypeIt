@@ -76,9 +76,11 @@ ordering of the scripts in the list.
 
 Note that the script files in the ``pypeit/scripts`` directory:
 
- * Should not be executable (i.e., no ``x``s in their permissions)
- * Should not start with an env statement; i.e., ``#!/usr/bin/env python``
- * Should not end with the ``if __name__ == '__main__':`` block
+- Should not be executable (i.e., no ``x`` in their permissions)
+
+- Should not start with an env statement; i.e., ``#!/usr/bin/env python``
+
+- Should not end with the ``if __name__ == '__main__':`` block
 
 Creating the executables from the raw script files is all handled by `pip`_
 installing PypeIt.  To ensure the script is installed, from the top-level
