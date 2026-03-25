@@ -8,7 +8,7 @@ from IPython import embed
 
 import numpy as np
 
-from pypeit import msgs
+from pypeit import log
 from pypeit import telescopes
 from pypeit.core import parse
 from pypeit.core import framematch
@@ -98,12 +98,12 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
             try:
                 binspatial = headarr[0]['HIERARCH ESO DET WIN1 BINX']
             except KeyError:
-                msgs.warn("Cannot determine spatial binning from the header. Setting to 1")
+                log.warning("Cannot determine spatial binning from the header. Setting to 1")
                 binspatial = 1
             try:
                 binspec = headarr[0]['HIERARCH ESO DET WIN1 BINY']
             except KeyError:
-                msgs.warn("Cannot determine spectral binning from the header. Setting to 1")
+                log.warning("Cannot determine spectral binning from the header. Setting to 1")
                 binspec = 1
             # Parse the binning information into a string
             return parse.binning2string(binspec, binspatial)
@@ -128,7 +128,7 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
                 cwlen = 'None'
             return cwlen
         else:
-            msgs.error("Not ready for this compound meta")
+            log.error("Not ready for this compound meta")
 
     def configuration_keys(self):
         """
@@ -225,7 +225,7 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
         if ftype in ['arc', 'tilt']:
             return good_exp & (fitstbl['target'] == 'LAMP,WAVE')
 
-        msgs.warn('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.warning('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     # IS THIS NEEDED??
@@ -860,7 +860,7 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
         detectors = np.array([self.get_detector_par(det, hdu=hdu) for det in mosaic])
         # Binning *must* be consistent for all detectors
         if any(d.binning != detectors[0].binning for d in detectors[1:]):
-            msgs.error('Binning is somehow inconsistent between detectors in the mosaic!')
+            log.error('Binning is somehow inconsistent between detectors in the mosaic!')
 
         # Collect the offsets and rotations for *all unbinned* detectors in the
         # full instrument, ordered by the number of the detector.  Detector
@@ -956,7 +956,7 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
             detector_dict2['gain'] = np.atleast_1d([0.86])
             detector_dict3['gain'] = np.atleast_1d([0.84])
         else:
-            msgs.error("Bad CCDGAIN mode for HIRES")
+            log.error("Bad CCDGAIN mode for HIRES")
             
         # Instantiate
         detector_dicts = [detector_dict1, detector_dict2, detector_dict3]
