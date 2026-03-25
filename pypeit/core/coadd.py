@@ -3453,13 +3453,13 @@ def _map_pixel_rebin(
         spat_bins: np.ndarray,
         spec_bins: np.ndarray,
     ) -> tuple[float, float] | None:
-    """
+    r"""
     Map a fractional pixel coordinate from an input image to its fractional
     coordinate in a rebinned image.
 
     This routine interprets ``obj_coord`` as a continuous location in the
     original image, with coordinates provided in ``[SPAT, SPEC]`` order,
-    i.e. ``[column, row]``.  The mapping is performed in two steps:
+    `i.e.`, ``[column, row]``.  The mapping is performed in two steps:
 
     #. Interpolate the continuous coordinate fields ``waveimg`` and
        ``spatimg`` at the requested input location to determine the spectral
@@ -3556,7 +3556,7 @@ def _map_pixel_rebin(
         \qquad
         f_j = j - j_0,
 
-    where :math:`0 \\le f_i < 1` and :math:`0 \\le f_j < 1`.
+    where :math:`0 \le f_i < 1` and :math:`0 \le f_j < 1`.
 
     The bilinear interpolation weights are then
 
@@ -3574,12 +3574,12 @@ def _map_pixel_rebin(
         f_j
         \end{bmatrix}.
 
-    If :math:`P` is the :math:`2\\times 2` patch of one of the coordinate
+    If :math:`P` is the :math:`2\times 2` patch of one of the coordinate
     fields over that cell, then the interpolated value is
 
     .. math::
 
-        v(i,j) = w_i^{\\mathsf T} \\, P \\, w_j.
+        v(i,j) = w_i^{\mathsf T} \, P \, w_j.
 
     In explicit form, for patch values
     :math:`P_{00}, P_{01}, P_{10}, P_{11}`,
@@ -3593,8 +3593,8 @@ def _map_pixel_rebin(
         + f_if_j P_{11}.
 
     This interpolation is applied independently to ``waveimg`` and
-    ``spatimg`` to obtain :math:`\\mathrm{spec\\_val}` and
-    :math:`\\mathrm{spat\\_val}`.
+    ``spatimg`` to obtain :math:`\mathrm{spec\_val}` and
+    :math:`\mathrm{spat\_val}`.
 
     **3. Why bilinear interpolation is a natural and efficient choice here**
 
@@ -3605,7 +3605,7 @@ def _map_pixel_rebin(
 
     Bilinear interpolation is appropriate here because it:
 
-    - uses only the local :math:`2\\times 2` neighborhood surrounding the
+    - uses only the local :math:`2\times 2` neighborhood surrounding the
       query point,
     - is continuous across pixel boundaries,
     - is exact for any coordinate field that varies linearly in either image
@@ -3622,7 +3622,7 @@ def _map_pixel_rebin(
 
     **4. Edge handling**
 
-    Bilinear interpolation requires a full :math:`2\\times 2` stencil.
+    Bilinear interpolation requires a full :math:`2\times 2` stencil.
     Therefore, when the query point lies on the last detector row or column,
     this routine falls back to nearest-neighbor sampling of the coordinate
     fields.  This preserves a sensible mapping at the array boundary without
@@ -3631,25 +3631,25 @@ def _map_pixel_rebin(
     **5. Mapping onto the rebinned grid**
 
     Once the interpolated coordinate values
-    :math:`\\mathrm{spec\\_val}` and :math:`\\mathrm{spat\\_val}` are known,
+    :math:`\mathrm{spec\_val}` and :math:`\mathrm{spat\_val}` are known,
     the function determines the enclosing rebinned output bins by locating the
-    indices :math:`i_{\\rm spec}` and :math:`i_{\\rm spat}` such that
+    indices :math:`i_{\rm spec}` and :math:`i_{\rm spat}` such that
 
     .. math::
 
-        \mathrm{spec\\_bins}[i_{\\rm spec}]
+        \mathrm{spec\_bins}[i_{\rm spec}]
         \le
-        \mathrm{spec\\_val}
+        \mathrm{spec\_val}
         <
-        \mathrm{spec\\_bins}[i_{\\rm spec}+1],
+        \mathrm{spec\_bins}[i_{\rm spec}+1],
 
     .. math::
 
-        \mathrm{spat\\_bins}[i_{\\rm spat}]
+        \mathrm{spat\_bins}[i_{\rm spat}]
         \le
-        \mathrm{spat\\_val}
+        \mathrm{spat\_val}
         <
-        \mathrm{spat\\_bins}[i_{\\rm spat}+1],
+        \mathrm{spat\_bins}[i_{\rm spat}+1],
 
     with the final bin treated according to the usual NumPy histogram
     convention.
@@ -3658,31 +3658,31 @@ def _map_pixel_rebin(
 
     .. math::
 
-        f_{\\rm spec} =
-        \\frac{
-            \mathrm{spec\\_val} - \mathrm{spec\\_bins}[i_{\\rm spec}]
+        f_{\rm spec} =
+        \frac{
+            \mathrm{spec\_val} - \mathrm{spec\_bins}[i_{\rm spec}]
         }{
-            \mathrm{spec\\_bins}[i_{\\rm spec}+1]
-            - \mathrm{spec\\_bins}[i_{\\rm spec}]
+            \mathrm{spec\_bins}[i_{\rm spec}+1]
+            - \mathrm{spec\_bins}[i_{\rm spec}]
         },
 
     .. math::
 
-        f_{\\rm spat} =
-        \\frac{
-            \mathrm{spat\\_val} - \mathrm{spat\\_bins}[i_{\\rm spat}]
+        f_{\rm spat} =
+        \frac{
+            \mathrm{spat\_val} - \mathrm{spat\_bins}[i_{\rm spat}]
         }{
-            \mathrm{spat\\_bins}[i_{\\rm spat}+1]
-            - \mathrm{spat\\_bins}[i_{\\rm spat}]
+            \mathrm{spat\_bins}[i_{\rm spat}+1]
+            - \mathrm{spat\_bins}[i_{\rm spat}]
         }.
 
     The returned fractional rebinned coordinate is therefore
 
     .. math::
 
-        x_{\\rm out} = i_{\\rm spat} + f_{\\rm spat},
+        x_{\rm out} = i_{\rm spat} + f_{\rm spat},
         \qquad
-        y_{\\rm out} = i_{\\rm spec} + f_{\\rm spec}.
+        y_{\rm out} = i_{\rm spec} + f_{\rm spec}.
 
     This convention is edge-based: integer values correspond to output pixel
     edges, not output pixel centers.
