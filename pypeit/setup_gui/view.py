@@ -1449,7 +1449,7 @@ class SetupGUIMainWindow(QMainWindow):
         controller (:class:`pypeit.setup_gui.controller.SetupGUIController`): The controller for the PypeitSetupGUI.
     """
 
-    helpURL = QUrl("https://pypeit.readthedocs.io/en/latest/tutorials/setup_gui.html")
+    helpURL = QUrl("https://pypeit.readthedocs.io/en/stable/tutorials/setup_gui.html")
 
     def __init__(self, model, controller):
         super().__init__(parent=None)

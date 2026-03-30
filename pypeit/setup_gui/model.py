@@ -79,10 +79,7 @@ class LogBuffer(io.TextIOBase):
         """
 
         # Get rid of Terminal escape codes in message
-        message = clear_text_color(message)
-
-        # Store the message
-        self._buffer.append(message)
+        self._buffer.append(clear_text_color(message))
 
         # Notify clients for specific watched log messages
         for watch in self._watches.items():
