@@ -141,6 +141,7 @@ def build_template(in_files, slits, wv_cuts, binspec, outroot, outdir=None,
     # Loop on the files
     for kk, slit in enumerate(slits):
         # Load up
+        pypeitFit = None  # Default value, in case a PypeItFit is not available
         if wvspec is None:
             in_file = in_files[ifiles[kk]]
             if lowredux:
@@ -163,11 +164,10 @@ def build_template(in_files, slits, wv_cuts, binspec, outroot, outdir=None,
             if chk:
                 ax.plot(wv_vac, spec, drawstyle='steps-mid')
             # Rebin spec if binning is different
-            npix = wv_vac.size
             if binning is not None and binning[kk] != binspec:
                 npix_orig = spec.size
                 x_orig = np.arange(npix_orig) / float(npix_orig - 1)
-                npix = int(npix * binning[kk] / binspec)
+                npix = int(npix_orig * binning[kk] / binspec)
                 x = np.arange(npix) / float(npix - 1)
                 # Interpolate the wavelengths and spectrum onto the new grid
                 spec = (interp1d(x_orig, spec, axis=0,
@@ -177,6 +177,7 @@ def build_template(in_files, slits, wv_cuts, binspec, outroot, outdir=None,
             # Default good pixels
             wvmin, wvmax = grab_wvlim(kk, wv_cuts, len(slits))
             gdi = (wv_vac > wvmin) & (wv_vac < wvmax)
+            npix = wv_vac.size
             if shift_wave:
                 if len(lvals) > 0:
                     # Find pixel closet to end
@@ -189,7 +190,10 @@ def build_template(in_files, slits, wv_cuts, binspec, outroot, outdir=None,
                     # Delta pix -- approximate but should be pretty good
                     dpix = dwv_specs / dwv_snipp[ipix]
                     # Calculate new wavelengths
-                    new_wave = pypeitFit.eval((-dpix + np.arange(npix)) / (npix - 1))
+                    if pypeitFit is None:
+                        new_wave = -dwv_specs + wv_vac
+                    else:
+                        new_wave = pypeitFit.eval((-dpix + np.arange(npix)) / (npix - 1))
                     # Range
                     iend = np.argmin(np.abs(new_wave - wvmax))
                     # Interpolate
@@ -228,7 +232,6 @@ def build_template(in_files, slits, wv_cuts, binspec, outroot, outdir=None,
     if chk:
         ax.plot(nwwv, nwspec, 'k-', drawstyle='steps-mid')
         plt.show()
-        embed()
     # Generate the table
     wvutils.write_template(nwwv, nwspec, binspec, outdir, outroot, det_cut=det_cut, overwrite=overwrite)
 
@@ -908,9 +911,9 @@ def main(flg):
         binspec = 1 # Desired binning
         binning = [1, 2] # Spectral binning of each infile
         scalevals = [1.0, 3.4] # Scale the second one down by 2x to match the first
-        lcut = [6620.0]
-        build_template(infiles, slits, lcut, binspec, outroot, scalespec=True,
-                       scalevals=scalevals, binning=binning, reid_files=True, chk=True)
+        lcut = [6910.0]
+        build_template(infiles, slits, lcut, binspec, outroot, scalespec=True, scalevals=scalevals,
+                       binning=binning, reid_files=True, shift_wave=True, chk=True)
 
 
 # Command line execution
