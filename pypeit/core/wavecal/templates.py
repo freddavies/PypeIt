@@ -56,7 +56,7 @@ else:
 
 
 def build_template(in_files, slits, wv_cuts, binspec, outroot, outdir=None,
-                   normalize=False, subtract_conti=False, wvspec=None,
+                   scalespec=False, scalevals=None, subtract_conti=False, wvspec=None,
                    lowredux=False, ifiles=None, det_cut=None, chk=False,
                    miny=None, overwrite=True, ascii_tbl=False, in_vac=True,
                    shift_wave=False, binning=None, micron=False,
@@ -93,9 +93,16 @@ def build_template(in_files, slits, wv_cuts, binspec, outroot, outdir=None,
             Show a plot or two
         miny (float):
             Impose a minimum value
-        normalize (bool, optional):
-            If provided multiple in_files, normalize each
-            snippet to have the same maximum amplitude.
+        scalespec (bool, optional):
+            If True, scale the spectrum by the provided scalevals. If
+            scalevals is None, the spectrum will be scaled to the
+            normalization value (default is 10000). Default is False, which will not scale.
+        scalevals (list, optional):
+            If scalespec is True, the values to scale each spectrum by.
+            Default is None, which will not scale. If provided, the
+            length of scalevals must match the number of in_files. If
+            scalespec is True and scalevals is None, the spectrum will
+            be scaled to the normalization value (default is 10000).
         subtract_conti (bool, optional):
             Subtract the continuum for the final archive
         ascii_tbl (bool, optional):
@@ -117,6 +124,8 @@ def build_template(in_files, slits, wv_cuts, binspec, outroot, outdir=None,
         ifiles = np.arange(len(in_files))
     if binning is None:
         binning = [None]*len(ifiles)
+    if scalespec and scalevals is None:
+        scalevals = [None]*len(ifiles)
     # Load xidl file
     # Grab it
     # Load and splice
@@ -189,15 +198,16 @@ def build_template(in_files, slits, wv_cuts, binspec, outroot, outdir=None,
         for kk,spec in enumerate(yvals):
             _, _, _, _, spec_cont_sub = wvutils.arc_lines_from_spec(spec)
             yvals[kk] = spec_cont_sub
-    # Normalize?
-    if normalize:
-        norm_val = 10000.
-        # Max values
-        maxs = []
-        for kk,spec in enumerate(yvals):
-            mx = np.max(spec)
-            spec = spec * norm_val / mx
-            yvals[kk] = spec
+    # Scale the input spectra by the user-provided scalevals or by the maximum value of each snippet
+    if scalespec:
+        for kk, spec in enumerate(yvals):
+            if scalevals[kk] is not None:
+                scale_factor = scalevals[kk]
+            else:
+                norm_val = 10000.
+                # Use the normalization value if scalevals is not provided
+                scale_factor = norm_val / np.max(spec)
+            yvals[kk] = spec * scale_factor
     # Concatenate
     nwspec = np.concatenate(yvals)
     nwwv = np.concatenate(lvals)
@@ -603,7 +613,7 @@ def main(flg):
         lcut = [7840.]
         wfile = template_path / 'Keck_LRIS' / 'R600_7500' / 'MasterWaveCalib_I_1_01.json'
         build_template(wfile, slits, lcut, binspec, outroot, lowredux=False,
-                       chk=True, normalize=True, subtract_conti=True)
+                       chk=True, scalespec=True, subtract_conti=True)
 
     # ##################################
     # Magellan/MagE
@@ -877,6 +887,21 @@ def main(flg):
         outfile = dataPaths.reid_arxiv.path / iout
         tbl.write(outfile, overwrite=True)
         print("Wrote: {}".format(outfile))
+    # Keck KCWI
+    if flg & (2**35):
+        pass
+    # Keck KCRM
+    if flg & (2**36):
+        dirc = template_path / 'KCWI' / 'RM1'
+        infiles = [dirc / 'keck_kcrm_rm1_lcen6230.fits',dirc / 'keck_kcrm_rm1_lcen7010.fits']
+        outroot = 'keck_kcrm_RM1.fits'
+        slits = [0, 0]
+        binspec = 1 # Desired binning
+        binning = [1, 2] # Spectral binning of each infile
+        scalevals = [1.0, 3.4] # Scale the second one down by 2x to match the first
+        lcut = [6620.0]
+        build_template(infiles, slits, lcut, binspec, outroot, scalespec=True,
+                       scalevals=scalevals, binning=binning, reid_files=True)
 
 
 # Command line execution
@@ -938,6 +963,12 @@ if __name__ == '__main__':
 
     # P200 Triplespec
     #flg += 2**34
+
+    # Keck KCWI
+    #flg += 2**35
+
+    # Keck KCRM
+    flg += 2**36
 
     main(flg)
 
