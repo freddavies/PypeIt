@@ -126,6 +126,10 @@ def build_template(in_files, slits, wv_cuts, binspec, outroot, outdir=None,
         binning = [None]*len(ifiles)
     if scalespec and scalevals is None:
         scalevals = [None]*len(ifiles)
+    # Prepare an axis if we are debugging
+    if chk:
+        plt.clf()
+        ax = plt.gca()
     # Load xidl file
     # Grab it
     # Load and splice
@@ -155,8 +159,23 @@ def build_template(in_files, slits, wv_cuts, binspec, outroot, outdir=None,
         log.info("wvmin, wvmax of {}: {}, {}".format(in_file, wv_vac.min(), wv_vac.max()))
         # Cut
         if len(slits) > 1:
+            # Plot the inputs if we are debugging
+            if chk:
+                ax.plot(wv_vac, spec, drawstyle='steps-mid')
+            # Rebin spec if binning is different
+            npix = wv_vac.size
+            if binning is not None and binning[kk] != binspec:
+                npix_orig = spec.size
+                x_orig = np.arange(npix_orig) / float(npix_orig - 1)
+                npix = int(npix * binning[kk] / binspec)
+                x = np.arange(npix) / float(npix - 1)
+                # Interpolate the wavelengths and spectrum onto the new grid
+                spec = (interp1d(x_orig, spec, axis=0,
+                                 bounds_error=False, fill_value='extrapolate'))(x)
+                wv_vac = (interp1d(x_orig, wv_vac, axis=0,
+                                 bounds_error=False, fill_value='extrapolate'))(x)
+            # Default good pixels
             wvmin, wvmax = grab_wvlim(kk, wv_cuts, len(slits))
-            # Default
             gdi = (wv_vac > wvmin) & (wv_vac < wvmax)
             if shift_wave:
                 if len(lvals) > 0:
@@ -170,15 +189,6 @@ def build_template(in_files, slits, wv_cuts, binspec, outroot, outdir=None,
                     # Delta pix -- approximate but should be pretty good
                     dpix = dwv_specs / dwv_snipp[ipix]
                     # Calculate new wavelengths
-                    npix = wv_vac.size
-                    # Rebin spec?
-                    if binning is not None and binning[kk] != binspec:
-                        npix_orig = spec.size
-                        x_orig = np.arange(npix_orig) / float(npix_orig - 1)
-                        x = np.arange(npix) / float(npix - 1)
-                        spec = (interp1d(x_orig, spec, axis=0,
-                                         bounds_error=False, fill_value='extrapolate'))(x)
-                    # Evaluate
                     new_wave = pypeitFit.eval((-dpix + np.arange(npix)) / (npix - 1))
                     # Range
                     iend = np.argmin(np.abs(new_wave - wvmax))
@@ -216,10 +226,9 @@ def build_template(in_files, slits, wv_cuts, binspec, outroot, outdir=None,
         nwspec = np.maximum(nwspec, miny)
     # Check
     if chk:
-        plt.clf()
-        ax = plt.gca()
-        ax.plot(nwwv, nwspec)
+        ax.plot(nwwv, nwspec, 'k-', drawstyle='steps-mid')
         plt.show()
+        embed()
     # Generate the table
     wvutils.write_template(nwwv, nwspec, binspec, outdir, outroot, det_cut=det_cut, overwrite=overwrite)
 
@@ -901,7 +910,7 @@ def main(flg):
         scalevals = [1.0, 3.4] # Scale the second one down by 2x to match the first
         lcut = [6620.0]
         build_template(infiles, slits, lcut, binspec, outroot, scalespec=True,
-                       scalevals=scalevals, binning=binning, reid_files=True)
+                       scalevals=scalevals, binning=binning, reid_files=True, chk=True)
 
 
 # Command line execution
