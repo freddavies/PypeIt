@@ -25,8 +25,7 @@ from pypeit.utils import all_subclasses
 
 def mAB_to_cgs(wave, mAB):
     """
-    Convert AB magnitudes to :math:`F_\lambda` in the cgs units :math:`{\rm
-    erg/cm}^2{\rm/s}/\AA`.
+    Convert AB magnitudes to :math:`F_\lambda` in the cgs units :math:`{\rm erg/cm}^2{\rm/s}/\AA`.
 
     Parameters
     ----------
