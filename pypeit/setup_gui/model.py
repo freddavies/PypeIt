@@ -22,7 +22,7 @@ from configobj import ConfigObj
 from datetime import datetime, timezone
 
 from pypeit import log
-from pypeit.logger import clear_text_color
+from pypeit.pkg.logger import clear_text_color
 from pypeit import spectrographs
 from pypeit.spectrographs.util import available_spectrographs
 from pypeit.pypeitsetup import PypeItSetup
