@@ -197,7 +197,7 @@ respect to the first image.  This is controlled through the parameters:
         offsets = auto
         spat_toler = 5
 
-Because ``pypeit_coadd_2dspec`` rebinns the input input images onto a common
+Because ``pypeit_coadd_2dspec`` rebins the input input images onto a common
 grid for the coaddition, the default execution is to refind all objects in each
 of the input frames and target the brightest one as the object of interest.
 

@@ -37,7 +37,41 @@ from pypeit.manual_extract import ManualExtractionObj
 class CoAdd2dStack:
     """ CoAdd 2D Stack dataclass
 
-    Replaces previous use of a dictionary for storing this information
+    Attributes
+    ----------
+    specobjs_list
+        List of <>
+    slits_list
+        List of <>
+    slitmask_stack
+        List of <>
+    sciimg_stack
+        List of <>
+    sciivar_stack
+        List of <>
+    skymodel_stack
+        List of <>
+    mask_stack
+        List of <>
+    waveimg_stack
+        List of <>
+    exptime_stack
+        List of exposure times
+    exptime_coadd
+        Definitive exposure time of the coaddition
+    redux_path
+        The reduction path
+    detectors
+        List of <>
+    spectrograph
+        Name of the spectrograph
+    pypeline
+        Pypeline
+    maskdef_designtab_list
+        List of <>
+    spat_flexure_list
+        List of <>
+    
     """
     specobjs_list:list
     slits_list:list

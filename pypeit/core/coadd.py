@@ -6,21 +6,18 @@ Coadding module.
 
 """
 
-import os
 import sys
 import copy
 import string
 
 from IPython import embed
 
-import numpy as np
-import scipy
-
-import matplotlib.pyplot as plt
-from matplotlib.ticker import NullFormatter, NullLocator, MaxNLocator
-
 from astropy import stats
 from astropy import convolution
+import matplotlib.pyplot as plt
+from matplotlib.ticker import NullFormatter, NullLocator, MaxNLocator
+import numpy as np
+import scipy
 
 from pypeit import log
 from pypeit import PypeItError
@@ -3722,36 +3719,25 @@ def _map_pixel_rebin(
     if not (0.0 <= i <= nspec - 1 and 0.0 <= j <= nspat - 1):
         return None
 
-    i0 = int(np.floor(i))
-    j0 = int(np.floor(j))
+    # Detector-grid coordinates for interpn: axis 0 = rows (SPEC), axis 1 = cols (SPAT)
+    points = (np.arange(nspec, dtype=float), np.arange(nspat, dtype=float))
+    xi = np.array([[i, j]], dtype=float)
 
-    # Use bilinear interpolation only when the full 2x2 stencil exists.
-    if i0 < nspec - 1 and j0 < nspat - 1:
-        # Fractional offsets within the cell
-        f = np.array([i - i0, j - j0])   # [fi, fj]
-
-        # 1D interpolation weights
-        wi = np.array([1.0 - f[0], f[0]])   # along rows (SPEC)
-        wj = np.array([1.0 - f[1], f[1]])   # along cols (SPAT)
-
-        # 2x2 patches
-        patch_wave = waveimg[i0:i0+2, j0:j0+2]
-        patch_spat = spatimg[i0:i0+2, j0:j0+2]
-
-        # Bilinear interpolation (matrix form)
-        spec_val = wi @ patch_wave @ wj
-        spat_val = wi @ patch_spat @ wj
-
+    if i < nspec - 1 and j < nspat - 1:
+        # Use bilinear interpolation when a full 2x2 stencil exists
+        method = 'linear'
     else:
-        # Fall back to nearest-neighbor if the 2x2 stencil would go out of bounds
-        ii, jj = np.clip(
-            np.floor([i, j] + 0.5).astype(int),
-            [0, 0],
-            [nspec - 1, nspat - 1],
-        )
+        # Otherwise, use nearest-neighbor at the array edge
+        method = 'nearest'
 
-        spec_val = waveimg[ii, jj]
-        spat_val = spatimg[ii, jj]
+    spec_val = float(scipy.interpolate.interpn(points, waveimg, xi, method=method,
+                             bounds_error=False, fill_value=np.nan)[0])
+    spat_val = float(scipy.interpolate.interpn(points, spatimg, xi, method=method,
+                             bounds_error=False, fill_value=np.nan)[0])
+
+    # Error-checking
+    if not np.isfinite(spec_val) or not np.isfinite(spat_val):
+        return None
 
     # Locate enclosing output bins
     ispec = np.searchsorted(spec_bins, spec_val, side='right') - 1
