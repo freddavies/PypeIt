@@ -151,9 +151,11 @@ class WaveTilts(calibframe.CalibFrame):
             slit_idx = self.spatid_to_zero(slit_spat)
             # Calculate
             coeff_out = self.coeffs[:self.spec_order[slit_idx]+1,:self.spat_order[slit_idx]+1,slit_idx]
-            _tilts = tracewave.fit2tilts(final_tilts.shape, coeff_out, self.func2d, spat_shift=-1*_flexure)
-            # Fill
             thismask_science = slitmask == slit_spat
+            _tilts = tracewave.fit2tilts(final_tilts.shape, coeff_out, self.func2d,
+                                         spat_shift=-1*_flexure,
+                                         slit_mask=thismask_science)
+            # Fill
             final_tilts[thismask_science] = _tilts[thismask_science]
         # Return
         return final_tilts
