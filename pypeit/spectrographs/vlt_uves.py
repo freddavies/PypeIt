@@ -3,10 +3,14 @@ Module for VLT/UVES
 
 .. include:: ../include/links.rst
 """
+from pathlib import Path
 
 from IPython import embed
 
 import numpy as np
+
+from astropy.io import fits
+from astropy.table import Table
 
 from pypeit import log
 from pypeit import telescopes
@@ -14,6 +18,7 @@ from pypeit.core import parse
 from pypeit.core import framematch
 from pypeit.spectrographs import spectrograph
 from pypeit.images import detector_container
+from pypeit.par import parset
 from pypeit.images.mosaic import Mosaic
 from pypeit.core.mosaic import build_image_mosaic_transform
 
@@ -62,7 +67,6 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
         """
         self.meta = {}
         # Required (core)
-        # same as in vlt_xshooter
         self.meta['ra'] = dict(ext=0, card='RA',
             required_ftypes=['science', 'standard'])  # Need to convert to : separated
         self.meta['dec'] = dict(ext=0, card='DEC', required_ftypes=['science', 'standard'])
@@ -73,12 +77,11 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
         self.meta['airmass'] = dict(ext=0, card='HIERARCH ESO TEL AIRM START', required_ftypes=['science', 'standard'])
         # Extras for config and frametyping
         self.meta['dispname'] = dict(card=None, compound=True)
-        self.meta['idname'] = dict(ext=0, card='HIERARCH ESO DPR CATG')
+        self.meta['idname'] = dict(ext=0, card='HIERARCH ESO DPR TYPE')
         self.meta['arm'] = dict(card=None, compound=True)
         self.meta['instrument'] = dict(ext=0, card='INSTRUME')
-        self.meta['decker'] = dict(ext=0, card='HIERARCH ESO INS SLIT2 WID')
         self.meta['echangle'] = dict(card=None, default=0.0)  # There is no header card for this, but it is required
-        self.meta['xdangle'] = dict(card=None, compound=True, rtol=0.01)  # There is not tolerance, really, because it's the central wavelength.
+        self.meta['xdangle'] = dict(card=None, compound=True, rtol=0.01)  # There is no tolerance, really, because it's the central wavelength.
 
     def compound_meta(self, headarr, meta_key):
         """
@@ -207,23 +210,25 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
         # TODO: Allow for 'sky' frame type, for now include sky in
         # 'science' category
         if ftype == 'science':
-            return good_exp & ((fitstbl['idname'] == 'SCIENCE')
-                                | (fitstbl['target'] == 'STD,TELLURIC')
-                                | (fitstbl['target'] == 'STD,SKY'))
+            return good_exp & ((fitstbl['idname'] == 'OBJECT')
+                | (fitstbl['idname'] == 'OBJECT,POINT')
+                | (fitstbl['idname'] == 'SCIENCE')
+                | (fitstbl['idname'] == 'STD,TELLURIC')
+                | (fitstbl['idname'] == 'STD,SKY'))
         if ftype == 'standard':
-            return good_exp & (fitstbl['target'] == 'STD,FLUX')
+            return good_exp & (fitstbl['idname'] == 'STD,FLUX')
         if ftype == 'bias':
-            return good_exp & (fitstbl['target'] == 'BIAS')
+            return good_exp & (fitstbl['idname'] == 'BIAS')
         if ftype == 'dark':
-            return good_exp & (fitstbl['target'] == 'DARK')
+            return good_exp & (fitstbl['idname'] == 'DARK')
         if ftype in ['pixelflat', 'trace', 'illumflat']:
             # Flats and trace frames are typed together
-            return good_exp & (fitstbl['target'] == 'LAMP,FLAT')
+            return good_exp & (fitstbl['idname'] == 'LAMP,FLAT')
         if ftype == 'pinhole':
             # Don't type pinhole
             return np.zeros(len(fitstbl), dtype=bool)
         if ftype in ['arc', 'tilt']:
-            return good_exp & (fitstbl['target'] == 'LAMP,WAVE')
+            return good_exp & (fitstbl['idname'] == 'LAMP,WAVE')
 
         log.warning('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
@@ -275,18 +280,6 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
 
         return type_bits
 
-    # def get_echelle_angle_files(self):
-    #     """ Pass back the files required
-    #     to run the echelle method of wavecalib
-    #
-    #     Returns:
-    #         list: List of files
-    #     """
-    #     angle_fits_file = 'keck_hires_angle_fits.fits'
-    #     composite_arc_file = 'keck_hires_composite_arc.fits'
-    #
-    #     return [angle_fits_file, composite_arc_file]
-
     def order_platescale(self, order_vec, binning=None):
         """
         Return the platescale for each echelle order.
@@ -330,8 +323,17 @@ class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
     name = 'vlt_uves_blue'
     camera = 'VLT_UVES_blue'
     ndet = 1
-    
-    # TODO: Place holder parameter set taken from X-shooter VIS for now.
+
+    def init_meta(self):
+        """
+        Define how metadata are derived from the spectrograph files.
+
+        That is, this associates the PypeIt-specific metadata keywords
+        with the instrument-specific header cards using :attr:`meta`.
+        """
+        super().init_meta()
+        self.meta['decker'] = dict(ext=0, card='HIERARCH ESO INS SLIT2 WID')
+
     @classmethod
     def default_pypeit_par(cls):
         """
@@ -342,9 +344,6 @@ class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
             all of PypeIt methods.
         """
         par = super().default_pypeit_par()
-
-        # what is this?
-        # par['rdx']['detnum'] = [(1,2,3)]
 
         # Adjustments to parameters for Keck HIRES
         turn_off_on = dict(use_biasimage=False, use_overscan=True, overscan_method='median')
@@ -497,15 +496,20 @@ class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
 
         return detector_container.DetectorContainer(**detector_dict)
 
-    def config_specific_par(self, scifile, inp_par=None):
+    def config_specific_par(
+            self,
+            inp:str|list|Path|fits.Header|Table,
+            inp_par:parset.ParSet|None=None
+        ) -> parset.ParSet:
         """
         Modify the PypeIt parameters to hard-wired values used for
         specific instrument configurations.
 
         Args:
-            scifile (:obj:`str`):
-                File to use when determining the configuration and how
-                to adjust the input parameters.
+            inp (:obj:`str`, :obj:`list`, `Path`_, `astropy.io.fits.Header`_, `astropy.table.Table`_):
+                Input filename, an `astropy.io.fits.Header`_ object, or a list
+                of `astropy.io.fits.Header`_ objects.  Or a row from the
+                metadata table.
             inp_par (:class:`~pypeit.par.parset.ParSet`, optional):
                 Parameter set used for the full run of PypeIt.  If None,
                 use :func:`default_pypeit_par`.
@@ -514,11 +518,9 @@ class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
-        par = super().config_specific_par(scifile, inp_par=inp_par)
+        par = super().config_specific_par(inp, inp_par=inp_par)
 
-        headarr = self.get_headarr(scifile)
-
-        bin_spec, bin_spat = parse.parse_binning(self.get_meta_value(headarr, 'binning'))
+        bin_spec, bin_spat = parse.parse_binning(self.get_meta_value(inp, 'binning'))
 
         # slit edges
         # NOTE: With add_missed_orders set to True and order_spat_range set to the
@@ -651,9 +653,18 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
 
     name = 'vlt_uves_red'
     camera = 'VLT_UVES_red'
-    ndet = 3
-    
-        # TODO: Place holder parameter set taken from X-shooter VIS for now.
+    ndet = 2
+
+    def init_meta(self):
+        """
+        Define how metadata are derived from the spectrograph files.
+
+        That is, this associates the PypeIt-specific metadata keywords
+        with the instrument-specific header cards using :attr:`meta`.
+        """
+        super().init_meta()
+        self.meta['decker'] = dict(ext=0, card='HIERARCH ESO INS SLIT3 WID')
+
     @classmethod
     def default_pypeit_par(cls):
         """
@@ -665,8 +676,7 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
         """
         par = super().default_pypeit_par()
 
-        # what is this?
-        par['rdx']['detnum'] = [(1,2,3)]
+        par['rdx']['detnum'] = [(1,2)]
 
         # Adjustments to parameters for Keck HIRES
         turn_off_on = dict(use_biasimage=False, use_overscan=True, overscan_method='median')
@@ -675,6 +685,40 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
         # standards are read with a different read mode and we don't yet have
         # the option to use different sets of biases for different standards,
         # or use the overscan for standards but not for science frames
+
+        # Setup dependent -- This is only temporary until we have the reidentification files for all the red settings
+        # 564l
+        # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
+        par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_564l_1x1.fits'
+        par['rdx']['detnum'] = [(1,)]
+        # 564u
+        # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
+        # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_564u_1x1.fits'
+        # par['rdx']['detnum'] = [(2,)]
+        # 580l
+        # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
+        # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_580l_1x1.fits'
+        # par['rdx']['detnum'] = [(1,)]
+        # 580u
+        # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
+        # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_580u_1x1.fits'
+        # par['rdx']['detnum'] = [(2,)]
+        # 760l
+        # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
+        # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_760l_1x1.fits'
+        # par['rdx']['detnum'] = [(1,)]
+        # 760u
+        # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
+        # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_760u_1x1.fits'
+        # par['rdx']['detnum'] = [(2,)]
+        # 860l
+        # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
+        # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_860l_1x1.fits'
+        # par['rdx']['detnum'] = [(1,)]
+        # 860u
+        # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
+        # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_860u_1x1.fits'
+        # par['rdx']['detnum'] = [(2,)]
 
         # Set the default exposure time ranges for the frame typing
         par['calibrations']['biasframe']['exprng'] = [None, 0.001]
@@ -730,7 +774,7 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
         par['calibrations']['wavelengths']['ech_nspec_coeff'] = 5
         par['calibrations']['wavelengths']['ech_norder_coeff'] = 3
         par['calibrations']['wavelengths']['ech_sigrej'] = 2.0
-        par['calibrations']['wavelengths']['ech_separate_2d'] = True
+        par['calibrations']['wavelengths']['ech_separate_2d'] = True  # TODO :: Before merging, this should be False
         par['calibrations']['wavelengths']['bad_orders_maxfrac'] = 0.5
 
         # Flats
@@ -766,15 +810,20 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
 
         return par
 
-    def config_specific_par(self, scifile, inp_par=None):
+    def config_specific_par(
+            self,
+            inp:str|list|Path|fits.Header|Table,
+            inp_par:parset.ParSet|None=None
+        ) -> parset.ParSet:
         """
         Modify the PypeIt parameters to hard-wired values used for
         specific instrument configurations.
 
         Args:
-            scifile (:obj:`str`):
-                File to use when determining the configuration and how
-                to adjust the input parameters.
+            inp (:obj:`str`, :obj:`list`, `Path`_, `astropy.io.fits.Header`_, `astropy.table.Table`_):
+                Input filename, an `astropy.io.fits.Header`_ object, or a list
+                of `astropy.io.fits.Header`_ objects.  Or a row from the
+                metadata table.
             inp_par (:class:`~pypeit.par.parset.ParSet`, optional):
                 Parameter set used for the full run of PypeIt.  If None,
                 use :func:`default_pypeit_par`.
@@ -783,17 +832,15 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
             :class:`~pypeit.par.parset.ParSet`: The PypeIt parameter set
             adjusted for configuration specific parameter values.
         """
-        par = super().config_specific_par(scifile, inp_par=inp_par)
+        par = super().config_specific_par(inp, inp_par=inp_par)
 
-        headarr = self.get_headarr(scifile)
-
-        bin_spec, bin_spat = parse.parse_binning(self.get_meta_value(headarr, 'binning'))
+        bin_spec, bin_spat = parse.parse_binning(self.get_meta_value(inp, 'binning'))
 
         # slit edges
         # NOTE: With add_missed_orders set to True and order_spat_range set to the
         # default (None), the code will try to add missing orders over the full
         # range of the detector mosaic!
-        par['calibrations']['slitedges']['order_spat_range'] = [10., 6200./bin_spat]
+        par['calibrations']['slitedges']['order_spat_range'] = [10., 4100./bin_spat]
 
         # wavelength
         par['calibrations']['wavelengths']['fwhm'] = 8.0/bin_spec
@@ -813,11 +860,11 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
             detector numbers that can be combined into a mosaic and processed by
             PypeIt.
         """
-        return [(1,2,3)]
+        return [(1,), (1,2)]
         
     @property
     def default_mosaic(self):
-        return self.allowed_mosaics[0]
+        return self.allowed_mosaics[1]
     
     def get_mosaic_par(self, mosaic, hdu=None, msc_ord=0):
         """
@@ -865,8 +912,8 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
         # Collect the offsets and rotations for *all unbinned* detectors in the
         # full instrument, ordered by the number of the detector.  Detector
         # numbers must be sequential and 1-indexed.
-        # See the mosaic documentattion.
-        msc_geometry = HIRESMosaicLookUp.geometry
+        # See the mosaic documentation.
+        msc_geometry = UVESMosaicLookUp.geometry
         expected_shape = msc_geometry[detid]['default_shape']
         shift = np.array([(msc_geometry[detid]['det1']['shift'][0], msc_geometry[detid]['det1']['shift'][1]),
                           (msc_geometry[detid]['det2']['shift'][0], msc_geometry[detid]['det2']['shift'][1])])
@@ -882,12 +929,12 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
         msc_rot = [None]*nimg
         msc_tfm = [None]*nimg
 
-        for i in range(nimg):
-            msc_sft[i] = shift[i]
-            msc_rot[i] = rotation[i]
+        for ii in range(nimg):
+            msc_sft[ii] = shift[ii]
+            msc_rot[ii] = rotation[ii]
             # binning is here in the PypeIt convention of (binspec, binspat), but the mosaic tranformations
             # occur in the raw data frame, which flips spectral and spatial
-            msc_tfm[i] = build_image_mosaic_transform(shape, msc_sft[i], msc_rot[i], tuple(reversed(binning)))
+            msc_tfm[ii] = build_image_mosaic_transform(shape, msc_sft[ii], msc_rot[ii], tuple(reversed(binning)))
 
         return Mosaic(mosaic_id, detectors, shape, np.array(msc_sft), np.array(msc_rot),
                       np.array(msc_tfm), msc_ord)
@@ -924,8 +971,8 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
             saturation      = 65535.,
             nonlinear       = 0.7, # Website says 0.6, but we'll push it a bit
             mincounts       = -1e10,
-            numamplifiers   = 1,
-            ronoise         = np.atleast_1d([2.8]),
+            numamplifiers   = np.atleast_1d([hdu[1].header['HIERARCH ESO DET OUT1 GAIN']]),
+            ronoise         = np.atleast_1d([hdu[1].header['HIERARCH ESO DET OUT1 RON']]),
             )
 
         # Detector 2.
@@ -933,45 +980,31 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
         detector_dict2.update(dict(
             det=2,
             dataext=2,
-            ronoise=np.atleast_1d([3.1])
+            gain=np.atleast_1d([hdu[2].header['HIERARCH ESO DET OUT1 GAIN']]),
+            ronoise=np.atleast_1d([hdu[2].header['HIERARCH ESO DET OUT1 RON']]),
         ))
 
-
-        # Detector 3,.
-        detector_dict3 = detector_dict1.copy()
-        detector_dict3.update(dict(
-            det=3,
-            dataext=3,
-            ronoise=np.atleast_1d([3.1])
-        ))
-
-        # Set gain
-        # https://www2.keck.hawaii.edu/inst/hires/instrument_specifications.html
-        if hdu is None or hdu[0].header['CCDGAIN'].strip() == 'low':
-            detector_dict1['gain'] = np.atleast_1d([1.9])
-            detector_dict2['gain'] = np.atleast_1d([2.1])
-            detector_dict3['gain'] = np.atleast_1d([2.1])
-        elif hdu[0].header['CCDGAIN'].strip() == 'high':
-            detector_dict1['gain'] = np.atleast_1d([0.78])
-            detector_dict2['gain'] = np.atleast_1d([0.86])
-            detector_dict3['gain'] = np.atleast_1d([0.84])
-        else:
-            log.error("Bad CCDGAIN mode for HIRES")
-            
         # Instantiate
-        detector_dicts = [detector_dict1, detector_dict2, detector_dict3]
+        detector_dicts = [detector_dict1, detector_dict2]
         return detector_container.DetectorContainer( **detector_dicts[det-1])
 
 
-def indexing(itt, postpix, det=None,xbin=1,ybin=1):
+def indexing(itt, postpix, det=None, xbin=1, ybin=1):
     """
-    Some annoying book-keeping for instrument placement.
+    Some annoying bookkeeping for instrument placement.
 
     Parameters
     ----------
     itt : int
     postpix : int
     det : int, optional
+        Detector number.
+    xbin : int, optional
+        The binning in the spectral direction.  This is needed to determine the
+        size of the unbinned image and thus the location of the postpix.
+    ybin : int, optional
+        The binning in the spatial direction.  This is needed to determine the
+        size of the unbinned image and thus the location of the postpix.
 
     Returns
     -------
@@ -998,58 +1031,3 @@ def indexing(itt, postpix, det=None,xbin=1,ybin=1):
 
     # Return
     return x1, x2, y1, y2, o_x1, o_x2, o_y1, o_y2
-
-# def uves_read_1chip(hdu,chipno):
-#     """ Read one of the HIRES detectors
-#
-#     Parameters
-#     ----------
-#     hdu : HDUList
-#     chipno : int
-#
-#     Returns
-#     -------
-#     data : ndarray
-#     oscan : ndarray
-#     """
-#
-#     # Extract datasec from header
-#     x_pix = hdu[0].header['NAXIS1']
-#     x0 = hdu[0].header['HIERARCH ESO DET WIN1 STRX']
-#     y_pix = hdu[0].header['NAXIS2']
-#     y0 = hdu[0].header['HIERARCH ESO DET WIN1 STRY']
-#     precol = hdu[0].header['HIERARCH ESO DET OUT1 PRSCX']
-#     postpix = hdu[0].header['HIERARCH ESO DET OUT1 OVSCX']
-#
-#     x1_dat = precol + x0
-#     x2_dat = x_pix - postpix
-#     y1_dat = y0
-#     y2_dat = y_pix
-#
-#     x1_det = x0
-#     x2_det = hdu[0].header['HIERARCH ESO DET OUT1 NX']
-#     y1_det = y0
-#     y2_det = hdu[0].header['HIERARCH ESO DET OUT1 NY']
-#
-#     # This rotates the image to be increasing wavelength to the top
-#     #data = np.rot90((hdu[chipno].data).T, k=2)
-#     #nx=data.shape[0]
-#     #ny=data.shape[1]
-#
-#     # Science data
-#     fullimage = hdu[chipno].data
-#     data = fullimage[x1_dat:x2_dat,y1_dat:y2_dat]
-#
-#     # Overscan
-#     oscan = fullimage[:,y2_dat:]
-#
-#     # Flip as needed
-#     if x1_det > x2_det:
-#         data = np.flipud(data)
-#         oscan = np.flipud(oscan)
-#     if y1_det > y2_det:
-#         data = np.fliplr(data)
-#         oscan = np.fliplr(oscan)
-#
-#     # Return
-#     return data, oscan
