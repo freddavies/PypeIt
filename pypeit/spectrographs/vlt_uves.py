@@ -51,7 +51,7 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
     url = 'https://www.eso.org/sci/facilities/paranal/instruments/uves.html'
     header_name = 'UVES'
     pypeline = 'Echelle'
-    ech_fixed_format = False
+    ech_fixed_format = True
     supported = False
     # TODO before support = True
     # 1. Implement flat fielding - DONE
@@ -537,7 +537,7 @@ class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
     # @property
     # def norders(self):
     #     """
-    #     Number of orders observed for this spectograph.
+    #     Number of orders observed for this spectrograph.
     #     """
     #     # 346
     #     # return 33
@@ -689,36 +689,36 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
         # Setup dependent -- This is only temporary until we have the reidentification files for all the red settings
         # 564l
         # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
-        par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_564l_1x1.fits'
-        par['rdx']['detnum'] = [(1,)]
+        # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_564l_1x1.fits'
+        # par['rdx']['detnum'] = 1
         # 564u
         # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
         # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_564u_1x1.fits'
-        # par['rdx']['detnum'] = [(2,)]
+        # par['rdx']['detnum'] = 2
         # 580l
         # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
-        # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_580l_1x1.fits'
-        # par['rdx']['detnum'] = [(1,)]
+        par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_580l_1x1.fits'
+        par['rdx']['detnum'] = 1
         # 580u
         # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
         # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_580u_1x1.fits'
-        # par['rdx']['detnum'] = [(2,)]
+        # par['rdx']['detnum'] = 2
         # 760l
         # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
         # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_760l_1x1.fits'
-        # par['rdx']['detnum'] = [(1,)]
+        # par['rdx']['detnum'] = 1
         # 760u
         # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
         # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_760u_1x1.fits'
-        # par['rdx']['detnum'] = [(2,)]
+        # par['rdx']['detnum'] = 2
         # 860l
         # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
         # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_860l_1x1.fits'
-        # par['rdx']['detnum'] = [(1,)]
+        # par['rdx']['detnum'] = 1
         # 860u
         # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
         # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_860u_1x1.fits'
-        # par['rdx']['detnum'] = [(2,)]
+        # par['rdx']['detnum'] = 2
 
         # Set the default exposure time ranges for the frame typing
         par['calibrations']['biasframe']['exprng'] = [None, 0.001]
@@ -763,18 +763,18 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
 
         par['calibrations']['wavelengths']['match_toler'] = 1.5
         # Reidentification parameters
-        par['calibrations']['wavelengths']['method'] = 'echelle'
+        par['calibrations']['wavelengths']['method'] = 'reidentify'# 'echelle' TODO :: This should be changed to echelle before merging
         par['calibrations']['wavelengths']['cc_shift_range'] = (-80.,80.)
         par['calibrations']['wavelengths']['cc_thresh'] = 0.6
         par['calibrations']['wavelengths']['cc_local_thresh'] = 0.25
-        par['calibrations']['wavelengths']['reid_cont_sub'] = False
+        par['calibrations']['wavelengths']['reid_cont_sub'] = True
 
         # Echelle parameters
         par['calibrations']['wavelengths']['echelle'] = True
         par['calibrations']['wavelengths']['ech_nspec_coeff'] = 5
         par['calibrations']['wavelengths']['ech_norder_coeff'] = 3
         par['calibrations']['wavelengths']['ech_sigrej'] = 2.0
-        par['calibrations']['wavelengths']['ech_separate_2d'] = True  # TODO :: Before merging, this should be False
+        par['calibrations']['wavelengths']['ech_separate_2d'] = False
         par['calibrations']['wavelengths']['bad_orders_maxfrac'] = 0.5
 
         # Flats
@@ -850,6 +850,7 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
     
     @property
     def allowed_mosaics(self):
+        # TODO :: Move this to the parent?
         """
         Return the list of allowed detector mosaics.
 
@@ -962,32 +963,140 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
         detector_dict1 = dict(
             binning         = binning,
             det             = 1,
-            dataext         = 1,
+            dataext         = 2,
             specaxis        = 0,
-            specflip        = False,
-            spatflip        = False,
+            specflip        = True,
+            spatflip        = True,
             platescale      = 0.135,
             darkcurr        = 0.0,  # e-/pixel/hour
             saturation      = 65535.,
             nonlinear       = 0.7, # Website says 0.6, but we'll push it a bit
             mincounts       = -1e10,
-            numamplifiers   = np.atleast_1d([hdu[1].header['HIERARCH ESO DET OUT1 GAIN']]),
-            ronoise         = np.atleast_1d([hdu[1].header['HIERARCH ESO DET OUT1 RON']]),
+            numamplifiers   = 1,
+            gain            = np.atleast_1d([hdu[2].header['HIERARCH ESO DET OUT1 GAIN']]),
+            ronoise         = np.atleast_1d([hdu[2].header['HIERARCH ESO DET OUT1 RON']]),
+            datasec         = np.atleast_1d('[:,57:2098]'), # '[49:2000,1:2999]',  49  2099
+            oscansec        = np.atleast_1d('[:,2102:]'), # '[1:48, 1:2999]',
             )
 
         # Detector 2.
         detector_dict2 = detector_dict1.copy()
         detector_dict2.update(dict(
             det=2,
-            dataext=2,
-            gain=np.atleast_1d([hdu[2].header['HIERARCH ESO DET OUT1 GAIN']]),
-            ronoise=np.atleast_1d([hdu[2].header['HIERARCH ESO DET OUT1 RON']]),
+            dataext=1,
+            gain=np.atleast_1d([hdu[1].header['HIERARCH ESO DET OUT1 GAIN']]),
+            ronoise=np.atleast_1d([hdu[1].header['HIERARCH ESO DET OUT1 RON']]),
+            datasec=np.atleast_1d('[:,57:2098]'),  # TODO :: CHECK ME BEFORE MERGING
+            oscansec=np.atleast_1d('[:,2102:]'),  # TODO :: CHECK ME BEFORE MERGING
         ))
 
         # Instantiate
         detector_dicts = [detector_dict1, detector_dict2]
         return detector_container.DetectorContainer( **detector_dicts[det-1])
 
+    @property
+    def norders(self):
+        """
+        Number of orders observed for this spectrograph.
+        """
+        # 564l
+        return 24
+        # 564u
+        # return 16
+        # 580l
+        # return 23
+        # 580u
+        # return 16
+        # 760l
+        # return 27
+        # 760u
+        # return 16
+        # 860l
+        # return 20
+        # 860u
+        # return 12
+
+    @property
+    def order_spat_pos(self):
+        """
+        Return the expected spatial position of each echelle order.
+
+        The following lines generated the values below:
+
+        .. code-block:: python
+
+            from pypeit import edgetrace
+            edges = edgetrace.EdgeTraceSet.from_file('Edges_A_1_DET01.fits.gz')
+
+            nrm_edges = edges.edge_fit[edges.nspec//2,:] / edges.nspat
+            slit_cen = ((nrm_edges + np.roll(nrm_edges,1))/2)[np.arange(nrm_edges.size//2)*2+1]
+
+        """
+        # 564l
+        return np.array([0.01578222, 0.05138392, 0.08686124, 0.1229205 , 0.15956966,
+                        0.19682514, 0.23469824, 0.27320327, 0.31235287, 0.35216309,
+                        0.39264916, 0.43382898, 0.47571848, 0.51833697, 0.56169515,
+                        0.60581347, 0.65070743, 0.69639906, 0.74290928, 0.79025851,
+                        0.83847016, 0.88756732, 0.93757559, 0.98655107])
+        # 564u
+        # return np.array([1.03830383, 1.0909761 , 1.1445786 , 1.19912095, 1.25461123,
+        #        1.31105596, 1.36845973, 1.42682524, 1.48615291, 1.54644082,
+        #        1.60768437, 1.66987614, 1.73300574, 1.7970593 , 1.8620196 ,
+        #        1.92786571, 1.99457265])
+
+    @property
+    def order_spat_width(self):
+        """
+        Return the expected spatial position of each echelle order.
+
+        The following lines generated the values below:
+
+        .. code-block:: python
+
+            import numpy as np
+            from pypeit import slittrace
+            slits = slittrace.SlitTraceSet.from_file('Slits_A_0_DET01.fits.gz')
+
+            np.median(slits.right_init-slits.left_init, axis=0)/slits.nspat
+
+        """
+        # 564l and 564u
+        return np.array([0.03]*self.norders)
+
+    @property
+    def orders(self):
+        """
+        Return the order number for each echelle order.
+        """
+        # 564l
+        return np.array([132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109], dtype=int)
+        # 564u
+        # return np.array([107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92], dtype=int)
+        # 580l
+        # return np.array([128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106], dtype=int)
+        # 580u
+        # return np.array([105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90], dtype=int)
+        # 760l
+        # return np.array([107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81], dtype=int)
+        # 760u
+        # return np.array([80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65], dtype=int)
+        # 860l
+        # return np.array([91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72], dtype=int)
+        # 860u
+        # return np.array([71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60], dtype=int)
+
+    @property
+    def spec_min_max(self):
+        """
+        Return the minimum and maximum spectral pixel expected for the
+        spectral range of each order.
+        """
+        # 564l
+        # spec_max = np.asarray([3000]*32 + [925])#, 2460
+        # spec_min = np.asarray([635] + [0]*32)
+        spec_max = np.asarray([4096]*23 + [2050])#, 2460
+        spec_min = np.asarray([1500] + [0]*23)
+        return np.vstack((spec_min, spec_max))
 
 def indexing(itt, postpix, det=None, xbin=1, ybin=1):
     """
