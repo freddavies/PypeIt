@@ -900,24 +900,18 @@ def fit2tilts(shape, coeff2, func2d, spat_shift=None, slit_mask=None):
     pypeitFit = fitting.PypeItFit(fitc=coeff2, minx=0.0, maxx=1.0,
                                   minx2=0.0, maxx2=1.0, func=func2d)
 
-    if slit_mask is not None:
-        # Evaluate only at slit pixels to save memory
-        spec_pix, spat_pix = np.where(slit_mask)
-        tilts_vals = pypeitFit.eval(spec_pix / xnspecmin1,
-                                    x2=(spat_pix - _spat_shift) / xnspatmin1)
-        tilts_vals = np.fmax(np.fmin(tilts_vals, 1.2), -0.2)
-        tilts = np.zeros(shape, dtype=float)
-        tilts[slit_mask] = tilts_vals
-        del tilts_vals, spec_pix, spat_pix
+    if slit_mask is None:
+        spat_pix, spec_pix = map(
+            lambda x : x.ravel(), np.meshgrid(np.arange(nspat), np.arange(nspec))
+        )
     else:
-        # Full-frame meshgrid evaluation
-        spec_vec = np.arange(nspec)
-        spat_vec = np.arange(nspat) - _spat_shift
-        spat_img, spec_img = np.meshgrid(spat_vec, spec_vec)
-        tilts = pypeitFit.eval(spec_img / xnspecmin1, x2=spat_img / xnspatmin1)
-        # Added this to ensure that tilts are never crazy values due to
-        # extrapolation of fits which can break wavelength solution fitting
-        tilts = np.fmax(np.fmin(tilts, 1.2), -0.2)
+        spec_pix, spat_pix = np.where(slit_mask)
+
+    tilts_vals = pypeitFit.eval(spec_pix / xnspecmin1, x2=(spat_pix - _spat_shift) / xnspatmin1)
+    tilts_vals = np.fmax(np.fmin(tilts_vals, 1.2), -0.2)
+    tilts = np.zeros(shape, dtype=float)
+    tilts[(spec_pix,spat_pix)] = tilts_vals
+    del tilts_vals, spec_pix, spat_pix
 
     return tilts
 
