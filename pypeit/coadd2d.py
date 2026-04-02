@@ -145,15 +145,13 @@ class CoAdd2D:
     -----
     The overall workflow is:
 
-    #. Load the per-exposure data products into a
-    :class:`~pypeit.core.coadd2d.CoAdd2dStack`.
-    #. Determine the subset of slits or orders that are valid for coaddition.
-    #. Compute relative offsets among the exposures.
-    #. Compute the weights used during coaddition.
-    #. Rectify and coadd the input images slit-by-slit or order-by-order.
-    #. Build a pseudo-image from the coadd outputs.
-    #. Run the extraction and bookkeeping steps needed to write the coadded
-    products to disk.
+        #. Load the per-exposure data products into a :class:`~pypeit.core.coadd2d.CoAdd2dStack`.
+        #. Determine the subset of slits or orders that are valid for coaddition.
+        #. Compute relative offsets among the exposures.
+        #. Compute the weights used during coaddition.
+        #. Rectify and coadd the input images slit-by-slit or order-by-order.
+        #. Build a pseudo-image from the coadd outputs.
+        #. Run the extraction and bookkeeping steps needed to write the coadded products to disk.
 
     See Also
     --------
@@ -209,7 +207,7 @@ class CoAdd2D:
 
         Returns
         -------
-        CoAdd2D
+        :class:`CoAdd2D`
             Instance of the subclass appropriate for the requested reduction mode.
         """
 
@@ -759,10 +757,10 @@ class CoAdd2D:
         The pseudo-image is the rectified, stacked image representation consumed by
         the later extraction steps.
 
-        ..todo.. see below
+        .. todo::
 
-        THIS UNDOCUMENTED CODE PROBABLY SHOULD GENERATE AND RETURN
-        STANDARD PYPEIT OBJCTS INSTEAD OF SOME UNDEFINED DICT
+            THIS UNDOCUMENTED CODE PROBABLY SHOULD GENERATE AND RETURN
+            STANDARD PYPEIT OBJCTS INSTEAD OF SOME UNDEFINED DICT
         """
 
         # Check that self.nslit is equal to len(coadd_list)
@@ -1146,7 +1144,7 @@ class CoAdd2D:
 
         Returns
         -------
-        CoAdd2dStack
+        :class:`CoAdd2dStack`
             Dataclass containing the stacked science images, masks, coordinate
             images, slit definitions, exposure times, and related metadata needed for
             coaddition.
@@ -2276,8 +2274,9 @@ class EchelleCoAdd2D(CoAdd2D):
             Tuple containing:
 
             - the reference-object echelle fractional-position identifiers for each
-            exposure, and
+              exposure, and
             - the average S/N values of the selected object in each exposure.
+
         """
         log.info('Finding brightest object')
         nexp = len(specobjs_list)
