@@ -4,8 +4,8 @@ Tests for Binospec overscan subtraction and nonlinearity correction.
 import numpy as np
 import pytest
 
-from pypeit.spectrographs.mmt_binospec import (clean_overscan_vector,
-                                                binospec_read_amp,
+from pypeit.core.procimg import clean_overscan_vector
+from pypeit.spectrographs.mmt_binospec import (binospec_read_amp,
                                                 MMTBINOSPECSpectrograph)
 
 

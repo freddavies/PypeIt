@@ -15,7 +15,6 @@ import matplotlib.pyplot as plt
 from matplotlib import patches
 import numpy as np
 from astropy.stats import sigma_clipped_stats
-from scipy.ndimage import median_filter
 
 from pypeit import io
 from pypeit import log
@@ -24,6 +23,7 @@ from pypeit import telescopes
 from pypeit import utils
 from pypeit.core import framematch
 from pypeit.core import parse
+from pypeit.core import procimg
 from pypeit.images import detector_container
 from pypeit.par import parset
 from pypeit.spectrographs import spectrograph
@@ -1054,48 +1054,6 @@ def _plot_region(ax, region, color, side_label):
     ax.legend()
 
 
-def clean_overscan_vector(overscan, w=9, nsig=1.0, rdnoise=4.0):
-    """
-    Clean a 1D overscan vector by median-filtering and interpolating
-    over outliers.
-
-    Replicates the IDL ``clean_overscan_vector`` function from
-    ``bino_mosaic.pro``.
-
-    Parameters
-    ----------
-    overscan : `numpy.ndarray`_
-        1D overscan vector to clean.
-    w : :obj:`int`, optional
-        Window size for median filtering. Must be >= 3. Default is 9.
-    nsig : :obj:`float`, optional
-        Sigma threshold for outlier rejection. Pixels deviating from
-        the median-filtered vector by more than ``nsig * rdnoise`` are
-        replaced by interpolation. Default is 1.0.
-    rdnoise : :obj:`float`, optional
-        Read noise in ADU, used to set the outlier threshold.
-        Default is 4.0.
-
-    Returns
-    -------
-    clean : `numpy.ndarray`_
-        Cleaned overscan vector with outliers interpolated over.
-    """
-    w = max(w, 3)
-    m_overscan = median_filter(overscan, size=w, mode='reflect')
-    bad = np.abs(overscan - m_overscan) > rdnoise * nsig
-    good = ~bad
-    if not np.any(bad):
-        return overscan.copy()
-    if not np.any(good):
-        return overscan.copy()
-    clean = overscan.copy()
-    good_idx = np.where(good)[0]
-    bad_idx = np.where(bad)[0]
-    clean[bad_idx] = np.interp(bad_idx, good_idx, overscan[good_idx])
-    return clean
-
-
 def binospec_read_amp(inp, ext):
     """
     Read one amplifier of an MMT BINOSPEC multi-extension FITS image
@@ -1143,7 +1101,7 @@ def binospec_read_amp(inp, ext):
     if y2 < nyt:
         overscan_y = temp[:, y2:nyt]
         overscan_vec, _, _ = sigma_clipped_stats(overscan_y, sigma=3.0, axis=1)
-        overscan_vec = clean_overscan_vector(overscan_vec, w=9, nsig=1.0)
+        overscan_vec = procimg.clean_overscan_vector(overscan_vec, w=9, nsig=1.0)
         temp = temp - overscan_vec[:, None]
 
     # X-axis overscan: prescan + postscan columns
@@ -1155,7 +1113,7 @@ def binospec_read_amp(inp, ext):
     if len(overscan_x_regions) > 0:
         overscan_x = np.concatenate(overscan_x_regions, axis=0)
         overscan_x_vec, _, _ = sigma_clipped_stats(overscan_x, sigma=3.0, axis=0)
-        overscan_x_vec = clean_overscan_vector(overscan_x_vec, w=9, nsig=1.0)
+        overscan_x_vec = procimg.clean_overscan_vector(overscan_x_vec, w=9, nsig=1.0)
         temp = temp - overscan_x_vec[None, :]
 
     # Crop to datasec
