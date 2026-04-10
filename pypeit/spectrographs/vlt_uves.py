@@ -34,10 +34,14 @@ class UVESMosaicLookUp:
         # blue
         'MSC01': {'default_shape': (2048, 4096),
                   'det1': {'shift': (0., 0.), 'rotation': 0.},},
-        # red
-        'MSC02': {'default_shape': (2048 * 2 + 67.0, 4096),
+        # red -- Note: Dekker et al. (2000) say that the red arm has a mosaic of two 2k x 4k CCDs, with a gap of 0.96mm,
+        # corresponding to 64 pixels (15 um pixels), however, RJC trimmed each detector by 3 pixels on each side in the
+        # cross-dispersion direction. Therefore, instead of 2048 it's 2042, and instead of 64 pixel gap, it's 70 pixels
+        # (3 pixels on each side of the two detectors, plus the 64 pixel gap).
+        # Using the fit_mosaic_parameters (on the 564, 580, 760, 860 setups) in the dev-suite, the best fit for the gap is 104 pixels
+        'MSC02': {'default_shape': (2042 * 2 + 104.0, 4096),
                   'det1': {'shift': (0., 0.), 'rotation': 0.},
-                  'det2': {'shift': (2048.0 + 67.0, 0.), 'rotation': 0.}},
+                  'det2': {'shift': (2042.0 + 104.0, 0.), 'rotation': 0.}},
     }
 
 class VLTUVESSpectrograph(spectrograph.Spectrograph):
@@ -51,7 +55,7 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
     url = 'https://www.eso.org/sci/facilities/paranal/instruments/uves.html'
     header_name = 'UVES'
     pypeline = 'Echelle'
-    ech_fixed_format = True
+    ech_fixed_format = False
     supported = False
     # TODO before support = True
     # 1. Implement flat fielding - DONE
@@ -316,7 +320,6 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
         return [angle_fits_file, composite_arc_file]
 
 
-
 # default_pypeit_par, config_specific_par and get_detector_par different for each arm??
 class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
     
@@ -357,11 +360,11 @@ class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
         par['calibrations']['biasframe']['exprng'] = [None, 0.001]
         #par['calibrations']['darkframe']['exprng'] = [999999, None]     # No dark frames
         #par['calibrations']['pinholeframe']['exprng'] = [999999, None]  # No pinhole frames on UVES ??
-        par['calibrations']['pixelflatframe']['exprng'] = [None, 60]
-        par['calibrations']['traceframe']['exprng'] = [None, 60]
-        par['calibrations']['illumflatframe']['exprng'] = [None, 60]
+        par['calibrations']['pixelflatframe']['exprng'] = [None, 120]
+        par['calibrations']['traceframe']['exprng'] = [None, 120]
+        par['calibrations']['illumflatframe']['exprng'] = [None, 120]
         par['calibrations']['standardframe']['exprng'] = [1, 600]
-        par['scienceframe']['exprng'] = [601, None]
+        par['scienceframe']['exprng'] = [30, None]
 
         # Slit tracing
         par['calibrations']['slitedges']['edge_thresh'] = 8.0
@@ -490,8 +493,8 @@ class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
             numamplifiers   = 1,
             gain            = np.atleast_1d([gain]),
             ronoise         = np.atleast_1d([ronoise]),
-            datasec         = np.atleast_1d('[:,51:2098]'), # '[49:2000,1:2999]',  49  2099
-            oscansec        = np.atleast_1d('[:,4:50]'), # '[1:48, 1:2999]',
+            datasec         = np.atleast_1d('[:,51:2098]'), # Any changes to this line should also be made in the mosaic geometry at the top of this file.
+            oscansec        = np.atleast_1d('[:,4:50]'),
             )
 
         return detector_container.DetectorContainer(**detector_dict)
@@ -687,36 +690,29 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
         # or use the overscan for standards but not for science frames
 
         # Setup dependent -- This is only temporary until we have the reidentification files for all the red settings
+        # par['calibrations']['wavelengths']['n_final'] = [3] + cls().norders*[4] + [3]
         # 564l
-        # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
         # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_564l_1x1.fits'
         # par['rdx']['detnum'] = 1
         # 564u
-        # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
         # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_564u_1x1.fits'
         # par['rdx']['detnum'] = 2
         # 580l
-        # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
         # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_580l_1x1.fits'
         # par['rdx']['detnum'] = 1
         # 580u
-        # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
         # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_580u_1x1.fits'
         # par['rdx']['detnum'] = 2
         # 760l
-        # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
         # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_760l_1x1.fits'
         # par['rdx']['detnum'] = 1
         # 760u
-        # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
-        par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_760u_1x1.fits'
-        par['rdx']['detnum'] = 2
+        # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_760u_1x1.fits'
+        # par['rdx']['detnum'] = 2
         # 860l
-        # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
         # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_860l_1x1.fits'
         # par['rdx']['detnum'] = 1
         # 860u
-        # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
         # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_860u_1x1.fits'
         # par['rdx']['detnum'] = 2
 
@@ -724,11 +720,11 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
         par['calibrations']['biasframe']['exprng'] = [None, 0.001]
         #par['calibrations']['darkframe']['exprng'] = [999999, None]     # No dark frames
         #par['calibrations']['pinholeframe']['exprng'] = [999999, None]  # No pinhole frames on UVES ??
-        par['calibrations']['pixelflatframe']['exprng'] = [None, 60]
-        par['calibrations']['traceframe']['exprng'] = [None, 60]
-        par['calibrations']['illumflatframe']['exprng'] = [None, 60]
+        par['calibrations']['pixelflatframe']['exprng'] = [None, 120]
+        par['calibrations']['traceframe']['exprng'] = [None, 120]
+        par['calibrations']['illumflatframe']['exprng'] = [None, 120]
         par['calibrations']['standardframe']['exprng'] = [1, 600]
-        par['scienceframe']['exprng'] = [601, None]
+        par['scienceframe']['exprng'] = [30, None]
 
         # Set default processing for slitless_pixflat
         par['calibrations']['slitless_pixflatframe']['process']['scale_to_mean'] = True
@@ -746,7 +742,7 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
         par['calibrations']['slitedges']['mask_off_detector'] = True
 
         par['calibrations']['slitedges']['add_missed_orders'] = True
-        par['calibrations']['slitedges']['order_width_poly'] = 2
+        par['calibrations']['slitedges']['order_width_poly'] = 4
         par['calibrations']['slitedges']['order_gap_poly'] = 3
 
         # These are the defaults
@@ -763,7 +759,7 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
 
         par['calibrations']['wavelengths']['match_toler'] = 1.5
         # Reidentification parameters
-        par['calibrations']['wavelengths']['method'] = 'reidentify'# 'echelle' TODO :: This should be changed to echelle before merging
+        par['calibrations']['wavelengths']['method'] = 'echelle'
         par['calibrations']['wavelengths']['cc_shift_range'] = (-80.,80.)
         par['calibrations']['wavelengths']['cc_thresh'] = 0.6
         par['calibrations']['wavelengths']['cc_local_thresh'] = 0.25
@@ -840,7 +836,7 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
         # NOTE: With add_missed_orders set to True and order_spat_range set to the
         # default (None), the code will try to add missing orders over the full
         # range of the detector mosaic!
-        par['calibrations']['slitedges']['order_spat_range'] = [10., 4100./bin_spat]
+        par['calibrations']['slitedges']['order_spat_range'] = [-20/bin_spat, (2042+20)/bin_spat]
 
         # wavelength
         par['calibrations']['wavelengths']['fwhm'] = 8.0/bin_spec
@@ -933,7 +929,7 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
         for ii in range(nimg):
             msc_sft[ii] = shift[ii]
             msc_rot[ii] = rotation[ii]
-            # binning is here in the PypeIt convention of (binspec, binspat), but the mosaic tranformations
+            # binning is here in the PypeIt convention of (binspec, binspat), but the mosaic transformations
             # occur in the raw data frame, which flips spectral and spatial
             msc_tfm[ii] = build_image_mosaic_transform(shape, msc_sft[ii], msc_rot[ii], tuple(reversed(binning)))
 
@@ -989,7 +985,7 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
                 dataext=0,
                 gain=np.atleast_1d([hdu[0].header['HIERARCH ESO DET OUT4 GAIN']]),
                 ronoise=np.atleast_1d([hdu[0].header['HIERARCH ESO DET OUT4 RON']]),
-                datasec=np.atleast_1d('[:,2200:4243]'),
+                datasec=np.atleast_1d('[:,2201:4242]'), # Any changes to this line requires changes to the mosaic at the top of this file.
                 oscansec=np.atleast_1d('[:,4246:4292]'),
             ))
 
@@ -1012,7 +1008,7 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
                 dataext=2,
                 gain=np.atleast_1d([hdu[2].header['HIERARCH ESO DET OUT1 GAIN']]),
                 ronoise=np.atleast_1d([hdu[2].header['HIERARCH ESO DET OUT1 RON']]),
-                datasec=np.atleast_1d('[:,57:2098]'),
+                datasec=np.atleast_1d('[:,57:2098]'), # Any changes to this line requires changes to the mosaic at the top of this file.
                 oscansec=np.atleast_1d('[:,2102:]'),
             ))
 
@@ -1023,176 +1019,168 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
                 dataext=1,
                 gain=np.atleast_1d([hdu[1].header['HIERARCH ESO DET OUT1 GAIN']]),
                 ronoise=np.atleast_1d([hdu[1].header['HIERARCH ESO DET OUT1 RON']]),
-                datasec=np.atleast_1d('[:,57:2098]'),  # TODO :: CHECK ME BEFORE MERGING
-                oscansec=np.atleast_1d('[:,2102:]'),  # TODO :: CHECK ME BEFORE MERGING
+                datasec=np.atleast_1d('[:,57:2098]'),
+                oscansec=np.atleast_1d('[:,2102:]'),
             ))
 
         # Instantiate
         detector_dicts = [detector_dict1, detector_dict2]
         return detector_container.DetectorContainer( **detector_dicts[det-1])
 
-    @property
-    def norders(self):
-        """
-        Number of orders observed for this spectrograph.
-        """
-        # 564l
-        # return 24
-        # 564u
-        # return 16
-        # 580l
-        # return 23
-        # 580u
-        # return 16
-        # 760l
-        # return 27
-        # 760u
-        return 16
-        # 860l
-        # return 20
-        # 860u
-        # return 12
-
-    @property
-    def order_spat_pos(self):
-        """
-        Return the expected spatial position of each echelle order.
-
-        The following lines generated the values below:
-
-        .. code-block:: python
-
-            from pypeit import edgetrace
-            import numpy as np
-            edges = edgetrace.EdgeTraceSet.from_file('Edges_A_1_DET01.fits.gz')
-
-            nrm_edges = edges.edge_fit[edges.nspec//2,:] / edges.nspat
-            slit_cen = ((nrm_edges + np.roll(nrm_edges,1))/2)[np.arange(nrm_edges.size//2)*2+1]
-        """
-        # 564l
-        # return np.array([0.01578222, 0.05138392, 0.08686124, 0.1229205 , 0.15956966,
-        #                 0.19682514, 0.23469824, 0.27320327, 0.31235287, 0.35216309,
-        #                 0.39264916, 0.43382898, 0.47571848, 0.51833697, 0.56169515,
-        #                 0.60581347, 0.65070743, 0.69639906, 0.74290928, 0.79025851,
-        #                 0.83847016, 0.88756732, 0.93757559, 0.98655107])
-        # 564u
-        # return np.array([1.03830383, 1.0909761 , 1.1445786 , 1.19912095, 1.25461123,
-        #        1.31105596, 1.36845973, 1.42682524, 1.48615291, 1.54644082,
-        #        1.60768437, 1.66987614, 1.73300574, 1.7970593 , 1.8620196 ,
-        #        1.92786571])-1.0
-        # 580l
-        # return np.array([0.00331805, 0.04051166, 0.07836001, 0.11683764, 0.15595799, 0.19573661,
-        #                  0.2361895 , 0.27733181, 0.31918132, 0.36175304, 0.40506604,
-        #                  0.44913884, 0.49399043, 0.53963986, 0.58609923, 0.63339613,
-        #                  0.68155325, 0.73059184, 0.78053567, 0.83141012, 0.88324067,
-        #                  0.93605624, 0.98658355])
-        # 580u
-        # return np.array([0.98658355, 1.04134111, 1.09713602, 1.15399128, 1.21193007, 1.27097549,
-        #                  1.33115066, 1.39247863, 1.45498233, 1.51868434, 1.583607  ,
-        #                  1.64977215, 1.71720131, 1.78591519, 1.85593368, 1.92727595])-1.0
-        # 760l
-        # return np.array([0.02183773, 0.05053537, 0.07979247, 0.10962473, 0.14005186,
-        #                  0.17108576, 0.20274669, 0.23504974, 0.26801479, 0.30166046,
-        #                  0.33600903, 0.37108002, 0.40689516, 0.44347488, 0.48084019,
-        #                  0.51902689, 0.55804775, 0.59793554, 0.63871922, 0.68042751,
-        #                  0.72309037, 0.76674139, 0.81141437, 0.85714477, 0.90397296,
-        #                  0.95193807, 0.99918404])
-        # 760u
-        return np.array([1.04940386, 1.10086063, 1.15357713, 1.20759186, 1.26294418,
-                         1.31967411, 1.37782262, 1.43743125, 1.49854233, 1.56119859,
-                         1.62544327, 1.69132011, 1.75887269, 1.82814509, 1.8991808,
-                         1.97202318])-1.0
-        # 860l
-        # return np.array([0.02392221, 0.06217453, 0.10308607, 0.14492544, 0.18771547,
-        #                  0.23148646, 0.27627465, 0.32210859, 0.36903165, 0.41708141,
-        #                  0.46629847, 0.51673004, 0.56841656, 0.62139887, 0.67573416,
-        #                  0.73147532, 0.78867386, 0.84739494, 0.9076995 , 0.96965012])
-        # 860u
-        # return np.array([1.03333505, 1.09881419, 1.16616242, 1.23546258, 1.30680295,
-        #        1.38027745, 1.45598595, 1.53403522, 1.61453928, 1.69761977,
-        #        1.78340725, 1.87204153, 1.96367285])-1.0
-
-    @property
-    def order_spat_width(self):
-        """
-        Return the expected spatial position of each echelle order.
-
-        The following lines generated the values below:
-
-        .. code-block:: python
-
-            import numpy as np
-            from pypeit import slittrace
-            slits = slittrace.SlitTraceSet.from_file('Slits_B_1_DET01.fits.gz')
-
-            tmp = np.median(slits.right_init-slits.left_init, axis=0)/slits.nspat
-            print(tmp)
-            print(np.median(tmp))
-        """
-        # 564l and 564u
-        # return np.array([0.03]*self.norders)
-        # 580l and 580u
-        # return np.array([0.0325]*self.norders)
-        # 760l and 760u
-        return np.array([0.023]*self.norders)
-        # 860l and 860u
-        # return np.array([0.034]*self.norders)
-
-    @property
-    def orders(self):
-        """
-        Return the order number for each echelle order.
-        """
-        # 564l
-        # return np.array([132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109], dtype=int)
-        # 564u
-        # return np.array([107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92], dtype=int)
-        # 580l
-        # return np.array([128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106], dtype=int)
-        # 580u
-        # return np.array([106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91], dtype=int)
-        # 760l
-        # return np.array([107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81], dtype=int)
-        # 760u
-        return np.array([81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66], dtype=int)
-        # 860l
-        # return np.array([91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72], dtype=int)
-        # 860u
-        # return np.array([71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60], dtype=int)
-
-    @property
-    def spec_min_max(self):
-        """
-        Return the minimum and maximum spectral pixel expected for the
-        spectral range of each order.
-        """
-        # 564l
-        # spec_max = np.asarray([4096]*23 + [2050])
-        # spec_min = np.asarray([1500] + [0]*23)
-        # 564u
-        # spec_max = np.asarray([4096]*15 + [2600])
-        # spec_min = np.asarray([2750] + [0]*15)
-        # 580l
-        # spec_max = np.asarray([4096]*22 + [2510])
-        # spec_min = np.asarray([2050] + [0]*22)
-        # 580u
-        # spec_max = np.asarray([4096]*15 + [2950])
-        # spec_min = np.asarray([2750] + [0]*15)
-        # 760l
-        # spec_max = np.asarray([4096]*26 + [1180])
-        # spec_min = np.asarray([250] + [0]*26)
-        # 760u
-        spec_max = np.asarray([4096]*16)
-        spec_min = np.asarray([2520] + [0]*15)
-        # 860l
-        # spec_max = np.asarray([4096]*19 + [3800])
-        # spec_min = np.asarray([800] + [0]*19)
-        # 860u
-        # spec_max = np.asarray([4096]*11 + [2050])
-        # spec_min = np.asarray([1500] + [0]*11)
-        return np.vstack((spec_min, spec_max))
+    # @property
+    # def norders(self):
+    #     """
+    #     Number of orders observed for this spectrograph.
+    #     """
+    #     return 24  # 564l
+    #     return 16  # 564u
+    #     return 23  # 580l
+    #     return 16  # 580u
+    #     return 27  # 760l
+    #     return 16  # 760u
+    #     return 20  # 860l
+    #     return 13  # 860u
+    #
+#     @property
+#     def order_spat_pos(self):
+#         """
+#         Return the expected spatial position of each echelle order.
+#
+#         The following lines generated the values below:
+#
+#         .. code-block:: python
+#
+#             from pypeit import edgetrace
+#             import numpy as np
+#             edges = edgetrace.EdgeTraceSet.from_file('Edges_H_7_DET02.fits.gz')
+#
+#             nrm_edges = edges.edge_fit[edges.nspec//2,:] / edges.nspat
+#             slit_cen = ((nrm_edges + np.roll(nrm_edges,1))/2)[np.arange(nrm_edges.size//2)*2+1]
+#         """
+#         # 564l
+#         # return np.array([0.01578222, 0.05138392, 0.08686124, 0.1229205 , 0.15956966,
+#         #                 0.19682514, 0.23469824, 0.27320327, 0.31235287, 0.35216309,
+#         #                 0.39264916, 0.43382898, 0.47571848, 0.51833697, 0.56169515,
+#         #                 0.60581347, 0.65070743, 0.69639906, 0.74290928, 0.79025851,
+#         #                 0.83847016, 0.88756732, 0.93757559, 0.98655107])
+#         # 564u
+#         # return np.array([0.04356585, 0.09744982, 0.15237898, 0.20838549, 0.26550201,
+#         #                  0.32375955, 0.38319573, 0.4438481 , 0.50575516, 0.56895762,
+#         #                  0.63350089, 0.69943186, 0.76679414, 0.8356444 , 0.90603342,
+#         #                  0.98124762])
+#         # 580l
+#         # return np.array([-0.00666975,  0.04932947,  0.10641487,  0.16463922,  0.22403526,
+#         #                  0.28464966,  0.34650731,  0.40965558,  0.47413649,  0.53999441,
+#         #                  0.60727987,  0.67603839,  0.74632731,  0.81820221,  0.89171804,
+#         #                  0.96691536])
+#         # 580u
+#         # return np.array([-0.0058766,  0.04932947,  0.10641487,  0.16463922,  0.22403526,
+#         #                  0.28464966,  0.34650731,  0.40965558,  0.47413649,  0.53999441,
+#         #                  0.60727987,  0.67603839,  0.74632731,  0.81820221,  0.89171804,
+#         #                  0.96691536])
+#         # 760l
+#         # return np.array([0.02183773, 0.05053537, 0.07979247, 0.10962473, 0.14005186,
+#         #                  0.17108576, 0.20274669, 0.23504974, 0.26801479, 0.30166046,
+#         #                  0.33600903, 0.37108002, 0.40689516, 0.44347488, 0.48084019,
+#         #                  0.51902689, 0.55804775, 0.59793554, 0.63871922, 0.68042751,
+#         #                  0.72309037, 0.76674139, 0.81141437, 0.85714477, 0.90397296,
+#         #                  0.95193807, 0.99918404])
+#         # 760u
+#         # return np.array([-0.00228510, 0.04915505, 0.10209448, 0.15640136, 0.21213053, 0.26934722,
+#         #        0.32809903, 0.38845984, 0.45049678, 0.51428256, 0.57989583,
+#         #        0.64742068, 0.71694612, 0.78857003, 0.86239197, 0.93852161])#, 1.01707693])
+#         # 860l
+#         # return np.array([0.02370136, 0.06174571, 0.10269732, 0.14457767, 0.18740961,
+#         #                  0.23122347, 0.27605553, 0.32193436, 0.36890337, 0.4170002 ,
+#         #                  0.46626546, 0.51674642, 0.56848357, 0.62151777, 0.67590628,
+#         #                  0.73170204, 0.7889566 , 0.84773519, 0.90809881, 0.9701096 ])
+#         # 860u
+#         return np.array([0.04758201, 0.1148355 , 0.18419335, 0.25561299, 0.32914172,
+#                          0.40505491, 0.48333775, 0.56381127, 0.64708008, 0.73297388,
+#                          0.82163438, 0.9131291 , 1.00757825])
+#
+#     @property
+#     def order_spat_width(self):
+#         """
+#         Return the expected spatial position of each echelle order.
+#
+#         The following lines generated the values below:
+#
+#         .. code-block:: python
+#
+#             import numpy as np
+#             from pypeit import slittrace
+#             slits = slittrace.SlitTraceSet.from_file('Slits_B_1_DET01.fits.gz')
+#
+#             tmp = np.median(slits.right_init-slits.left_init, axis=0)/slits.nspat
+#             print(tmp)
+#             print(np.median(tmp))
+#         """
+#         # 564l and 564u
+#         # return np.array([0.03]*self.norders)
+#         # 580l and 580u
+#         # return np.array([0.0325]*self.norders)
+#         # 760l and 760u
+#         # return np.array([0.023]*self.norders)
+#         # 860l and 860u
+#         return np.array([0.034]*self.norders)
+#
+#     @property
+#     def orders(self):
+#         """
+#         Return the order number for each echelle order.
+#         """
+#         # 564l
+#         # return np.array([132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109], dtype=int)
+#         # 564u
+#         # return np.array([107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92], dtype=int)
+#         # 580l
+#         # return np.array([128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106], dtype=int)
+#         # 580u
+#         # return np.array([105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90], dtype=int)
+#         # 760l
+#         # return np.array([107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81], dtype=int)
+#         # 760u
+#         # return np.array([80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65], dtype=int)
+#         # 860l
+#         # return np.array([91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72], dtype=int)
+#         # 860u
+#         return np.array([70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58], dtype=int)
+#
+#     @property
+#     def spec_min_max(self):
+#         """
+#         Return the minimum and maximum spectral pixel expected for the
+#         spectral range of each order.
+#         """
+#         # 564l
+#         # spec_max = np.asarray([4096]*23 + [2050])
+#         # spec_min = np.asarray([1500] + [0]*23)
+#         # 564u
+#         # spec_max = np.asarray([4096]*15 + [2600])
+#         # spec_min = np.asarray([2750] + [0]*15)
+#         # 580l
+#         # spec_max = np.asarray([4096]*22 + [2510])
+#         # spec_min = np.asarray([2050] + [0]*22)
+#         # 580u
+#         # spec_max = np.asarray([4096]*15 + [3000])
+#         # spec_min = np.asarray([2700] + [0]*15)
+#         # 760l
+#         # spec_max = np.asarray([4096]*26 + [1180])
+#         # spec_min = np.asarray([250] + [0]*26)
+#         # 760u
+#         # spec_max = np.asarray([4096]*16)
+#         # spec_min = np.asarray([2700] + [0]*15)
+#         # 860l
+#         # spec_max = np.asarray([4096]*19 + [3800])
+#         # spec_min = np.asarray([800] + [0]*19)
+#         # 860u
+#         spec_max = np.asarray([4096]*12 + [1440])
+#         spec_min = np.asarray([0]*13)
+#         return np.vstack((spec_min, spec_max))
 
 def indexing(itt, postpix, det=None, xbin=1, ybin=1):
+    # TODO :: Is this function even needed?
     """
     Some annoying bookkeeping for instrument placement.
 
@@ -1213,12 +1201,15 @@ def indexing(itt, postpix, det=None, xbin=1, ybin=1):
     -------
 
     """
+    log.warning("Currently in the indexing function, which is a bit of a mess.  This should be cleaned up before merging.")
+    embed()
+    assert False
     # Deal with single chip
     if det is not None:
         tt = 0
     else:
         tt = itt
-    ii = int(np.round(2048/xbin))
+    ii = int(np.round(2048/xbin))  # TODO :: Before merging, the 2048 should be 2048 for the blue chip, but 2042 for the red chip.
     jj = int(np.round(4096/ybin))
     # y indices
     y1, y2 = 0, jj
