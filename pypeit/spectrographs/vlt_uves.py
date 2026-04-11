@@ -968,62 +968,62 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
             nonlinear       = 0.7, # Website says 0.6, but we'll push it a bit
             mincounts       = -1e10,
             numamplifiers   = 1,
-            # Placeholders, will be updated for each detector
-            det=0,
-            dataext=0,
-            gain=np.atleast_1d([1.0]),
-            ronoise=np.atleast_1d([1.0]),
-            datasec=np.atleast_1d('[:,]'),
-            oscansec=np.atleast_1d('[:,]'),
+            # Placeholders, will be updated for each detector -- must all be None, so that  the code will break
+            # if it tries to obtain information without passing in the hdu argument.
+            det=None,
+            dataext=None,
+            gain=None,
+            ronoise=None,
+            datasec=None,
+            oscansec=None,
         )
         # Now, depending on the HDU format (which changed at some point into multi-extension fits files),
         # we need to extract information from different HDUs for the two detectors.
-        if len(hdu) == 1:
-            # This is the old format, where the two detectors are stored in a single HDU
-            # Detector 1
-            detector_dict1 = detector_base.copy()
-            detector_dict1.update(dict(
-                det=1,
-                dataext=0,
-                gain=np.atleast_1d([hdu[0].header['HIERARCH ESO DET OUT4 GAIN']]),
-                ronoise=np.atleast_1d([hdu[0].header['HIERARCH ESO DET OUT4 RON']]),
-                datasec=np.atleast_1d('[:,2201:4242]'), # Any changes to this line requires changes to the mosaic at the top of this file.
-                oscansec=np.atleast_1d('[:,4246:4292]'),
-            ))
+        detector_dict1 = detector_base.copy()
+        detector_dict2 = detector_base.copy()
+        if hdu is not None:
+            if len(hdu) == 1:
+                # This is the old format, where the two detectors are stored in a single HDU
+                # Detector 1
+                detector_dict1.update(dict(
+                    det=1,
+                    dataext=0,
+                    gain=np.atleast_1d([hdu[0].header['HIERARCH ESO DET OUT4 GAIN']]),
+                    ronoise=np.atleast_1d([hdu[0].header['HIERARCH ESO DET OUT4 RON']]),
+                    datasec=np.atleast_1d('[:,2201:4242]'), # Any changes to this line requires changes to the mosaic at the top of this file.
+                    oscansec=np.atleast_1d('[:,4246:4292]'),
+                ))
 
-            # Detector 2
-            detector_dict2 = detector_base.copy()
-            detector_dict2.update(dict(
-                det=2,
-                dataext=0,
-                gain=np.atleast_1d([hdu[0].header['HIERARCH ESO DET OUT1 GAIN']]),
-                ronoise=np.atleast_1d([hdu[0].header['HIERARCH ESO DET OUT1 RON']]),
-                datasec=np.atleast_1d('[:,57:2098]'),
-                oscansec=np.atleast_1d('[:,2102:2148]'),
-            ))
-        else:
-            # This is the new format, where the two detectors are stored in separate HDUs.
-            # Detector 1.
-            detector_dict1 = detector_base.copy()
-            detector_dict1.update(dict(
-                det=1,
-                dataext=2,
-                gain=np.atleast_1d([hdu[2].header['HIERARCH ESO DET OUT1 GAIN']]),
-                ronoise=np.atleast_1d([hdu[2].header['HIERARCH ESO DET OUT1 RON']]),
-                datasec=np.atleast_1d('[:,57:2098]'), # Any changes to this line requires changes to the mosaic at the top of this file.
-                oscansec=np.atleast_1d('[:,2102:]'),
-            ))
+                # Detector 2
+                detector_dict2.update(dict(
+                    det=2,
+                    dataext=0,
+                    gain=np.atleast_1d([hdu[0].header['HIERARCH ESO DET OUT1 GAIN']]),
+                    ronoise=np.atleast_1d([hdu[0].header['HIERARCH ESO DET OUT1 RON']]),
+                    datasec=np.atleast_1d('[:,57:2098]'),
+                    oscansec=np.atleast_1d('[:,2102:2148]'),
+                ))
+            else:
+                # This is the new format, where the two detectors are stored in separate HDUs.
+                # Detector 1.
+                detector_dict1.update(dict(
+                    det=1,
+                    dataext=2,
+                    gain=np.atleast_1d([hdu[2].header['HIERARCH ESO DET OUT1 GAIN']]),
+                    ronoise=np.atleast_1d([hdu[2].header['HIERARCH ESO DET OUT1 RON']]),
+                    datasec=np.atleast_1d('[:,57:2098]'), # Any changes to this line requires changes to the mosaic at the top of this file.
+                    oscansec=np.atleast_1d('[:,2102:]'),
+                ))
 
-            # Detector 2.
-            detector_dict2 = detector_base.copy()
-            detector_dict2.update(dict(
-                det=2,
-                dataext=1,
-                gain=np.atleast_1d([hdu[1].header['HIERARCH ESO DET OUT1 GAIN']]),
-                ronoise=np.atleast_1d([hdu[1].header['HIERARCH ESO DET OUT1 RON']]),
-                datasec=np.atleast_1d('[:,57:2098]'),
-                oscansec=np.atleast_1d('[:,2102:]'),
-            ))
+                # Detector 2.
+                detector_dict2.update(dict(
+                    det=2,
+                    dataext=1,
+                    gain=np.atleast_1d([hdu[1].header['HIERARCH ESO DET OUT1 GAIN']]),
+                    ronoise=np.atleast_1d([hdu[1].header['HIERARCH ESO DET OUT1 RON']]),
+                    datasec=np.atleast_1d('[:,57:2098]'),
+                    oscansec=np.atleast_1d('[:,2102:]'),
+                ))
 
         # Instantiate
         detector_dicts = [detector_dict1, detector_dict2]
