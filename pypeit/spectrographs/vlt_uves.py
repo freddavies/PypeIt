@@ -307,18 +307,6 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
         # Assume no significant variation (which is likely true)
         return np.ones_like(order_vec)*det.platescale*binspatial
 
-    def get_echelle_angle_files(self):
-        """ Pass back the files required
-        to run the echelle method of wavecalib
-
-        Returns:
-            list: List of files
-        """
-        angle_fits_file = 'vlt_uves_angle_fits.fits'
-        composite_arc_file = 'vlt_uves_composite_arc.fits'
-
-        return [angle_fits_file, composite_arc_file]
-
 
 # default_pypeit_par, config_specific_par and get_detector_par different for each arm??
 class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
@@ -536,6 +524,18 @@ class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
 
         # Return
         return par
+
+    def get_echelle_angle_files(self):
+        """ Pass back the files required
+        to run the echelle method of wavecalib
+
+        Returns:
+            list: List of files
+        """
+        angle_fits_file = 'vlt_uves_blue_angle_fits.fits'
+        composite_arc_file = 'vlt_uves_blue_composite_arc.fits'
+
+        return [angle_fits_file, composite_arc_file]
 
     # @property
     # def norders(self):
@@ -763,12 +763,12 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
         par['calibrations']['wavelengths']['cc_shift_range'] = (-80.,80.)
         par['calibrations']['wavelengths']['cc_thresh'] = 0.6
         par['calibrations']['wavelengths']['cc_local_thresh'] = 0.25
-        par['calibrations']['wavelengths']['reid_cont_sub'] = True
+        par['calibrations']['wavelengths']['reid_cont_sub'] = False
 
         # Echelle parameters
         par['calibrations']['wavelengths']['echelle'] = True
-        par['calibrations']['wavelengths']['ech_nspec_coeff'] = 5
-        par['calibrations']['wavelengths']['ech_norder_coeff'] = 3
+        par['calibrations']['wavelengths']['ech_nspec_coeff'] = 6
+        par['calibrations']['wavelengths']['ech_norder_coeff'] = 4
         par['calibrations']['wavelengths']['ech_sigrej'] = 2.0
         par['calibrations']['wavelengths']['ech_separate_2d'] = False
         par['calibrations']['wavelengths']['bad_orders_maxfrac'] = 0.5
@@ -836,7 +836,9 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
         # NOTE: With add_missed_orders set to True and order_spat_range set to the
         # default (None), the code will try to add missing orders over the full
         # range of the detector mosaic!
-        par['calibrations']['slitedges']['order_spat_range'] = [-20/bin_spat, (2042+20)/bin_spat]
+        # par['calibrations']['slitedges']['order_spat_range'] = [-50/bin_spat, (2042+50)/bin_spat]
+        offset = 50.0  # Extra number of pixels to add to the end of the mosaic to allow for missed orders.
+        par['calibrations']['slitedges']['order_spat_range'] = [-offset/bin_spat, (2042 * 2 + 104.0 + offset)/bin_spat]
 
         # wavelength
         par['calibrations']['wavelengths']['fwhm'] = 8.0/bin_spec
@@ -1026,6 +1028,18 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
         # Instantiate
         detector_dicts = [detector_dict1, detector_dict2]
         return detector_container.DetectorContainer( **detector_dicts[det-1])
+
+    def get_echelle_angle_files(self):
+        """ Pass back the files required
+        to run the echelle method of wavecalib
+
+        Returns:
+            list: List of files
+        """
+        angle_fits_file = 'vlt_uves_red_angle_fits.fits'
+        composite_arc_file = 'vlt_uves_red_composite_arc.fits'
+
+        return [angle_fits_file, composite_arc_file]
 
     # @property
     # def norders(self):
