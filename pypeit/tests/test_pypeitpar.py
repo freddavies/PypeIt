@@ -10,12 +10,12 @@ from configobj import ConfigObj
 
 from pypeit.par import pypeitpar
 from pypeit.par import parset
+from pypeit.par import util
 from pypeit.spectrographs.util import load_spectrograph
 
 
 def test_detnum_mixed_tuple():
     """Test parsing of detnum with mixed int and tuple values."""
-    from pypeit.par import util
 
     # Mixed int and tuple
     cfg = ConfigObj(['[rdx]', 'detnum = 1,(2,6)'])
