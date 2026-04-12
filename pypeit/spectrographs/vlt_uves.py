@@ -41,7 +41,7 @@ class UVESMosaicLookUp:
         # Using the fit_mosaic_parameters (on the 564, 580, 760, 860 setups) in the dev-suite, the best fit for the gap is 104 pixels
         'MSC02': {'default_shape': (2042 * 2 + 104.0, 4096),
                   'det1': {'shift': (0., 0.), 'rotation': 0.},
-                  'det2': {'shift': (2042.0 + 104.0, 0.), 'rotation': 0.}},
+                  'det2': {'shift': (2042.0 + 104.0, 0.0), 'rotation': 0.0}},
     }
 
 class VLTUVESSpectrograph(spectrograph.Spectrograph):
@@ -770,7 +770,7 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
         par['calibrations']['wavelengths']['ech_nspec_coeff'] = 6
         par['calibrations']['wavelengths']['ech_norder_coeff'] = 4
         par['calibrations']['wavelengths']['ech_sigrej'] = 2.0
-        par['calibrations']['wavelengths']['ech_separate_2d'] = False
+        par['calibrations']['wavelengths']['ech_separate_2d'] = True  # Doesn't seem like there's an offset+rotation that works for VLT/UVES
         par['calibrations']['wavelengths']['bad_orders_maxfrac'] = 0.5
 
         # Flats
