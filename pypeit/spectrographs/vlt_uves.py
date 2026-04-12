@@ -56,11 +56,7 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
     header_name = 'UVES'
     pypeline = 'Echelle'
     ech_fixed_format = False
-    supported = False
-    # TODO before support = True
-    # 1. Implement flat fielding - DONE
-    # 2. Test on several different setups - DONE
-    # 3. Implement PCA extrapolation into the blue
+    supported = True
 
     def init_meta(self):
         """
@@ -211,7 +207,6 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
             exposures in ``fitstbl`` that are ``ftype`` type frames.
         """
         good_exp = framematch.check_frame_exptime(fitstbl['exptime'], exprng)
-        # TODO: Allow for 'sky' frame type, for now include sky in
         # 'science' category
         if ftype == 'science':
             return good_exp & ((fitstbl['idname'] == 'OBJECT')
@@ -517,7 +512,7 @@ class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
         # NOTE: With add_missed_orders set to True and order_spat_range set to the
         # default (None), the code will try to add missing orders over the full
         # range of the detector mosaic!
-        par['calibrations']['slitedges']['order_spat_range'] = [10., 2080./bin_spat]
+        par['calibrations']['slitedges']['order_spat_range'] = [-50., (2048.0+50.0)/bin_spat]
 
         # wavelength
         par['calibrations']['wavelengths']['fwhm'] = 8.0/bin_spec
@@ -1192,50 +1187,3 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
 #         spec_max = np.asarray([4096]*12 + [1440])
 #         spec_min = np.asarray([0]*13)
 #         return np.vstack((spec_min, spec_max))
-
-def indexing(itt, postpix, det=None, xbin=1, ybin=1):
-    # TODO :: Is this function even needed?
-    """
-    Some annoying bookkeeping for instrument placement.
-
-    Parameters
-    ----------
-    itt : int
-    postpix : int
-    det : int, optional
-        Detector number.
-    xbin : int, optional
-        The binning in the spectral direction.  This is needed to determine the
-        size of the unbinned image and thus the location of the postpix.
-    ybin : int, optional
-        The binning in the spatial direction.  This is needed to determine the
-        size of the unbinned image and thus the location of the postpix.
-
-    Returns
-    -------
-
-    """
-    log.warning("Currently in the indexing function, which is a bit of a mess.  This should be cleaned up before merging.")
-    embed()
-    assert False
-    # Deal with single chip
-    if det is not None:
-        tt = 0
-    else:
-        tt = itt
-    ii = int(np.round(2048/xbin))  # TODO :: Before merging, the 2048 should be 2048 for the blue chip, but 2042 for the red chip.
-    jj = int(np.round(4096/ybin))
-    # y indices
-    y1, y2 = 0, jj
-    o_y1, o_y2 = y1, y2
-
-    # x
-    x1, x2 = (tt%4)*ii, (tt%4 + 1)*ii
-    if det is None:
-        o_x1 = 4*ii + (tt%4)*postpix
-    else:
-        o_x1 = ii + (tt%4)*postpix
-    o_x2 = o_x1 + postpix
-
-    # Return
-    return x1, x2, y1, y2, o_x1, o_x2, o_y1, o_y2
