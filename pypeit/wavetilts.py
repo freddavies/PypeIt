@@ -816,16 +816,18 @@ class BuildWaveTilts:
             # Tilts are created with the size of the original slitmask,
             # which corresonds to the same binning as the science
             # images, trace images, and pixelflats etc.
+            thismask_science = self.slitmask_science == slit_spat
             self.tilts = tracewave.fit2tilts(self.slitmask_science.shape, coeff_out,
-                                             self.par['func2d'])
+                                             self.par['func2d'],
+                                             slit_mask=thismask_science)
             # Check that the tilts image has values that span a reasonable range
             # TODO: Is this the right threshold?
-            if np.nanmax(self.tilts) - np.nanmin(self.tilts) < 0.8:
+            _slit_tilts = self.tilts[thismask_science]
+            if np.nanmax(_slit_tilts) - np.nanmin(_slit_tilts) < 0.8:
                 log.warning('Tilts image fit not good. This slit/order will not be reduced!')
                 self.slits.mask[slit_idx] = self.slits.bitmask.turn_on(self.slits.mask[slit_idx], 'BADTILTCALIB')
                 continue
             # Save to final image
-            thismask_science = self.slitmask_science == slit_spat
             self.final_tilts[thismask_science] = self.tilts[thismask_science]
 
         if show:
