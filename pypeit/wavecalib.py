@@ -1073,7 +1073,7 @@ class BuildWaveCalib:
         arccen, arccen_bpm, arc_maskslit = arc.get_censpec(
             self.slitcen, self.slitmask, self.msarc.image,
             gpm=self.gpm, slit_bpm=self.wvc_bpm,
-            slitIDs=slitIDs)
+            slitIDs=slitIDs, box_rad=self.par['boxcar_radius'])
         # Step
         self.steps.append(inspect.stack()[0][3])
 
