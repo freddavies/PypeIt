@@ -917,10 +917,10 @@ def main(flg):
                        binning=binning, reid_files=True, shift_wave=True, chk=True)
         # RH3
         dirc = template_path / 'KCWI' / 'RH3'
-        infiles = [dirc / 'keck_kcrm_rh3_lcen8550.fits',dirc / 'keck_kcrm_rh3_lcen9010.fits']
+        infiles = [dirc / 'keck_kcrm_rh3_lcen8550.fits',dirc / 'keck_kcrm_rh3_lcen9010_coadd.fits']
         outroot = 'keck_kcrm_RH3.fits'
         slits = [0, 0]
-        binspec = 2 # Desired binning
+        binspec = 1 # Desired binning
         binning = [2, 2] # Spectral binning of each infile
         scalevals = [1.0, 11.0] # Scale the second spectrum to match the first
         lcut = [8920.0]
