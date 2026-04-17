@@ -1186,6 +1186,11 @@ class BuildWaveCalib:
         j_par = jsonify(sv_par)
         self.wv_calib['strpar'] = json.dumps(j_par)#, sort_keys=True, indent=4, separators=(',', ': '))
 
+        # Post a warning if you're reducing SlicerIFU data and not all slits are available
+        ngood = np.where(np.logical_not(self.wvc_bpm))[0].size
+        if self.spectrograph.pypeline == 'SlicerIFU' and ngood < self.slits.nslits:
+            log.warning(f'Wavelength calibration is not available for {self.slits.nslits-ngood} slits.')
+
         return self.wv_calib
 
 
