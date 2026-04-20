@@ -1618,8 +1618,7 @@ class MultiSlitCoAdd2D(CoAdd2D):
         
         # The user passed in user_obj_ids that we will use these for the brighest object to 
         # be optionally used for offsets and weights. 
-        if self.par['coadd2d']['weights'] != 'auto':
-            # TODO: Is this strictly correct?  TPEB 2026-03-18
+        if self.par['coadd2d']['weights'] != 'auto' or self.par['coadd2d']['offsets'] != 'auto':
             raise PypeItError('Parameter `user_obj_ids` can only be used if weights are set to `auto`.')
         if len(self.par['coadd2d']['user_obj_ids']) != self.nexp:
             raise PypeItError(
