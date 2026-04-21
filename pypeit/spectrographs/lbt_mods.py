@@ -21,6 +21,7 @@ from pypeit.core import parse
 from pypeit.images.detector_container import DetectorContainer
 
 
+
 # TODO: FW: test MODS1B and MODS2B
 
 class LBTMODSSpectrograph(spectrograph.Spectrograph):
@@ -167,25 +168,27 @@ class LBTMODSSpectrograph(spectrograph.Spectrograph):
             exposures in ``fitstbl`` that are ``ftype`` type frames.
         """
         good_exp = framematch.check_frame_exptime(fitstbl['exptime'], exprng)
+
+
         if ftype in ['science']:
-            return good_exp & (fitstbl['idname'] == 'OBJECT') & (fitstbl['ra'] != 'none') \
+            return good_exp & ((fitstbl['idname'] == 'OBJECT') | (fitstbl['idname'] == 'object')) & (fitstbl['ra'] != 'none') \
                    & (fitstbl['dispname'] != 'Flat')
         if ftype in ['standard']:
-            return good_exp & (fitstbl['idname'] == 'STD') & (fitstbl['ra'] != 'none') \
+            return good_exp & ((fitstbl['idname'] == 'STD') | (fitstbl['idname'] == 'std')) & (fitstbl['ra'] != 'none') \
                    & (fitstbl['dispname'] != 'Flat')
         if ftype == 'bias':
-            return good_exp  & (fitstbl['idname'] == 'BIAS')
+            return good_exp  & ((fitstbl['idname'] == 'BIAS') | (fitstbl['idname'] == 'bias'))
         if ftype in ['pixelflat', 'trace', 'illumflat']:
             # Flats and trace frames are typed together
-            return good_exp  & (fitstbl['idname'] == 'FLAT') & (fitstbl['decker'] != 'Imaging')
+            return good_exp  & ((fitstbl['idname'] == 'FLAT') | (fitstbl['idname'] == 'flat')) & (fitstbl['decker'] != 'Imaging')
         if ftype in ['slitless_pixflat']:
             # Slitless Pixel Flats
-            return good_exp  & (fitstbl['idname'] == 'FLAT') & (fitstbl['decker'] == 'Imaging') & (fitstbl['dispname'] != 'Flat')
+            return good_exp  & ((fitstbl['idname'] == 'FLAT') | (fitstbl['idname'] == 'flat')) & (fitstbl['decker'] == 'Imaging') & (fitstbl['dispname'] != 'Flat')
         if ftype in ['pinhole', 'dark']:
             # Don't type pinhole or dark frames
             return np.zeros(len(fitstbl), dtype=bool)
         if ftype in ['arc', 'tilt']:
-            return good_exp & (fitstbl['idname'] == 'COMP') & (fitstbl['dispname'] != 'Flat')
+            return good_exp & ((fitstbl['idname'] == 'COMP') | (fitstbl['idname'] == 'comp')) & (fitstbl['dispname'] != 'Flat')
 
         log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
