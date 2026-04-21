@@ -466,7 +466,7 @@ def get_censpec(slit_cen, slitmask, arcimg, gpm=None, box_rad=3.0,
         Shape is (nslits,).
     """
     # Initialize the good pixel mask
-    # TODO :: This is a bug... In echelle spectrographs, slitmask can equal -1 for a valdi slit that is just off the detector. We need a different mask value for being off the slitmask.
+    # TODO :: This is a bug... In echelle spectrographs, slitmask can equal -1 for a valid slit that is just off the detector. We need a different mask value for being off the slitmask.
     _gpm = (slitmask != -1) if gpm is None else gpm & (slitmask != -1)
     # Mask saturated parts of the arc image for the extraction
     _gpm = _gpm & (arcimg < nonlinear_counts)
