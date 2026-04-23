@@ -19,7 +19,7 @@ from pypeit import PypeItError
 from pypeit.core import arc, qa
 from pypeit.core import fitting
 from pypeit.core import parse
-from pypeit.core.wavecal import autoid, wv_fitting, wvutils
+from pypeit.core.wavecal import autoid, wv_fitting, wvutils, templates
 from pypeit.core.gui.identify import Identify
 from pypeit import datamodel
 from pypeit import calibframe
@@ -699,6 +699,30 @@ class BuildWaveCalib:
                                              nsnippet=self.par['nsnippet'], 
                                              x_percentile=self.par['cc_percent_ceil'])
 
+            # For SlicerIFU, the wavelength coverage should be roughly the same for all slices, so if just one slit
+            # successfully calibrated, try this as the template.
+            refslit = self.par['reference_slit']
+            if (self.spectrograph.pypeline == "SlicerIFU") and refslit is not None:
+                refslitidx = np.argmin(np.abs(self.slits.slitord_id-refslit))
+                if refslit != self.slits.slitord_id[refslitidx]:
+                    raise PypeItError(f"Reference slit {refslit} not found in the slits. "
+                                      f"Check your reference slit or slit IDs.")
+                log.info(f"Attempting to wavelength calibrate all slits using the solution from slit {refslit}")
+                # Generate a template dict
+                template_dict = {'wave': final_fit[str(refslitidx)].wave_soln,
+                                 'spec': final_fit[str(refslitidx)].spec,
+                                 'bin': self.binspectral,
+                                 'order': self.slits.ech_order if self.slits.ech_order is not None else None,
+                                 'lines_pix': None,
+                                 'lines_wav': None,
+                                 'lines_fit_ord': None}
+                final_fit, order_vec = autoid.full_template(arccen, self.lamps, self.par, ok_mask_idx, self.det,
+                                                            self.binspectral, slit_ids=self.slits.slitord_id,
+                                                            measured_fwhms=self.measured_fwhms,
+                                                            nonlinear_counts=self.nonlinear_counts,
+                                                            nsnippet=self.par['nsnippet'],
+                                                            x_percentile=self.par['cc_percent_ceil'],
+                                                            template_dict=template_dict)
             # Grab arxiv for redo later?
             if self.par['echelle']: 
                 # Hold for later usage

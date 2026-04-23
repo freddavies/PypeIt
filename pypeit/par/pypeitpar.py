@@ -2895,7 +2895,7 @@ class WavelengthSolutionPar(ParSet):
                  n_first=None, n_final=None, sigrej_first=None, sigrej_final=None, numsearch=None,
                  nfitpix=None, boxcar_radius=None, refframe=None,
                  nsnippet=None, use_instr_flag=None, wvrng_arxiv=None,
-                 ech_2dfit=None, ech_separate_2d=None, redo_slits=None, qa_log=None,
+                 ech_2dfit=None, ech_separate_2d=None, redo_slits=None, reference_slit=None, qa_log=None,
                  cc_percent_ceil=None, echelle_pad=None, cc_offset_minmax=None, stretch_func=None):
 
         # Grab the parameter names and values from the function
@@ -3184,6 +3184,15 @@ class WavelengthSolutionPar(ParSet):
         dtypes['redo_slits'] = [int, list]
         descr['redo_slits'] = 'Redo the input slit(s) [multislit] or order(s) [echelle]'
 
+        dtypes['reference_slit'] = int
+        descr['reference_slit'] = 'Primarily for multi-object or IFU data where all slits cover a very similar ' \
+                                  'wavelength range. If the wavelength calibration does not work for some slits, you ' \
+                                  'can attempt to repeat the wavelength calibration for all slits using the slit ' \
+                                  'that has the best wavelength calibration (i.e. one that has the greatest ' \
+                                  'wavelength overlap with all slits, the most lines correctly identified, the lowest ' \
+                                  'RMS, or ) as a reference. This parameter is the spatial ID of the slit to use ' \
+                                  'as a reference for this process.'
+
         defaults['qa_log'] = True
         dtypes['qa_log'] = bool
         descr['qa_log'] = 'Governs whether the wavelength solution arc line QA plots will have log or linear scaling'\
@@ -3239,7 +3248,7 @@ class WavelengthSolutionPar(ParSet):
                    'reid_arxiv', 'nreid_min', 'reid_cont_sub', 'cc_shift_range', 'cc_thresh', 'cc_local_thresh',
                    'nlocal_cc', 'rms_thresh_frac_fwhm', 'match_toler', 'func', 'n_first','n_final',
                    'sigrej_first', 'sigrej_final', 'numsearch', 'nfitpix', 'boxcar_radius',
-                   'refframe', 'nsnippet', 'use_instr_flag', 'wvrng_arxiv',
+                   'refframe', 'nsnippet', 'use_instr_flag', 'wvrng_arxiv', 'reference_slit',
                    'redo_slits', 'qa_log', 'cc_percent_ceil', 'echelle_pad', 'cc_offset_minmax', 'stretch_func']
 
         badkeys = np.array([pk not in parkeys for pk in k])
