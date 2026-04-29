@@ -19,7 +19,7 @@ from pypeit import PypeItError
 from pypeit.core import arc, qa
 from pypeit.core import fitting
 from pypeit.core import parse
-from pypeit.core.wavecal import autoid, wv_fitting, wvutils, templates
+from pypeit.core.wavecal import autoid, wv_fitting, wvutils
 from pypeit.core.gui.identify import Identify
 from pypeit import datamodel
 from pypeit import calibframe
