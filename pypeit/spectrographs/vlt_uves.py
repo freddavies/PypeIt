@@ -83,6 +83,89 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
         self.meta['echangle'] = dict(card=None, default=0.0)  # There is no header card for this, but it is required
         self.meta['xdangle'] = dict(card=None, compound=True, rtol=0.01)  # There is no tolerance, really, because it's the central wavelength.
 
+    @classmethod
+    def default_pypeit_par(cls):
+        """
+        Return the default parameters to use for this instrument.
+
+        Returns:
+            :class:`~pypeit.par.pypeitpar.PypeItPar`: Parameters required by
+            all of PypeIt methods.
+        """
+        par = super().default_pypeit_par()
+
+        # Set the default exposure time ranges for the frame typing
+        par['calibrations']['biasframe']['exprng'] = [None, 0.001]
+        #par['calibrations']['darkframe']['exprng'] = [999999, None]     # No dark frames
+        #par['calibrations']['pinholeframe']['exprng'] = [999999, None]  # No pinhole frames on UVES
+        par['calibrations']['pixelflatframe']['exprng'] = [None, 120]
+        par['calibrations']['traceframe']['exprng'] = [None, 120]
+        par['calibrations']['illumflatframe']['exprng'] = [None, 120]
+        par['calibrations']['standardframe']['exprng'] = [1, 600]
+        par['scienceframe']['exprng'] = [30, None]
+
+        # Slit tracing
+        par['calibrations']['slitedges']['edge_thresh'] = 8.0
+        par['calibrations']['slitedges']['fit_order'] = 8
+        par['calibrations']['slitedges']['max_shift_adj'] = 0.5
+        par['calibrations']['slitedges']['trace_thresh'] = 10.
+        par['calibrations']['slitedges']['left_right_pca'] = True
+        par['calibrations']['slitedges']['length_range'] = 0.3
+        par['calibrations']['slitedges']['max_nudge'] = 0.
+        par['calibrations']['slitedges']['overlap'] = True
+        par['calibrations']['slitedges']['dlength_range'] = 0.25
+        par['calibrations']['slitedges']['mask_off_detector'] = False
+
+        par['calibrations']['slitedges']['add_missed_orders'] = True
+        par['calibrations']['slitedges']['order_gap_poly'] = 3
+
+        # These are the defaults
+        par['calibrations']['tilts']['tracethresh'] = 15
+        par['calibrations']['tilts']['spat_order'] = 3
+        par['calibrations']['tilts']['spec_order'] = 5
+
+        # 1D wavelength solution
+        par['calibrations']['wavelengths']['lamps'] = ['ThAr']
+        par['calibrations']['wavelengths']['rms_thresh_frac_fwhm'] = 0.1
+        par['calibrations']['wavelengths']['sigdetect'] = 4.
+        par['calibrations']['wavelengths']['n_first'] = 3
+        par['calibrations']['wavelengths']['n_final'] = 4
+
+        par['calibrations']['wavelengths']['match_toler'] = 1.5
+        # Reidentification parameters
+        par['calibrations']['wavelengths']['method'] = 'echelle'
+        par['calibrations']['wavelengths']['cc_shift_range'] = (-80.,80.)
+        par['calibrations']['wavelengths']['cc_thresh'] = 0.6
+        par['calibrations']['wavelengths']['cc_local_thresh'] = 0.25
+        par['calibrations']['wavelengths']['reid_cont_sub'] = False
+
+        # Echelle parameters
+        par['calibrations']['wavelengths']['echelle'] = True
+        par['calibrations']['wavelengths']['ech_nspec_coeff'] = 6
+        par['calibrations']['wavelengths']['ech_norder_coeff'] = 4
+        par['calibrations']['wavelengths']['ech_sigrej'] = 2.0
+        par['calibrations']['wavelengths']['ech_separate_2d'] = True  # Doesn't seem like there's an offset+rotation that works for VLT/UVES red (note that blue doesn't have a mosaic)
+        par['calibrations']['wavelengths']['bad_orders_maxfrac'] = 0.5
+
+        # Flats
+        par['calibrations']['flatfield']['tweak_slits_thresh'] = 0.90
+        par['calibrations']['flatfield']['tweak_slits_maxfrac'] = 0.10
+        par['calibrations']['flatfield']['slit_illum_finecorr'] = False
+
+        # Extraction
+        par['reduce']['skysub']['bspline_spacing'] = 0.6
+        par['reduce']['skysub']['global_sky_std'] = False
+        # local sky subtraction operates on entire slit
+        par['reduce']['extraction']['model_full_slit'] = True
+        # Mask 3 edges pixels since the slit is short, insted of default (5,5)
+        par['reduce']['findobj']['find_trim_edge'] = [3, 3]
+        # number of objects
+        par['reduce']['findobj']['maxnumber_sci'] = 2  # Assume that there is max two object in each order.
+        par['reduce']['findobj']['maxnumber_std'] = 1  # Assume that there is only one object in each order.
+
+        # Coadding
+        par['coadd1d']['wave_method'] = 'log10'
+
     def compound_meta(self, headarr, meta_key):
         """
         Methods to generate metadata requiring interpretation of the header
@@ -232,53 +315,6 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
         log.warning('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
-    # IS THIS NEEDED??
-    def vet_assigned_ftypes(self, type_bits, fitstbl):
-        """
-
-        NOTE: this function should only be called when running pypeit_setup,
-        in order to not overwrite any user-provided frame types.
-
-        This method checks the assigned frame types for consistency.
-        For frames that are assigned both the science and standard types,
-        this method chooses the one that is most likely, by checking if the
-        frames are within 10 arcmin of a listed standard star.
-
-        In addition, for this instrument, if a frame is assigned both a
-        pixelflat and slitless_pixflat type, the pixelflat type is removed.
-        NOTE: if the same frame is assigned to multiple configurations, this
-        method will remove the pixelflat type for all configurations, i.e.,
-        it is not possible to use slitless_pixflat type for one calibration group
-        and pixelflat for another.
-
-        Args:
-            type_bits (`numpy.ndarray`_):
-                Array with the frame types assigned to each frame.
-            fitstbl (:class:`~pypeit.metadata.PypeItMetaData`):
-                The class holding the metadata for all the frames.
-
-        Returns:
-            `numpy.ndarray`_: The updated frame types.
-
-        """
-        type_bits = super().vet_assigned_ftypes(type_bits, fitstbl)
-
-        # where pixelflat is assigned
-        pixelflat_idx = fitstbl.type_bitmask.flagged(type_bits, flag='pixelflat')
-
-        # find configurations where both pixelflat and slitless_pixflat are assigned
-        pixflat_match = np.zeros(len(fitstbl), dtype=bool)
-
-        for f, frame in enumerate(fitstbl):
-            if pixelflat_idx[f]:
-                match_config_values = []
-                pixflat_match[f] = np.any(match_config_values)
-
-        # remove pixelflat from the type_bits
-        type_bits[pixflat_match] = fitstbl.type_bitmask.turn_off(type_bits[pixflat_match], 'pixelflat')
-
-        return type_bits
-
     def order_platescale(self, order_vec, binning=None):
         """
         Return the platescale for each echelle order.
@@ -303,7 +339,6 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
         return np.ones_like(order_vec)*det.platescale*binspatial
 
 
-# default_pypeit_par, config_specific_par and get_detector_par different for each arm??
 class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
     
     name = 'vlt_uves_blue'
@@ -339,103 +374,11 @@ class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
         # the option to use different sets of biases for different standards,
         # or use the overscan for standards but not for science frames
 
-        # Set the default exposure time ranges for the frame typing
-        par['calibrations']['biasframe']['exprng'] = [None, 0.001]
-        #par['calibrations']['darkframe']['exprng'] = [999999, None]     # No dark frames
-        #par['calibrations']['pinholeframe']['exprng'] = [999999, None]  # No pinhole frames on UVES ??
-        par['calibrations']['pixelflatframe']['exprng'] = [None, 120]
-        par['calibrations']['traceframe']['exprng'] = [None, 120]
-        par['calibrations']['illumflatframe']['exprng'] = [None, 120]
-        par['calibrations']['standardframe']['exprng'] = [1, 600]
-        par['scienceframe']['exprng'] = [30, None]
-
         # Slit tracing
-        par['calibrations']['slitedges']['edge_thresh'] = 8.0
-        par['calibrations']['slitedges']['fit_order'] = 8
-        par['calibrations']['slitedges']['max_shift_adj'] = 0.5
-        par['calibrations']['slitedges']['trace_thresh'] = 10.
-        par['calibrations']['slitedges']['left_right_pca'] = True
-        par['calibrations']['slitedges']['length_range'] = 0.3
-        par['calibrations']['slitedges']['max_nudge'] = 0.
-        par['calibrations']['slitedges']['overlap'] = False
-        par['calibrations']['slitedges']['dlength_range'] = 0.25
-        par['calibrations']['slitedges']['mask_off_detector'] = False
-
-        par['calibrations']['slitedges']['add_missed_orders'] = True
         par['calibrations']['slitedges']['order_width_poly'] = 2
-        par['calibrations']['slitedges']['order_gap_poly'] = 3
-
-        # These are the defaults
-        par['calibrations']['tilts']['tracethresh'] = 15
-        par['calibrations']['tilts']['spat_order'] = 3
-        par['calibrations']['tilts']['spec_order'] = 5  # [5, 5, 5] + 12*[7] # + [5]
-
-        # 1D wavelength solution
-        par['calibrations']['wavelengths']['lamps'] = ['ThAr']
-        par['calibrations']['wavelengths']['rms_thresh_frac_fwhm'] = 0.1
-        par['calibrations']['wavelengths']['sigdetect'] = 4.
-        par['calibrations']['wavelengths']['n_first'] = 3
-        par['calibrations']['wavelengths']['n_final'] = 4
-
-        # Setup dependent
-        # 346
-        # par['calibrations']['wavelengths']['n_final'] = [3] + 31*[4] + [3]
-        # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_346_1x1.fits'
-        # 390
-        # par['calibrations']['wavelengths']['n_final'] = [3] + 38*[4] + [3]
-        # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_390_1x1.fits'
-        # 437
-        # par['calibrations']['wavelengths']['n_final'] = [3] + 29*[4] + [3]
-        # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_437_1x1.fits'
-
-        par['calibrations']['wavelengths']['match_toler'] = 1.5
-        # Reidentification parameters
-        par['calibrations']['wavelengths']['method'] = 'echelle'
-        par['calibrations']['wavelengths']['cc_shift_range'] = (-80.,80.)
-        par['calibrations']['wavelengths']['cc_thresh'] = 0.6
-        par['calibrations']['wavelengths']['cc_local_thresh'] = 0.25
-        par['calibrations']['wavelengths']['reid_cont_sub'] = False
-
-        # Echelle parameters
-        par['calibrations']['wavelengths']['echelle'] = True
-        par['calibrations']['wavelengths']['ech_nspec_coeff'] = 6
-        par['calibrations']['wavelengths']['ech_norder_coeff'] = 4
-        par['calibrations']['wavelengths']['ech_sigrej'] = 2.0
-        par['calibrations']['wavelengths']['ech_separate_2d'] = False
-        par['calibrations']['wavelengths']['bad_orders_maxfrac'] = 0.5
-
-        # Flats
-        par['calibrations']['flatfield']['tweak_slits_thresh'] = 0.90
-        par['calibrations']['flatfield']['tweak_slits_maxfrac'] = 0.10
-        par['calibrations']['flatfield']['slit_illum_finecorr'] = False
 
         # Extraction
-        par['reduce']['skysub']['bspline_spacing'] = 0.6
-        par['reduce']['skysub']['global_sky_std'] = False
         par['reduce']['skysub']['sky_sigrej'] = 4.0
-
-        # local sky subtraction operates on entire slit
-        par['reduce']['extraction']['model_full_slit'] = True
-        # Mask 3 edges pixels since the slit is short, insted of default (5,5)
-        par['reduce']['findobj']['find_trim_edge'] = [3, 3]
-        # number of objects
-        par['reduce']['findobj']['maxnumber_sci'] = 2  # Assume that there is max two object in each order.
-        par['reduce']['findobj']['maxnumber_std'] = 1  # Assume that there is only one object in each order.
-
-        # Sensitivity function parameters
-        # par['sensfunc']['algorithm'] = 'IR'
-        # par['sensfunc']['polyorder'] = 5 #[9, 11, 11, 9, 9, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7]
-        # par['sensfunc']['IR']['telgridfile'] = 'TellPCA_3000_10500_R120000.fits'
-        # par['sensfunc']['IR']['pix_shift_bounds'] = (-40.0,40.0)
-        
-        # Telluric parameters
-        # HIRES is usually oversampled, so the helio shift can be large
-        # par['telluric']['pix_shift_bounds'] = (-40.0,40.0)
-        # Similarly, the resolution guess is higher than it should be
-        # par['telluric']['resln_frac_bounds'] = (0.25,1.25)
-
-        # Coadding
-        par['coadd1d']['wave_method'] = 'log10'
 
         return par
         
@@ -532,120 +475,6 @@ class VLTUVESBlueSpectrograph(VLTUVESSpectrograph):
 
         return [angle_fits_file, composite_arc_file]
 
-    # @property
-    # def norders(self):
-    #     """
-    #     Number of orders observed for this spectrograph.
-    #     """
-    #     # 346
-    #     # return 33
-    #     # 390
-    #     return 40
-    #     # 437
-    #     # return 31
-    #
-    # @property
-    # def order_spat_pos(self):
-    #     """
-    #     Return the expected spatial position of each echelle order.
-    #
-    #     The following lines generated the values below:
-    #
-    #     .. code-block:: python
-    #
-    #         from pypeit import edgetrace
-    #         edges = edgetrace.EdgeTraceSet.from_file('Edges_A_1_DET01.fits.gz')
-    #
-    #         nrm_edges = edges.edge_fit[edges.nspec//2,:] / edges.nspat
-    #         slit_cen = ((nrm_edges + np.roll(nrm_edges,1))/2)[np.arange(nrm_edges.size//2)*2+1]
-    #
-    #     """
-    #     # 346
-    #     # self.slits.spat_id/self.slits.nspat
-    #     # return np.array([0.01672502, 0.04038521, 0.06437769, 0.08873001, 0.11342802,
-    #     #                  0.13848158, 0.16389396, 0.18967436, 0.2158253 , 0.24235753,
-    #     #                  0.26927502, 0.29658814, 0.32430333, 0.3524269 , 0.3809682 ,
-    #     #                  0.40993333, 0.43933332, 0.46917632, 0.49946995, 0.53022563,
-    #     #                  0.56144813, 0.59315476, 0.62534499, 0.65802905, 0.69121394,
-    #     #                  0.72492322, 0.75916269, 0.79394031, 0.82926452, 0.86515239,
-    #     #                  0.90162054, 0.93867218, 0.97624925]) #, 1.01457846
-    #     # 390
-    #     return np.array([0.01015914, 0.02863268, 0.04737307, 0.06639743, 0.08571161,
-    #                      0.10532204, 0.12523394, 0.14545357, 0.16598767, 0.18684648,
-    #                      0.20803361, 0.22955166, 0.25140925, 0.27361704, 0.29618321,
-    #                      0.31911634, 0.34241571, 0.36609522, 0.3901668 , 0.41464044,
-    #                      0.43951508, 0.46480507, 0.49052863, 0.51669461, 0.54329339,
-    #                      0.57034692, 0.59786838, 0.62586725, 0.65435386, 0.68334213,
-    #                      0.71284255, 0.74286562, 0.77342552, 0.80453873, 0.83622065,
-    #                      0.86848146, 0.90133283, 0.93479389, 0.96886826, 1.00359619])
-    #     # 437
-    #     # return np.array([0.01619767, 0.04055738, 0.06533852, 0.09053352, 0.11616566,
-    #     #                  0.14224589, 0.16877437, 0.19576498, 0.22323035, 0.25118463,
-    #     #                  0.27963696, 0.30860075, 0.33808912, 0.36811271, 0.39868486,
-    #     #                  0.42982015, 0.46153456, 0.49384601, 0.52676794, 0.56030554,
-    #     #                  0.59448245, 0.62931538, 0.66481626, 0.70100701, 0.73791999,
-    #     #                  0.77556252, 0.81395274, 0.85309815, 0.89305741, 0.9338257 ,
-    #     #                  0.97538197])
-    #
-    # @property
-    # def order_spat_width(self):
-    #     """
-    #     Return the expected spatial position of each echelle order.
-    #
-    #     The following lines generated the values below:
-    #
-    #     .. code-block:: python
-    #
-    #         import numpy as np
-    #         from pypeit import slittrace
-    #         slits = slittrace.SlitTraceSet.from_file('Slits_A_0_DET01.fits.gz')
-    #
-    #         np.median(slits.right_init-slits.left_init, axis=0)/slits.nspat
-    #
-    #     """
-    #     # 346
-    #     # return np.array(33*[0.019389049210670473])
-    #     # 390
-    #     return np.array(40 * [0.01628965847925201])
-    #     # 437
-    #     # return np.array(31 * [0.020187482348035246])
-    #
-    # @property
-    # def orders(self):
-    #     """
-    #     Return the order number for each echelle order.
-    #     """
-    #     # 346
-    #     # return np.array([153, 152, 151, 150, 149, 148, 147, 146, 145, 144, 143, 142, 141,
-    #     #                  140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128,
-    #     #                  127, 126, 125, 124, 123, 122, 121], dtype=int)
-    #     # 390
-    #     return np.array([142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130,
-    #                      129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117,
-    #                      116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104,
-    #                      103])
-    #     # 437
-    #     # return np.array([124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112,
-    #     #                  111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100,  99,
-    #     #                  98,  97,  96,  95,  94])
-    #
-    # @property
-    # def spec_min_max(self):
-    #     """
-    #     Return the minimum and maximum spectral pixel expected for the
-    #     spectral range of each order.
-    #     """
-    #     # 346
-    #     # spec_max = np.asarray([3000]*32 + [925])#, 2460
-    #     # spec_min = np.asarray([635] + [0]*32)
-    #     # 390
-    #     spec_max = np.asarray([3000]*38 + [920, 2740])
-    #     spec_min = np.asarray([1650, 330] + [0]*38)
-    #     # 437
-    #     # spec_max = np.asarray([3000]*30 + [2260])
-    #     # spec_min = np.asarray([1060] + [0]*30)
-    #     return np.vstack((spec_min, spec_max))
-
 
 class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
 
@@ -676,128 +505,24 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
 
         par['rdx']['detnum'] = [(1,2)]
 
-        # Adjustments to parameters for Keck HIRES
-        turn_off_on = dict(use_biasimage=False, use_overscan=True, overscan_method='median')
-        par.reset_all_processimages_par(**turn_off_on)
-        # Right now we are using the overscan and not biases becuase the
-        # standards are read with a different read mode and we don't yet have
-        # the option to use different sets of biases for different standards,
-        # or use the overscan for standards but not for science frames
-
-        # Setup dependent -- This is only temporary until we have the reidentification files for all the red settings
-        # par['calibrations']['wavelengths']['n_final'] = [3] + cls().norders*[4] + [3]
-        # 564l
-        # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_564l_1x1.fits'
-        # par['rdx']['detnum'] = 1
-        # 564u
-        # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_564u_1x1.fits'
-        # par['rdx']['detnum'] = 2
-        # 580l
-        # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_580l_1x1.fits'
-        # par['rdx']['detnum'] = 1
-        # 580u
-        # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_580u_1x1.fits'
-        # par['rdx']['detnum'] = 2
-        # 760l
-        # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_760l_1x1.fits'
-        # par['rdx']['detnum'] = 1
-        # 760u
-        # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_760u_1x1.fits'
-        # par['rdx']['detnum'] = 2
-        # 860l
-        # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_860l_1x1.fits'
-        # par['rdx']['detnum'] = 1
-        # 860u
-        # par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_uves_860u_1x1.fits'
-        # par['rdx']['detnum'] = 2
-
-        # Set the default exposure time ranges for the frame typing
-        par['calibrations']['biasframe']['exprng'] = [None, 0.001]
-        #par['calibrations']['darkframe']['exprng'] = [999999, None]     # No dark frames
-        #par['calibrations']['pinholeframe']['exprng'] = [999999, None]  # No pinhole frames on UVES ??
-        par['calibrations']['pixelflatframe']['exprng'] = [None, 120]
-        par['calibrations']['traceframe']['exprng'] = [None, 120]
-        par['calibrations']['illumflatframe']['exprng'] = [None, 120]
-        par['calibrations']['standardframe']['exprng'] = [1, 600]
-        par['scienceframe']['exprng'] = [30, None]
-
         # Set default processing for slitless_pixflat
         par['calibrations']['slitless_pixflatframe']['process']['scale_to_mean'] = True
 
         # Slit tracing
-        par['calibrations']['slitedges']['edge_thresh'] = 8.0
-        par['calibrations']['slitedges']['fit_order'] = 8
-        par['calibrations']['slitedges']['max_shift_adj'] = 0.5
-        par['calibrations']['slitedges']['trace_thresh'] = 10.
-        par['calibrations']['slitedges']['left_right_pca'] = True
-        par['calibrations']['slitedges']['length_range'] = 0.3
-        par['calibrations']['slitedges']['max_nudge'] = 0.
-        par['calibrations']['slitedges']['overlap'] = True
-        par['calibrations']['slitedges']['dlength_range'] = 0.25
         par['calibrations']['slitedges']['mask_off_detector'] = True
-
-        par['calibrations']['slitedges']['add_missed_orders'] = True
         par['calibrations']['slitedges']['order_width_poly'] = 4
-        par['calibrations']['slitedges']['order_gap_poly'] = 3
-
-        # These are the defaults
-        par['calibrations']['tilts']['tracethresh'] = 15
-        par['calibrations']['tilts']['spat_order'] = 3
-        par['calibrations']['tilts']['spec_order'] = 5
-
-        # 1D wavelength solution
-        par['calibrations']['wavelengths']['lamps'] = ['ThAr']
-        par['calibrations']['wavelengths']['rms_thresh_frac_fwhm'] = 0.1
-        par['calibrations']['wavelengths']['sigdetect'] = 5.
-        par['calibrations']['wavelengths']['n_first'] = 3
-        par['calibrations']['wavelengths']['n_final'] = 4
-
-        par['calibrations']['wavelengths']['match_toler'] = 1.5
-        # Reidentification parameters
-        par['calibrations']['wavelengths']['method'] = 'echelle'
-        par['calibrations']['wavelengths']['cc_shift_range'] = (-80.,80.)
-        par['calibrations']['wavelengths']['cc_thresh'] = 0.6
-        par['calibrations']['wavelengths']['cc_local_thresh'] = 0.25
-        par['calibrations']['wavelengths']['reid_cont_sub'] = False
-
-        # Echelle parameters
-        par['calibrations']['wavelengths']['echelle'] = True
-        par['calibrations']['wavelengths']['ech_nspec_coeff'] = 6
-        par['calibrations']['wavelengths']['ech_norder_coeff'] = 4
-        par['calibrations']['wavelengths']['ech_sigrej'] = 2.0
-        par['calibrations']['wavelengths']['ech_separate_2d'] = True  # Doesn't seem like there's an offset+rotation that works for VLT/UVES
-        par['calibrations']['wavelengths']['bad_orders_maxfrac'] = 0.5
-
-        # Flats
-        par['calibrations']['flatfield']['tweak_slits_thresh'] = 0.90
-        par['calibrations']['flatfield']['tweak_slits_maxfrac'] = 0.10
-        par['calibrations']['flatfield']['slit_illum_finecorr'] = False
-
-        # Extraction
-        par['reduce']['skysub']['bspline_spacing'] = 0.6
-        par['reduce']['skysub']['global_sky_std'] = False
-        # local sky subtraction operates on entire slit
-        par['reduce']['extraction']['model_full_slit'] = True
-        # Mask 3 edges pixels since the slit is short, insted of default (5,5)
-        par['reduce']['findobj']['find_trim_edge'] = [3, 3]
-        # number of objects
-        par['reduce']['findobj']['maxnumber_sci'] = 2  # Assume that there is max two object in each order.
-        par['reduce']['findobj']['maxnumber_std'] = 1  # Assume that there is only one object in each order.
 
         # Sensitivity function parameters
         par['sensfunc']['algorithm'] = 'IR'
-        par['sensfunc']['polyorder'] = 5 #[9, 11, 11, 9, 9, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7]
+        par['sensfunc']['polyorder'] = 5
         par['sensfunc']['IR']['telgridfile'] = 'TellPCA_3000_10500_R120000.fits'
         par['sensfunc']['IR']['pix_shift_bounds'] = (-40.0,40.0)
 
         # Telluric parameters
-        # HIRES is usually oversampled, so the helio shift can be large
+        # Allow for a large helio shift with UVES
         par['telluric']['pix_shift_bounds'] = (-40.0,40.0)
         # Similarly, the resolution guess is higher than it should be
         par['telluric']['resln_frac_bounds'] = (0.25,1.25)
-
-        # Coadding
-        par['coadd1d']['wave_method'] = 'log10'
 
         return par
 
@@ -843,7 +568,6 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
 
     @property
     def allowed_mosaics(self):
-        # TODO :: Move this to the parent?
         """
         Return the list of allowed detector mosaics.
 
@@ -854,11 +578,11 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
             detector numbers that can be combined into a mosaic and processed by
             PypeIt.
         """
-        return [(1,), (1,2)]
+        return [(1,2)]
 
     @property
     def default_mosaic(self):
-        return self.allowed_mosaics[1]
+        return self.allowed_mosaics[0]
 
     def get_mosaic_par(self, mosaic, hdu=None, msc_ord=0):
         """
@@ -1035,155 +759,3 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
         composite_arc_file = 'vlt_uves_red_composite_arc.fits'
 
         return [angle_fits_file, composite_arc_file]
-
-    # @property
-    # def norders(self):
-    #     """
-    #     Number of orders observed for this spectrograph.
-    #     """
-    #     return 24  # 564l
-    #     return 16  # 564u
-    #     return 23  # 580l
-    #     return 16  # 580u
-    #     return 27  # 760l
-    #     return 16  # 760u
-    #     return 20  # 860l
-    #     return 13  # 860u
-    #
-#     @property
-#     def order_spat_pos(self):
-#         """
-#         Return the expected spatial position of each echelle order.
-#
-#         The following lines generated the values below:
-#
-#         .. code-block:: python
-#
-#             from pypeit import edgetrace
-#             import numpy as np
-#             edges = edgetrace.EdgeTraceSet.from_file('Edges_H_7_DET02.fits.gz')
-#
-#             nrm_edges = edges.edge_fit[edges.nspec//2,:] / edges.nspat
-#             slit_cen = ((nrm_edges + np.roll(nrm_edges,1))/2)[np.arange(nrm_edges.size//2)*2+1]
-#         """
-#         # 564l
-#         # return np.array([0.01578222, 0.05138392, 0.08686124, 0.1229205 , 0.15956966,
-#         #                 0.19682514, 0.23469824, 0.27320327, 0.31235287, 0.35216309,
-#         #                 0.39264916, 0.43382898, 0.47571848, 0.51833697, 0.56169515,
-#         #                 0.60581347, 0.65070743, 0.69639906, 0.74290928, 0.79025851,
-#         #                 0.83847016, 0.88756732, 0.93757559, 0.98655107])
-#         # 564u
-#         # return np.array([0.04356585, 0.09744982, 0.15237898, 0.20838549, 0.26550201,
-#         #                  0.32375955, 0.38319573, 0.4438481 , 0.50575516, 0.56895762,
-#         #                  0.63350089, 0.69943186, 0.76679414, 0.8356444 , 0.90603342,
-#         #                  0.98124762])
-#         # 580l
-#         # return np.array([-0.00666975,  0.04932947,  0.10641487,  0.16463922,  0.22403526,
-#         #                  0.28464966,  0.34650731,  0.40965558,  0.47413649,  0.53999441,
-#         #                  0.60727987,  0.67603839,  0.74632731,  0.81820221,  0.89171804,
-#         #                  0.96691536])
-#         # 580u
-#         # return np.array([-0.0058766,  0.04932947,  0.10641487,  0.16463922,  0.22403526,
-#         #                  0.28464966,  0.34650731,  0.40965558,  0.47413649,  0.53999441,
-#         #                  0.60727987,  0.67603839,  0.74632731,  0.81820221,  0.89171804,
-#         #                  0.96691536])
-#         # 760l
-#         # return np.array([0.02183773, 0.05053537, 0.07979247, 0.10962473, 0.14005186,
-#         #                  0.17108576, 0.20274669, 0.23504974, 0.26801479, 0.30166046,
-#         #                  0.33600903, 0.37108002, 0.40689516, 0.44347488, 0.48084019,
-#         #                  0.51902689, 0.55804775, 0.59793554, 0.63871922, 0.68042751,
-#         #                  0.72309037, 0.76674139, 0.81141437, 0.85714477, 0.90397296,
-#         #                  0.95193807, 0.99918404])
-#         # 760u
-#         # return np.array([-0.00228510, 0.04915505, 0.10209448, 0.15640136, 0.21213053, 0.26934722,
-#         #        0.32809903, 0.38845984, 0.45049678, 0.51428256, 0.57989583,
-#         #        0.64742068, 0.71694612, 0.78857003, 0.86239197, 0.93852161])#, 1.01707693])
-#         # 860l
-#         # return np.array([0.02370136, 0.06174571, 0.10269732, 0.14457767, 0.18740961,
-#         #                  0.23122347, 0.27605553, 0.32193436, 0.36890337, 0.4170002 ,
-#         #                  0.46626546, 0.51674642, 0.56848357, 0.62151777, 0.67590628,
-#         #                  0.73170204, 0.7889566 , 0.84773519, 0.90809881, 0.9701096 ])
-#         # 860u
-#         return np.array([0.04758201, 0.1148355 , 0.18419335, 0.25561299, 0.32914172,
-#                          0.40505491, 0.48333775, 0.56381127, 0.64708008, 0.73297388,
-#                          0.82163438, 0.9131291 , 1.00757825])
-#
-#     @property
-#     def order_spat_width(self):
-#         """
-#         Return the expected spatial position of each echelle order.
-#
-#         The following lines generated the values below:
-#
-#         .. code-block:: python
-#
-#             import numpy as np
-#             from pypeit import slittrace
-#             slits = slittrace.SlitTraceSet.from_file('Slits_B_1_DET01.fits.gz')
-#
-#             tmp = np.median(slits.right_init-slits.left_init, axis=0)/slits.nspat
-#             print(tmp)
-#             print(np.median(tmp))
-#         """
-#         # 564l and 564u
-#         # return np.array([0.03]*self.norders)
-#         # 580l and 580u
-#         # return np.array([0.0325]*self.norders)
-#         # 760l and 760u
-#         # return np.array([0.023]*self.norders)
-#         # 860l and 860u
-#         return np.array([0.034]*self.norders)
-#
-#     @property
-#     def orders(self):
-#         """
-#         Return the order number for each echelle order.
-#         """
-#         # 564l
-#         # return np.array([132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109], dtype=int)
-#         # 564u
-#         # return np.array([107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92], dtype=int)
-#         # 580l
-#         # return np.array([128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106], dtype=int)
-#         # 580u
-#         # return np.array([105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90], dtype=int)
-#         # 760l
-#         # return np.array([107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81], dtype=int)
-#         # 760u
-#         # return np.array([80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65], dtype=int)
-#         # 860l
-#         # return np.array([91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72], dtype=int)
-#         # 860u
-#         return np.array([70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58], dtype=int)
-#
-#     @property
-#     def spec_min_max(self):
-#         """
-#         Return the minimum and maximum spectral pixel expected for the
-#         spectral range of each order.
-#         """
-#         # 564l
-#         # spec_max = np.asarray([4096]*23 + [2050])
-#         # spec_min = np.asarray([1500] + [0]*23)
-#         # 564u
-#         # spec_max = np.asarray([4096]*15 + [2600])
-#         # spec_min = np.asarray([2750] + [0]*15)
-#         # 580l
-#         # spec_max = np.asarray([4096]*22 + [2510])
-#         # spec_min = np.asarray([2050] + [0]*22)
-#         # 580u
-#         # spec_max = np.asarray([4096]*15 + [3000])
-#         # spec_min = np.asarray([2700] + [0]*15)
-#         # 760l
-#         # spec_max = np.asarray([4096]*26 + [1180])
-#         # spec_min = np.asarray([250] + [0]*26)
-#         # 760u
-#         # spec_max = np.asarray([4096]*16)
-#         # spec_min = np.asarray([2700] + [0]*15)
-#         # 860l
-#         # spec_max = np.asarray([4096]*19 + [3800])
-#         # spec_min = np.asarray([800] + [0]*19)
-#         # 860u
-#         spec_max = np.asarray([4096]*12 + [1440])
-#         spec_min = np.asarray([0]*13)
-#         return np.vstack((spec_min, spec_max))
