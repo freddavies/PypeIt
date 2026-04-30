@@ -18,6 +18,12 @@ to still work at the bluest settings, e.g. a central wavelength of 4000 A. Bette
 Bad pixel mask
 ++++++++++++++
 
-The bad pixels were identified from flat and bias observations taken in
-2019 and need to be verified.
+The static bad pixel mask is loaded from FITS files derived from the IDL
+pipeline calibration data (``badpix_binospec.fits`` plus the hard-coded bad
+columns and detector trap regions defined in ``bino_mosaic.pro``).  This
+adds roughly 12,500 individual bad pixels per detector, along with bad
+columns and detector trap region masking, replacing the small set of
+hard-coded bad columns previously identified from 2019 flat and bias
+observations.  The mask files are distributed with the package as
+``static_calibs/mmt_binospec/bpm_binospec_det{1,2}.fits.gz``.
 
