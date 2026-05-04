@@ -70,16 +70,6 @@ def recursive_dict_evaluate(d):
             reconstructed = ','.join(d[k])
             try:
                 result = ast.literal_eval(reconstructed)
-                if isinstance(result, tuple):
-                    if any(isinstance(x, tuple) for x in result):
-                        # Nested tuples or mixed: e.g., "(1,5),(2,6)" or
-                        # "1,(2,6)"
-                        d[k] = list(result)
-                    else:
-                        # Single tuple: e.g., "(2,6)" → wrap in a list
-                        d[k] = [result]
-                else:
-                    d[k] = result
             except (ValueError, SyntaxError):
                 # ast.literal_eval failed; fall back to the legacy eval_tuple
                 # approach.
@@ -94,6 +84,12 @@ def recursive_dict_evaluate(d):
                     # for the mosaic and a series of locations in the mosaiced
                     # image, like add_slits, rm_slits, and manual.
                     pass
+            else:
+                # Wrap plain tuple e.g. "(2,6)" → [(2,6)]; convert nested/mixed
+                # tuple e.g. "(1,5),(2,6)" or "1,(2,6)" to a list.
+                if isinstance(result, tuple):
+                    result = [result] if not any(isinstance(x, tuple) for x in result) else list(result)
+                d[k] = result
             continue
 
         if isinstance(d[k], list):
