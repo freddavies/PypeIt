@@ -9,6 +9,7 @@ import inspect
 
 from IPython import embed
 from pathlib import Path
+import gc
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -155,6 +156,10 @@ class WaveTilts(calibframe.CalibFrame):
             # Fill
             thismask_science = slitmask == slit_spat
             final_tilts[thismask_science] = _tilts[thismask_science]
+
+            # This is a work around for the Python memory usage issues
+            _tilts = None
+            gc.collect(2)        
         # Return
         return final_tilts
 
@@ -826,6 +831,12 @@ class BuildWaveTilts:
             thismask_science = self.slitmask_science == slit_spat
             self.final_tilts[thismask_science] = self.tilts[thismask_science]
 
+            
+            # This is a work around for the Python memory usage issues
+            _slit_tilts = None
+            self.tilts = None
+            gc.collect(2)
+    
         if show:
             viewer, ch = display.show_image(self.mstilt.image * (self.slitmask > -1), chname='tilts')
             display.show_tilts(viewer, ch, self.make_tbl_tilt_traces())
