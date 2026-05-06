@@ -45,7 +45,6 @@ bottom of the :doc:`../spectrographs/spectrographs` page.
    LDT DeVeny <deveny_howto>
    Shane Kast <kast_howto>
    Subaru FOCAS <focas_howto>
-   VLT UVES (follow a similar procedure to Keck/HIRES) <hires_howto>
 
 ----
 
