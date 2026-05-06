@@ -29,17 +29,14 @@ class UVESMosaicLookUp:
     Similar to :class:`~pypeit.spectrographs.gemini_gmos.GeminiGMOSMosaicLookUp`
 
     """
-    # Original
+    # This is onle the red mosaic. The blue arm just has a single detector.
     geometry = {
-        # blue
-        'MSC01': {'default_shape': (2048, 4096),
-                  'det1': {'shift': (0., 0.), 'rotation': 0.},},
         # red -- Note: Dekker et al. (2000) say that the red arm has a mosaic of two 2k x 4k CCDs, with a gap of 0.96mm,
         # corresponding to 64 pixels (15 um pixels), however, RJC trimmed each detector by 3 pixels on each side in the
         # cross-dispersion direction. Therefore, instead of 2048 it's 2042, and instead of 64 pixel gap, it's 70 pixels
         # (3 pixels on each side of the two detectors, plus the 64 pixel gap).
         # Using the fit_mosaic_parameters (on the 564, 580, 760, 860 setups) in the dev-suite, the best fit for the gap is 104 pixels
-        'MSC02': {'default_shape': (2042 * 2 + 104.0, 4096),
+        'MSC01': {'default_shape': (2042 * 2 + 104.0, 4096),
                   'det1': {'shift': (0., 0.), 'rotation': 0.},
                   'det2': {'shift': (2042.0 + 104.0, 0.0), 'rotation': 0.0}},
     }
@@ -165,6 +162,8 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
 
         # Coadding
         par['coadd1d']['wave_method'] = 'log10'
+
+        return par
 
     def compound_meta(self, headarr, meta_key):
         """
@@ -618,7 +617,6 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
 
         # Index of mosaic in list of allowed detector combinations
         mosaic_id = self.allowed_mosaics.index(mosaic)+1
-        # is this needed? Since only red arm MSCO2 needs mosaic
         detid = f'MSC0{mosaic_id}'
 
         # Get the detectors
