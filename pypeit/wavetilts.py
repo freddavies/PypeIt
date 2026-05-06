@@ -833,7 +833,6 @@ class BuildWaveTilts:
 
             
             # This is a work around for the Python memory usage issues
-            _slit_tilts = None
             self.tilts = None
             gc.collect(2)
     
