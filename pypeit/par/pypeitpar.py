@@ -3188,9 +3188,14 @@ class WavelengthSolutionPar(ParSet):
         descr['reference_slit'] = 'Primarily for multi-object or IFU data where all slits cover a very similar ' \
                                   'wavelength range. If the wavelength calibration does not work for some slits, you ' \
                                   'can attempt to repeat the wavelength calibration for all slits using the slit ' \
-                                  'that has the best wavelength calibration (i.e. one that has the greatest ' \
-                                  'wavelength overlap with all slits, the most lines correctly identified, the lowest ' \
-                                  'RMS, or ) as a reference. This parameter is the spatial ID of the slit to use ' \
+                                  'that has the best wavelength calibration. An excellent choice for a ``reference_slit`` is ' \
+                                  'one that has: ' \
+                                  '(1) the correct wavelength solution; ' \
+                                  '(2) the greatest wavelength overlap with all slits; ' \
+                                  '(3) the most lines correctly identified; and ' \
+                                  '(4) the lowest RMS. ' \
+                                  'in that order of priority. ' \
+                                  'This parameter is the spatial ID of the slit to use ' \
                                   'as a reference for this process.'
 
         defaults['qa_log'] = True
