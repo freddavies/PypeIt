@@ -141,7 +141,6 @@ class VLTUVESSpectrograph(spectrograph.Spectrograph):
         par['calibrations']['wavelengths']['ech_nspec_coeff'] = 6
         par['calibrations']['wavelengths']['ech_norder_coeff'] = 4
         par['calibrations']['wavelengths']['ech_sigrej'] = 2.0
-        par['calibrations']['wavelengths']['ech_separate_2d'] = True  # Doesn't seem like there's an offset+rotation that works for VLT/UVES red (note that blue doesn't have a mosaic)
         par['calibrations']['wavelengths']['bad_orders_maxfrac'] = 0.5
 
         # Flats
@@ -510,6 +509,9 @@ class VLTUVESRedSpectrograph(VLTUVESSpectrograph):
         # Slit tracing
         par['calibrations']['slitedges']['mask_off_detector'] = True
         par['calibrations']['slitedges']['order_width_poly'] = 4
+
+        # Wavelength calibration should be done separately for a mosaic
+        par['calibrations']['wavelengths']['ech_separate_2d'] = True  # Doesn't seem like there's an offset+rotation that works for VLT/UVES red (note that blue doesn't have a mosaic)
 
         # Sensitivity function parameters
         par['sensfunc']['algorithm'] = 'IR'
