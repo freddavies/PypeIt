@@ -25,6 +25,7 @@ Functionality/Performance Improvements and Additions
 
 Instrument-specific Updates
 ---------------------------
+<<<<<<< bino_g1000_cal
 
 - MMT/Binospec: extended the ``mmt_binospec_1000`` reid_arxiv template redward
   from 6760 Å to 7211 Å to support central wavelengths around 6450 Å.  The
@@ -34,6 +35,9 @@ Instrument-specific Updates
   :func:`~pypeit.core.wavecal.templates.build_template` with continuum
   subtraction on the new segment.
 
+=======
+- Implemented support for VLT/UVES data reduction.
+>>>>>>> develop
 
 Script Changes
 --------------
@@ -79,3 +83,6 @@ Bug Fixes
 - Avoid a circular import by moving
   :func:`~pypeit.core.wavecal.waveio.load_tree` into
   :func:`~pypeit.core.wavecal.kdtree_generator`.
+- Fix a bug in 2D coaddition where manually identified objects were not being
+  used to compute offsets between input frames.  Add description of this failure
+  mode to the :ref:`known_issues_coadd2d` documentation for 2D coaddition.
