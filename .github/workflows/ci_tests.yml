@@ -20,7 +20,31 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         python: ['3.11', '3.12', '3.13', '3.14']
-        toxenv: [test, test-alldeps-cov, test-numpydev, test-gingadev, test-astropydev]
+        toxenv: [test, test-alldeps]
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python }}
+    - name: Install base dependencies
+      run: |
+        python -m pip install --upgrade pip tox
+    - name: Test with tox
+      run: |
+        tox -e ${{ matrix.python }}-${{ matrix.toxenv }}
+
+  dev-tests:
+    name: Tox env ${{ matrix.python }}-${{ matrix.toxenv }}
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python: ['3.13']
+        toxenv: [test-numpydev, test-astropydev]
     steps:
     - name: Check out repository
       uses: actions/checkout@v3
@@ -77,7 +101,7 @@ jobs:
     - name: Conda environment check
       uses: actions/setup-python@v4
       with:
-        python-version: '3.12'
+        python-version: '3.13'
     - name: Install base dependencies
       run: |
         python -m pip install --upgrade pip tox
@@ -94,7 +118,7 @@ jobs:
     - name: Python codestyle check
       uses: actions/setup-python@v4
       with:
-        python-version: '3.12'
+        python-version: '3.13'
     - name: Install base dependencies
       run: |
         python -m pip install --upgrade pip
