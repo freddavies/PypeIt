@@ -25,7 +25,10 @@ Functionality/Performance Improvements and Additions
 
 Instrument-specific Updates
 ---------------------------
-<<<<<<< bino_g1000_cal
+
+- Updated the MMT Binospec bad pixel mask to match the IDL pipeline, adding
+  ~12,500 individual bad pixels, additional bad columns, and detector trap
+  region masking from static calibration files.
 
 - MMT/Binospec: extended the ``mmt_binospec_1000`` reid_arxiv template redward
   from 6760 Å to 7211 Å to support central wavelengths around 6450 Å.  The
@@ -35,9 +38,7 @@ Instrument-specific Updates
   :func:`~pypeit.core.wavecal.templates.build_template` with continuum
   subtraction on the new segment.
 
-=======
 - Implemented support for VLT/UVES data reduction.
->>>>>>> develop
 
 Script Changes
 --------------
