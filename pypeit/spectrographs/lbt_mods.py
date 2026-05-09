@@ -20,6 +20,8 @@ from pypeit.spectrographs import spectrograph
 from pypeit.core import parse
 from pypeit.images.detector_container import DetectorContainer
 
+from IPython import embed
+
 
 
 # TODO: FW: test MODS1B and MODS2B
@@ -229,8 +231,25 @@ class LBTMODSSpectrograph(spectrograph.Spectrograph):
         # Read
         log.info(f'Reading LBT/MODS file: {fil}')
         hdu = io.fits_open(fil)
+
+        # post-2025upgrade: 
+        #          raw images are 6-extension MEFs and in the 6th, merged, extension, naxis1=8292
+        #          CCDCTRLR = 'Archon' is in the header; this keyword does not exist in earlier images
+
+        if 'CCDCTRLR' in head:
+            postupgrade = True
+        else:
+            postupgrade = False
+
+        embed()
+        """
+   naxis1 and naxis2 are not in the primary header of the new MODS images, only in the extension headers.
+   if naxis1, naxis2 are used only for determining whether a datafile has been pre-processed or not, is there instead another keyword?
+        """
+
         head = hdu[0].header
 
+ 
         # TODO These parameters should probably be stored in the detector par
 
         # Number of amplifiers (could pull from DetectorPar but this avoids needing the spectrograph, e.g. view_fits)
@@ -242,6 +261,7 @@ class LBTMODSSpectrograph(spectrograph.Spectrograph):
         # This definition is the same for both raw and processed (overscan-subtracted and trimmed) images. 
         # NAXIS1, NAXIS2 values already incorporate the binning; there is no need to use CCDXBIN,CCDYBIN here.
 
+
         # get the x and y dimensions of the image ...
         naxis1, naxis2 = head['NAXIS1'], head['NAXIS2']
         # get the x and y binning factors...
@@ -250,7 +270,12 @@ class LBTMODSSpectrograph(spectrograph.Spectrograph):
         # Use the value of NAXIS1 to determine whether the image has been processed or not.
         # Processed images will have NAXIS1 = 8192 (unbinned) or 4096 (xbin=2)
         # Raw images will have NAXIS1 = 8288 (unbinned) or 4144 (xbin=2)
-        if (naxis1*xbin)==8288:
+
+      
+        if postupgrade and (naxis1*xbin)==8292:
+            proc = False
+            raise PypeItError('PypeIt does not yet reduce raw images after the MODS upgrade. Pre-process the data, and then use the spectrogaph names: lbt_mods1b_proc, lbt_mods1r_proc, lbt_mods2b_proc and lbt_mods2r_proc.')
+        if preupgrade and (naxis1*xbin)==8288:
             proc = False
         elif (naxis1*xbin)==8192:
             proc = True
