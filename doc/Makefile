@@ -14,6 +14,16 @@ ifeq ($(shell which $(SPHINXBUILD) >/dev/null 2>&1; echo $$?), 1)
 $(error The '$(SPHINXBUILD)' command was not found. Make sure you have Sphinx installed, then set the SPHINXBUILD environment variable to point to the full path of the '$(SPHINXBUILD)' executable. Alternatively you can add the directory with the executable to your PATH. If you don't have Sphinx installed, grab it from http://sphinx-doc.org/)
 endif
 
+help:
+	@echo "Options are \`make <target>' where <target> is one of"
+	@echo "  clean      remove files that are automatically rebuilt by a full build (make html)"
+	@echo "  apirst     build the API docs, copy the dev-suite README, and run the automated scripts that do not require the dev-suite"
+	@echo "  examples   run scripts that automatically create doc elements based on files in the dev-suite"
+	@echo "  html       run make apirst, make examples, and build the full set of HTML files"
+	@echo "  htmlnoex   same as make html but skip make examples"
+	@echo "  htmlonly   skip both make apirst and make examples; i.e., just rebuild the HTML files"
+	@echo "  picky      same as make html, but be picky about syntax in the docs (in development)"
+
 clean:
 	rm -rf $(LOCALFILES)
 
