@@ -11,7 +11,7 @@ Documentation Updates
 - Updated the documentation about the use of the mask design file for Gemini/GMOS.
   See the :ref:`gemini_gmos` documentation for details.
 - Updated the Setup GUI tutorial to reflect the new look of the GUI.
-- Modified the ``update_docs`` script to allow the docs to be build without
+- Modified the ``update_docs`` script to allow the docs to be built without
   access to ``$PYPEIT_DEV/RAW_DATA``.
 
 Dependency Changes
