@@ -231,23 +231,32 @@ class LBTMODSSpectrograph(spectrograph.Spectrograph):
         # Read
         log.info(f'Reading LBT/MODS file: {fil}')
         hdu = io.fits_open(fil)
+        head0 = hdu[0].header
 
         # post-2025upgrade: 
         #          raw images are 6-extension MEFs and in the 6th, merged, extension, naxis1=8292
         #          CCDCTRLR = 'Archon' is in the header; this keyword does not exist in earlier images
 
-        if 'CCDCTRLR' in head:
-            postupgrade = True
+        if 'CCDCTRLR' in head0:
+            upgrade = True
         else:
-            postupgrade = False
+            upgrade = False
+
+        if 'HISTORY' in head0:
+            history = head0['HISTORY']
+            for i in range(len(history)):
+                if 'modsProc' in history[i]:
+                    proc = True
+                else:
+                    proc = False
+        else:
+            proc = False
 
         embed()
-        """
-   naxis1 and naxis2 are not in the primary header of the new MODS images, only in the extension headers.
-   if naxis1, naxis2 are used only for determining whether a datafile has been pre-processed or not, is there instead another keyword?
-        """
 
-        head = hdu[0].header
+   #naxis1 and naxis2 are not in the primary header of the new MODS images, only in the extension headers.
+   #if naxis1, naxis2 are used only for determining whether a datafile has been pre-processed or not, is there instead another keyword?
+
 
  
         # TODO These parameters should probably be stored in the detector par
@@ -265,17 +274,17 @@ class LBTMODSSpectrograph(spectrograph.Spectrograph):
         # get the x and y dimensions of the image ...
         naxis1, naxis2 = head['NAXIS1'], head['NAXIS2']
         # get the x and y binning factors...
-        xbin, ybin = head['CCDXBIN'], head['CCDYBIN']
+        xbin, ybin = head0['CCDXBIN'], head0['CCDYBIN']
 
         # Use the value of NAXIS1 to determine whether the image has been processed or not.
         # Processed images will have NAXIS1 = 8192 (unbinned) or 4096 (xbin=2)
         # Raw images will have NAXIS1 = 8288 (unbinned) or 4144 (xbin=2)
 
       
-        if postupgrade and (naxis1*xbin)==8292:
+        if upgrade and (naxis1*xbin)==8292:
             proc = False
             raise PypeItError('PypeIt does not yet reduce raw images after the MODS upgrade. Pre-process the data, and then use the spectrogaph names: lbt_mods1b_proc, lbt_mods1r_proc, lbt_mods2b_proc and lbt_mods2r_proc.')
-        if preupgrade and (naxis1*xbin)==8288:
+        if not upgrade and (naxis1*xbin)==8288:
             proc = False
         elif (naxis1*xbin)==8192:
             proc = True
@@ -298,14 +307,23 @@ class LBTMODSSpectrograph(spectrograph.Spectrograph):
         # In this case, set datasize using the keyword value DETSIZE and keep xbin, ybin  
         #
         #if (naxis1*xbin)==8288:
-        if not proc:
+        if not proc and preupgrade:
            cbias = 48 # number of columns in the prescan at either end
-           datasize = head['DETSIZE'] # Unbinned size of detector full array
+           datasize = head0['DETSIZE'] # Unbinned size of detector full array, DETSIZE='[1:8292,1:3088]'    
            _, nx_full, _, ny_full = np.array(parse.load_sections(datasize, fmt_iraf=False)).flatten()
            # Determine the size of the output array...
            nx, ny = int(nx_full / xbin), int(ny_full / ybin)
            nbias1 = 48
            nbias2 = 8240
+
+        if not proc and upgrade:
+           cbias = 50 # number of columns in the prescan at either end
+           datasize = head0['DETSIZE'] # Unbinned size of detector full array, DETSIZE='[1:8292,1:3088]'    
+           _, nx_full, _, ny_full = np.array(parse.load_sections(datasize, fmt_iraf=False)).flatten()
+           # Determine the size of the output array...
+           nx, ny = int(nx_full / xbin), int(ny_full / ybin)
+           nbias1 = 50
+           nbias2 = 8242
 
            ## allocate datasec and oscansec to the image
            # apm 1
