@@ -242,6 +242,9 @@ class LBTMODSSpectrograph(spectrograph.Spectrograph):
         else:
             upgrade = False
 
+        # Have the data been pre-processed by modsCCDRed? modsProc.py in the final step and writes "modsProc" in a HISTORY
+        # card that is added to the header. 
+        #
         if 'HISTORY' in head0:
             history = head0['HISTORY']
             for i in range(len(history)):
