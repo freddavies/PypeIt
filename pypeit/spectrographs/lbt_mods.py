@@ -255,7 +255,7 @@ class LBTMODSSpectrograph(spectrograph.Spectrograph):
         else:
             proc = False
 
-        embed()
+        #embed()
 
    #naxis1 and naxis2 are not in the primary header of the new MODS images, only in the extension headers.
    #if naxis1, naxis2 are used only for determining whether a datafile has been pre-processed or not, is there instead another keyword?
@@ -275,7 +275,7 @@ class LBTMODSSpectrograph(spectrograph.Spectrograph):
 
 
         # get the x and y dimensions of the image ...
-        naxis1, naxis2 = head['NAXIS1'], head['NAXIS2']
+        naxis1, naxis2 = head0['NAXIS1'], head0['NAXIS2']
         # get the x and y binning factors...
         xbin, ybin = head0['CCDXBIN'], head0['CCDYBIN']
 
@@ -310,7 +310,7 @@ class LBTMODSSpectrograph(spectrograph.Spectrograph):
         # In this case, set datasize using the keyword value DETSIZE and keep xbin, ybin  
         #
         #if (naxis1*xbin)==8288:
-        if not proc and preupgrade:
+        if not proc and ~upgrade:
            cbias = 48 # number of columns in the prescan at either end
            datasize = head0['DETSIZE'] # Unbinned size of detector full array, DETSIZE='[1:8292,1:3088]'    
            _, nx_full, _, ny_full = np.array(parse.load_sections(datasize, fmt_iraf=False)).flatten()
@@ -328,25 +328,25 @@ class LBTMODSSpectrograph(spectrograph.Spectrograph):
            nbias1 = 50
            nbias2 = 8242
 
-           ## allocate datasec and oscansec to the image
-           # apm 1
-           rawdatasec_img[int(nbias1/xbin):int(nx/2), :int(ny/2)] = 1
-           oscansec_img[1:int(nbias1/xbin), :int(ny/2)] = 1 # exclude the first pixel since it always has problem
-           # apm 2
-           rawdatasec_img[int(nx/2):int(nbias2/xbin), :int(ny/2)] = 2
-           oscansec_img[int(nbias2/xbin):nx-1, :int(ny/2)] = 2 # exclude the last pixel since it always has problem
-           # apm 3
-           rawdatasec_img[int(nbias1/xbin):int(nx/2), int(ny/2):] = 3
-           oscansec_img[1:int(nbias1/xbin), int(ny/2):] = 3 # exclude the first pixel since it always has problem
-           # apm 4
-           rawdatasec_img[int(nx/2):int(nbias2/xbin), int(ny/2):] = 4
-           oscansec_img[int(nbias2/xbin):nx-1, int(ny/2):] = 4 # exclude the last pixel since it always has problem
+        ## allocate datasec and oscansec to the image
+        # apm 1
+        rawdatasec_img[int(nbias1/xbin):int(nx/2), :int(ny/2)] = 1
+        oscansec_img[1:int(nbias1/xbin), :int(ny/2)] = 1 # exclude the first pixel since it always has problem
+        # apm 2
+        rawdatasec_img[int(nx/2):int(nbias2/xbin), :int(ny/2)] = 2
+        oscansec_img[int(nbias2/xbin):nx-1, :int(ny/2)] = 2 # exclude the last pixel since it always has problem
+        # apm 3
+        rawdatasec_img[int(nbias1/xbin):int(nx/2), int(ny/2):] = 3
+        oscansec_img[1:int(nbias1/xbin), int(ny/2):] = 3 # exclude the first pixel since it always has problem
+        # apm 4
+        rawdatasec_img[int(nx/2):int(nbias2/xbin), int(ny/2):] = 4
+        oscansec_img[int(nbias2/xbin):nx-1, int(ny/2):] = 4 # exclude the last pixel since it always has problem
 
         #### else if processed: ####
         # For processed images, set datasize using naxis1, naxis2 and don't carry along xbin, ybin.
         #elif naxis1==8192 or naxis1==4096:
         #if (naxis1*xbin)==8192:
-        elif proc: 
+        if proc: 
            datasize = "[1:"+str(naxis1)+",1:"+str(naxis2)+"]" # Size of image 
            _, nx_full, _, ny_full = np.array(parse.load_sections(datasize, fmt_iraf=False)).flatten()
            # Determine the size of the output array...
@@ -1200,7 +1200,7 @@ class LBTMODS1RArchonSpectrograph(LBTMODS1RSpectrograph):
             nonlinear       = 0.99,
             mincounts       = -1e10,
             numamplifiers   = 4,
-            gain            = np.atleast_1d([2.5,2.5,2.5,2.5]), # Need final values for these
+            gain            = np.atleast_1d([2.2,2.2,2.2,2.2]), # Need final values for these
             ronoise         = np.atleast_1d([3.5,3.5,3.5,3.5]) # Need updated values for these
             )
         return DetectorContainer(**detector_dict)
@@ -1362,7 +1362,7 @@ class LBTMODS1BArchonSpectrograph(LBTMODS1BSpectrograph):
             nonlinear       = 0.99,
             mincounts       = -1e10,
             numamplifiers   = 4,
-            gain            = np.atleast_1d([2.55,1.91,2.09,2.02]), # Need updated values for these
+            gain            = np.atleast_1d([2.0,2.0,2.0,2.0]), # Need updated values for these
             ronoise         = np.atleast_1d([3.41,2.93,2.92,2.76]) # Need updated values for these
             )
         return DetectorContainer(**detector_dict)
@@ -1382,6 +1382,331 @@ class LBTMODS1BArchonSpectrograph(LBTMODS1BSpectrograph):
         par.reset_all_processimages_par(overscan_method='median')
         
         return par
+
+class LBTMODS2RArchonSpectrograph(LBTMODS1RSpectrograph):
+    """
+    Child to handle the new Archon controller
+    """
+    name = 'lbt_mods2r_archon'
+    supported = True
+    comment = 'MODS-II red spectrometer with upgraded readout controller (post-2025)'
+    
+    def get_rawimage(self, raw_file, det):
+        """
+        Read raw images and generate a few other bits and pieces
+        that are key for image processing.
+
+        Parameters
+        ----------
+        raw_file : :obj:`str`
+            File to read
+        det : :obj:`int`
+            1-indexed detector to read
+
+        Returns
+        -------
+        detector_par : :class:`pypeit.images.detector_container.DetectorContainer`
+            Detector metadata parameters.
+        raw_img : `numpy.ndarray`_
+            Raw image for this detector.
+        hdu : `astropy.io.fits.HDUList`_
+            Opened fits file
+        exptime : :obj:`float`
+            Exposure time read from the file header
+        rawdatasec_img : `numpy.ndarray`_
+            Data (Science) section of the detector as provided by setting the
+            (1-indexed) number of the amplifier used to read each detector
+            pixel. Pixels unassociated with any amplifier are set to 0.
+        oscansec_img : `numpy.ndarray`_
+            Overscan section of the detector as provided by setting the
+            (1-indexed) number of the amplifier used to read each detector
+            pixel. Pixels unassociated with any amplifier are set to 0.
+        """
+        fil = utils.find_single_file(f'{raw_file}*', required=True)
+
+        # Read
+        log.info(f'Reading LBT/MODS file: {fil}')
+        hdu = io.fits_open(fil)
+        head0 = hdu[0].header
+
+        # post-2025upgrade:
+        #          raw images are 6-extension MEFs and in the 6th, merged, extension, naxis1=8292
+        #          CCDCTRLR = 'Archon' is in the header; this keyword does not exist in earlier images
+
+        if 'CCDCTRLR' in head0:
+            head1 = hdu[1].header
+            #head2 = hdu[2].header
+            #head3 = hdu[3].header
+            #head4 = hdu[4].header
+        else:
+            raise PypeItError("No CCDCTRLR in the header; did you mean lbt_mods1r instead?")
+
+        # TODO These parameters should probably be stored in the detector par
+
+        # Number of amplifiers (could pull from DetectorPar but this avoids needing the spectrograph, e.g. view_fits)
+        detector_par = self.get_detector_par(det if det is not None else 1, hdu=hdu)
+        numamp = detector_par['numamplifiers']
+
+        # get the x and y dimensions of each amplifier...
+        naxis1, naxis2 = head1['NAXIS1'], head1['NAXIS2']
+        # get the x and y binning factors...
+        xbin, ybin = head0['CCDXBIN'], head0['CCDYBIN']
+        
+        # allocate output array...
+        array = np.zeros((2*naxis2,2*naxis1),dtype=float)
+        array[:naxis2//ybin,:naxis1//xbin] = hdu[1].data
+        array[:naxis2//ybin,naxis1//xbin:] = np.flip(hdu[2].data,axis=1)
+        array[naxis2//ybin:,:naxis1//xbin] = hdu[3].data
+        array[naxis2//ybin:,naxis1//xbin:] = np.flip(hdu[4].data,axis=1)
+        array = array.T
+
+        rawdatasec_img = np.zeros_like(array, dtype=int)
+        oscansec_img = np.zeros_like(array, dtype=int)
+
+        presc = 50//xbin # number of columns in the prescan
+        oscan = 32//xbin # number of columns in the overscan
+        nx, ny = array.shape
+
+        # Overscan columns are at the center of the image, prescan at either end.
+        # Previously the prescan columns were used as overscan, now we use the "real" overscan.
+        # (there does seem to be a subtle difference...)
+        rawdatasec_img[presc:nx//2-oscan,:naxis2] = 1
+        oscansec_img[nx//2-oscan:nx//2,:naxis2] = 1
+        #oscansec_img[:presc,:naxis2] = 1
+        rawdatasec_img[presc:nx//2-oscan,naxis2:] = 2
+        oscansec_img[nx//2-oscan:nx//2,naxis2:] = 2
+        #oscansec_img[:presc,naxis2:] = 2
+        rawdatasec_img[nx//2+oscan:nx-presc,:naxis2] = 3
+        oscansec_img[nx//2:nx//2+oscan,:naxis2] = 3
+        #oscansec_img[nx-presc:,:naxis2] = 3
+        rawdatasec_img[nx//2+oscan: nx-presc,naxis2:] = 4
+        oscansec_img[nx//2:nx//2+oscan,naxis2:] = 4
+        #oscansec_img[nx-presc:,naxis2:] = 4
+
+        # Need the exposure time
+        exptime = hdu[self.meta['exptime']['ext']].header[self.meta['exptime']['card']]
+        # Return, transposing array back to orient the overscan properly
+        return detector_par,np.flipud(array), hdu, exptime, np.flipud(rawdatasec_img), np.flipud(oscansec_img)
+
+
+    def get_detector_par(self, det, hdu=None):
+        """
+        Return metadata for the selected detector.
+
+        Args:
+            det (:obj:`int`):
+                1-indexed detector number.
+            hdu (`astropy.io.fits.HDUList`_, optional):
+                The open fits file with the raw image of interest.  If not
+                provided, frame-dependent parameters are set to a default.
+
+        Returns:
+            :class:`~pypeit.images.detector_container.DetectorContainer`:
+            Object with the detector metadata.
+        """
+        # Binning
+        binning = '1,1' if hdu is None \
+                    else f"{hdu[0].header['CCDXBIN']},{hdu[0].header['CCDYBIN']}"
+
+        # Detector 1
+        detector_dict = dict(
+            binning= binning,
+            det=1,
+            dataext         = 0,
+            specaxis        = 0,
+            specflip        = False,
+            spatflip        = False,
+            platescale      = 0.123,
+            darkcurr        = 0.4,  # e-/pixel/hour
+            saturation      = 65535.,
+            nonlinear       = 0.99,
+            mincounts       = -1e10,
+            numamplifiers   = 4,
+            gain            = np.atleast_1d([2.2,2.2,2.2,2.2]), # Need final values for these
+            ronoise         = np.atleast_1d([3.5,3.5,3.5,3.5]) # Need updated values for these
+            )
+        return DetectorContainer(**detector_dict)
+
+    @classmethod
+    def default_pypeit_par(cls):
+        """
+        Return the default parameters to use for this instrument.
+        
+        Returns:
+            :class:`~pypeit.par.pypeitpar.PypeItPar`: Parameters required by
+            all of PypeIt methods.
+        """
+        par = super().default_pypeit_par()
+        
+        # No longer need odd_even overscan method.
+        par.reset_all_processimages_par(overscan_method='median')
+        
+        return par
+
+class LBTMODS2BArchonSpectrograph(LBTMODS1BSpectrograph):
+    """
+    Child to handle the new Archon controller
+    """
+    name = 'lbt_mods2b_archon'
+    supported = True
+    comment = 'MODS-II blue spectrometer with upgraded readout controller (post-2025)'
+
+    def get_rawimage(self, raw_file, det):
+        """
+        Read raw images and generate a few other bits and pieces
+        that are key for image processing.
+
+        Parameters
+        ----------
+        raw_file : :obj:`str`
+            File to read
+        det : :obj:`int`
+            1-indexed detector to read
+
+        Returns
+        -------
+        detector_par : :class:`pypeit.images.detector_container.DetectorContainer`
+            Detector metadata parameters.
+        raw_img : `numpy.ndarray`_
+            Raw image for this detector.
+        hdu : `astropy.io.fits.HDUList`_
+            Opened fits file
+        exptime : :obj:`float`
+            Exposure time read from the file header
+        rawdatasec_img : `numpy.ndarray`_
+            Data (Science) section of the detector as provided by setting the
+            (1-indexed) number of the amplifier used to read each detector
+            pixel. Pixels unassociated with any amplifier are set to 0.
+        oscansec_img : `numpy.ndarray`_
+            Overscan section of the detector as provided by setting the
+            (1-indexed) number of the amplifier used to read each detector
+            pixel. Pixels unassociated with any amplifier are set to 0.
+        """
+        fil = utils.find_single_file(f'{raw_file}*', required=True)
+
+        # Read
+        log.info(f'Reading LBT/MODS file: {fil}')
+        hdu = io.fits_open(fil)
+        head0 = hdu[0].header
+
+        # post-2025upgrade:
+        #          raw images are 6-extension MEFs and in the 6th, merged, extension, naxis1=8292
+        #          CCDCTRLR = 'Archon' is in the header; this keyword does not exist in earlier images
+
+        if 'CCDCTRLR' in head0:
+            head1 = hdu[1].header
+            head2 = hdu[2].header
+            #head3 = hdu[3].header
+            #head4 = hdu[4].header
+        else:
+            raise PypeItError("No CCDCTRLR in the header; did you mean lbt_mods1b instead?")
+
+        # TODO These parameters should probably be stored in the detector par
+
+        # Number of amplifiers (could pull from DetectorPar but this avoids needing the spectrograph, e.g. view_fits)
+        detector_par = self.get_detector_par(det if det is not None else 1, hdu=hdu)
+        numamp = detector_par['numamplifiers']
+
+        # get the x and y dimensions of each amplifier...
+        naxis1, naxis2 = head1['NAXIS1'], head1['NAXIS2']
+        # get the x and y binning factors...
+        xbin, ybin = head0['CCDXBIN'], head0['CCDYBIN']
+        
+        # allocate output array...
+        array = np.zeros((2*naxis2,2*naxis1),dtype=float)
+        array[:naxis2//ybin,:naxis1//xbin] = hdu[1].data
+        array[:naxis2//ybin,naxis1//xbin:] = np.flip(hdu[2].data,axis=1)
+        array[naxis2//ybin:,:naxis1//xbin] = hdu[3].data
+        array[naxis2//ybin:,naxis1//xbin:] = np.flip(hdu[4].data,axis=1)
+        array = array.T
+
+        rawdatasec_img = np.zeros_like(array, dtype=int)
+        oscansec_img = np.zeros_like(array, dtype=int)
+
+        # oscansec_img is not needed for the proc subclasses, however get_rawimage returns oscansec_img so we'll keep it for now.
+        
+        presc = 50//xbin # number of columns in the prescan
+        oscan = 32//xbin # number of columns in the overscan
+        nx, ny = array.shape
+
+        # Overscan columns are at the center of the image, prescan at either end.
+        # Previously the prescan columns were used as overscan, now we use the "real" overscan.
+        # (there does seem to be a subtle difference...)
+        rawdatasec_img[presc:nx//2-oscan,:naxis2] = 1
+        oscansec_img[nx//2-oscan:nx//2,:naxis2] = 1
+        #oscansec_img[:presc,:naxis2] = 1
+        rawdatasec_img[presc:nx//2-oscan,naxis2:] = 2
+        oscansec_img[nx//2-oscan:nx//2,naxis2:] = 2
+        #oscansec_img[:presc,naxis2:] = 2
+        rawdatasec_img[nx//2+oscan:nx-presc,:naxis2] = 3
+        oscansec_img[nx//2:nx//2+oscan,:naxis2] = 3
+        #oscansec_img[nx-presc:,:naxis2] = 3
+        rawdatasec_img[nx//2+oscan: nx-presc,naxis2:] = 4
+        oscansec_img[nx//2:nx//2+oscan,naxis2:] = 4
+        #oscansec_img[nx-presc:,naxis2:] = 4
+
+        # Need the exposure time
+        exptime = hdu[self.meta['exptime']['ext']].header[self.meta['exptime']['card']]
+        # Return, transposing array back to orient the overscan properly
+        return detector_par,np.flipud(array), hdu, exptime, np.flipud(rawdatasec_img), np.flipud(oscansec_img)
+
+
+    def get_detector_par(self, det, hdu=None):
+        """
+        Return metadata for the selected detector.
+
+        Args:
+            det (:obj:`int`):
+                1-indexed detector number.
+            hdu (`astropy.io.fits.HDUList`_, optional):
+                The open fits file with the raw image of interest.  If not
+                provided, frame-dependent parameters are set to a default.
+
+        Returns:
+            :class:`~pypeit.images.detector_container.DetectorContainer`:
+            Object with the detector metadata.
+        """
+        # Binning
+        binning = '1,1' if hdu is None \
+                    else f"{hdu[0].header['CCDXBIN']},{hdu[0].header['CCDYBIN']}"
+
+        # Detector 1
+        detector_dict = dict(
+            binning= binning,
+            det=1,
+            dataext         = 0,
+            specaxis        = 0,
+            specflip        = True,
+            spatflip        = False,
+            platescale      = 0.120,
+            darkcurr        = 0.5,  # e-/pixel/hour
+            saturation      = 65535.,
+            nonlinear       = 0.99,
+            mincounts       = -1e10,
+            numamplifiers   = 4,
+            gain            = np.atleast_1d([2.0,2.0,2.0,2.65]), # Need updated values for these
+            ronoise         = np.atleast_1d([3.41,2.93,2.92,2.76]) # Need updated values for these
+            )
+        return DetectorContainer(**detector_dict)
+
+    @classmethod
+    def default_pypeit_par(cls):
+        """
+        Return the default parameters to use for this instrument.
+        
+        Returns:
+            :class:`~pypeit.par.pypeitpar.PypeItPar`: Parameters required by
+            all of PypeIt methods.
+        """
+        par = super().default_pypeit_par()
+        
+        # No longer need odd_even overscan method.
+        par.reset_all_processimages_par(overscan_method='median')
+        
+        return par
+
+
+
 
 
 ##### The classes below are for pre-processed grating spectra #####
